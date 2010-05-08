@@ -22,6 +22,7 @@ Module::Build::DB->new(
     },
     requires           => {
         'aliased'                           => '0.30',
+        'Class::XSAccessor'                 => '1.05',
         'DBD::SQLite'                       => '1.29',
         'DBI'                               => '1.608',
         'DBIx::Connector'                   => '0.34',
