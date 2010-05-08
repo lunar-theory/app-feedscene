@@ -1,0 +1,9 @@
+_build
+blib
+App-FeedScene-*
+MANIFEST
+MANIFEST.bak
+MANIFEST.SKIP.*
+META.*
+Build
+MYMETA.*
