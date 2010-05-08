@@ -1,0 +1,4 @@
+---
+name: App::FeedScene
+dbi:
+  dsn: dbi:SQLite:dbname=feedscene.db
