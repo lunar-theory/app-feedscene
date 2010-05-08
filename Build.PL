@@ -30,7 +30,7 @@ Module::Build::DB->new(
         'Getopt::Long'                      => '2.34',
         'perl'                              => 5.012,
         'Pod::Usage'                        => '1.36',
-        'YAML::Syck'                        => '1.07',
+        'YAML::XS'                          => '0.33',
     },
     recommends         => {
         'Test::Pod'              => '1.20',

@@ -31,3 +31,6 @@
 # Avoid spelling test.
 pod-spelling.t$
 ^MYMETA.yml$
+
+# Avoid databases.
+*.db
