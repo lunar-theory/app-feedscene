@@ -1,12 +1,10 @@
 package App::FeedScene::LinkUpdater 0.01;
 
-use strict;
-use warnings;
 use 5.12.0;
 use utf8;
 
 use Class::XSAccessor constructor => 'new', accessors => { map { $_ => $_ } qw(
-   config_file
+   name
    csv_url
 ) };
 
@@ -17,7 +15,7 @@ sub go {
 
 sub run {
     my $self = shift;
-    my $conn = FeedScene::App->new($self->{config_file});
+    my $conn = FeedScene::App->new($self->name)->conn;
 }
 
 1;

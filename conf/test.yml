@@ -1,4 +1,0 @@
----
-name: App::FeedScene (TEST)
-dbi:
-  dsn: dbi:SQLite:dbname=feedscene_test.db
