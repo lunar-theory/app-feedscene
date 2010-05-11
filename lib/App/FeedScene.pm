@@ -9,19 +9,19 @@ use Exception::Class::DBI 1.0;
 our $SELF;
 
 use Class::XSAccessor accessors => { map { $_ => $_ } qw(
-    name
+    app
     conn
 ) };
 
 sub new {
-    my ($class, $name) = @_;
+    my ($class, $app) = @_;
     if ($SELF) {
-        return $SELF if !$name || $SELF->name eq $name;
-        die qq{You tried to create a "$name" app but the singleton is "}
-            . $SELF->name . '"';
+        return $SELF if !$app || $SELF->app eq $app;
+        die qq{You tried to create a "$app" app but the singleton is "}
+            . $SELF->app . '"';
     }
 
-    $SELF = bless { name => $name } => $class;
+    $SELF = bless { app => $app } => $class;
     my $dsn = 'dbi:SQLite:dbname=' . $SELF->db_name;
     my $conn = $SELF->conn(DBIx::Connector->new($dsn, '', '', {
         PrintError     => 0,
@@ -38,7 +38,7 @@ sub new {
 }
 
 sub db_name {
-    'db/' . shift->name . '.db';
+    'db/' . shift->app . '.db';
 }
 
 1;

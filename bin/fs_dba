@@ -8,12 +8,12 @@ use Getopt::Long;
 Getopt::Long::Configure( qw(bundling) );
 
 GetOptions(
-    'name|n=s'   => \my $name,
+    'app|a=s'    => \my $app,
     'client|c=s' => \my $client,
     'dir|d=s'    => \my $dir,
-#    'verbose|V+' => \my $verbose,
+#   'verbose|V+' => \my $verbose,
     'help|h'     => \my $help,
-    'man|M'      => \my $man,
+    'man|m'      => \my $man,
     'version|v'  => \my $version,
 ) or _pod2usage();
 
@@ -29,14 +29,14 @@ if ($version) {
     exit;
 }
 
-_pod2usage('-message' => 'Missing or invalid --name option') unless $name;
+_pod2usage('-message' => 'Missing or invalid --app option') unless $app;
 
 my $command = shift or _pod2usage( '-message' => 'Missing command' );
 my $meth = App::FeedScene::DBA->can($command)
     or _pod2usage('-message' => qq{Invalid command: "$command"});
 
 App::FeedScene::DBA->new(
-    name    => $name,
+    app     => $app,
     client  => $client,
     sql_dir => $dir,
 )->$meth;
@@ -51,3 +51,35 @@ sub _pod2usage {
     );
 }
 
+=head1 Name
+
+fs_dba - FeedScene database administration
+
+=head1 Usage
+
+  fs_dba --app APPNAME COMMAND
+
+=head1 Description
+
+This program initializes and updates FeedScene application SQLite databases.
+The databases are stored in the F<db> directory, and each is named for the
+C<--name> option.
+
+=head1 Options
+
+  -a --app NAME       Name of the FeedScene app.
+  -c --client CLIENT  Path to the SQLite 3 client.
+  -d --dir DIRECTORY  Directory containing SQL upgrade scripts
+  -h --help           Print a usage statement and exit.
+  -m --man            Print the complete documentation and exit.
+  -v --version        Print the version number and exit.
+
+=head1 Author
+
+David E. Wheeler <david@kineticode.com>
+
+=head1 Copyright
+
+Copyright (c) 2010 David E. Wheeler. All rights reserved.
+
+=cut

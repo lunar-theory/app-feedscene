@@ -5,15 +5,15 @@ use utf8;
 use App::FeedScene;
 
 use Class::XSAccessor constructor => '_new', accessors => { map { $_ => $_ } qw(
-    name
+    app
     client
     sql_dir
 ) };
 
 sub new {
     my $self = shift->_new(@_);
-    require Carp && carp::croak('Missing the required "name" parameter')
-        unless $self->name;
+    require Carp && Carp::croak('Missing the required "app" parameter')
+        unless $self->app;
     $self->client('sqlite3') unless $self->client;
     $self->sql_dir('sql') unless $self->sql_dir;
     return $self;
@@ -21,7 +21,7 @@ sub new {
 
 sub init {
     my $self = shift;
-    my $fs = App::FeedScene->new($self->name);
+    my $fs = App::FeedScene->new($self->app);
     my $db_file = $fs->db_name;
     die qq{Database "$db_file" already exists\n} if -e $db_file;
     $fs->conn->run(sub { shift->do('PRAGMA schema_version = 0' ) });
@@ -29,7 +29,7 @@ sub init {
 
 sub update {
     my $self = shift;
-    my $fs = App::FeedScene->new($self->name);
+    my $fs = App::FeedScene->new($self->app);
     $self->init unless -e $fs->db_name;
     my $conn = $fs->conn;
 

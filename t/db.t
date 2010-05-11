@@ -12,7 +12,7 @@ BEGIN { use_ok 'App::FeedScene' or die; }
 isa_ok my $fs = App::FeedScene->new('myapp'), 'App::FeedScene';
 END { $fs->conn->disconnect; unlink 'db/myapp.db' }
 
-is $fs->name, 'myapp', 'Name should be correct';
+is $fs->app, 'myapp', 'App name should be correct';
 isa_ok $fs->conn, 'DBIx::Connector';
 is +App::FeedScene->new, $fs, 'Should be a singleton';
 
