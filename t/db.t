@@ -17,7 +17,8 @@ isa_ok $fs->conn, 'DBIx::Connector';
 is +App::FeedScene->new, $fs, 'Should be a singleton';
 
 throws_ok { App::FeedScene->new('foo') }
-    qr/You tried to create a "foo" app but the singleton is "myapp"/;
+    qr/You tried to create a "foo" app but the singleton is for "myapp"/,
+    'Error for invalid app name should be correct';
 
 isa_ok my $dbh = $fs->conn->dbh, 'DBI::db', 'The DBH';
 ok $fs->conn->connected, 'We should be connected to the database';
