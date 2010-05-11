@@ -30,4 +30,3 @@ ok !$dbh->{PrintError}, 'PrintError should be disabled';
 ok !$dbh->{RaiseError}, 'RaiseError should be disabled';
 ok $dbh->{AutoCommit}, 'AutoCommit should be enabled';
 isa_ok $dbh->{HandleError}, 'CODE', 'The error handler';
-
