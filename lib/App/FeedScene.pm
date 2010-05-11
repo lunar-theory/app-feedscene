@@ -17,7 +17,7 @@ sub new {
     my ($class, $app) = @_;
     if ($SELF) {
         return $SELF if !$app || $SELF->app eq $app;
-        die qq{You tried to create a "$app" app but the singleton is "}
+        die qq{You tried to create a "$app" app but the singleton is for "}
             . $SELF->app . '"';
     }
 
