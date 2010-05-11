@@ -7,7 +7,7 @@ use LWP::RobotUA;
 use App::FeedScene;
 
 # Monkey-patch to support RobotUA.
-#@LWP::UserAgent::WithCache::ISA = ('LWP::RobotUA');
+@LWP::UserAgent::WithCache::ISA = ('LWP::RobotUA');
 
 sub new {
     my ($class, $app) = (shift, shift);
@@ -17,10 +17,16 @@ sub new {
         cache_root => $cache_dir,
         agent      => 'feedscene/' . App::FeedScene->VERSION,
         from       => 'bot@designsceneapp.com',
-        # delay      => 10, # be very nice -- max one hit every ten minutes!
-        # use_sleep  => 0,
+        delay      => 10, # be very nice -- max one hit every ten minutes!
     );
     return $self;
+}
+
+sub host_wait {
+    my ($self, $netloc) = @_;
+    # First visit is for robots.txt, so let it be free.
+    return if $self->no_visits($netloc) < 2;
+    $self->SUPER::host_wait($netloc);
 }
 
 1;
