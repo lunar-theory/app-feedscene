@@ -5,25 +5,20 @@ use utf8;
 use App::FeedScene;
 use App::FeedScene::UA;
 use Text::CSV_XS;
+use HTTP::Status qw(HTTP_NOT_MODIFIED);
 
-use Class::XSAccessor constructor => '_new', accessors => { map { $_ => $_ } qw(
+use Class::XSAccessor constructor => 'new', accessors => { map { $_ => $_ } qw(
    app
    url
 ) };
 
-sub new {
-    my $self = shift->_new(@_);
-    require Carp && Carp::croak('Missing the required "app" parameter')
-        unless $self->app;
-    require Carp && Carp::croak('Missing the required "url" parameter')
-        unless $self->url;
-    return $self;
-}
-
 sub run {
     my $self = shift;
     my $res = App::FeedScene::UA->new($self->app)->get($self->url);
-    $self->process($res->decoded_content);
+    require Carp && Carp::croak($res->status_line)
+        unless $res->is_success or $res->code == HTTP_NOT_MODIFIED;
+    $self->process($res->decoded_content)
+        unless $res->code == HTTP_NOT_MODIFIED;
 }
 
 sub process {
@@ -32,20 +27,36 @@ sub process {
     my $csv   = Text::CSV_XS->new({ binary => 1 });
     shift @csv;
 
-    my $sth = App::FeedScene->new($self->app)->conn->run(sub {
+    my $conn = App::FeedScene->new($self->app)->conn;
+    my $sth = $conn->run(sub {
         shift->prepare(q{
             INSERT OR REPLACE INTO links (portal, url, category)
             VALUES (?, ?, ?)
         });
     });
 
-    for my $line (@csv) {
-        $csv->parse($line);
-        my ($portal, $url, $category) = $csv->fields;
-        $portal = 0 if $portal eq 'text';
-        $sth->execute($portal, $url, $category);
-    }
+    $conn->txn(sub {
+        for my $line (@csv) {
+            $csv->parse($line);
+            my ($portal, $url, $category) = $csv->fields;
+            $portal = 0 if $portal eq 'text';
+            $sth->execute($portal, $url, $category);
+        }
+    });
 }
 
-
 1;
+
+=head1 Name
+
+App::FeedScene::LinkUpdate - FeedScene link updater
+
+=head1 Author
+
+David E. Wheeler <david@kineticode.com>
+
+=head1 Copyright
+
+Copyright (c) 2010 David E. Wheeler. All rights reserved.
+
+=cut
