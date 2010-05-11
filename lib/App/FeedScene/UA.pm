@@ -11,7 +11,7 @@ use App::FeedScene;
 
 sub new {
     my ($class, $app) = (shift, shift);
-    (my $cache_dir = __FILE__) =~ s{lib/App/FeedScene/UA.pm$}{cache};
+    (my $cache_dir = __FILE__) =~ s{lib/App/FeedScene/UA[.]pm$}{cache};
     my $self = $class->SUPER::new(
         namespace  => $app,
         cache_root => $cache_dir,
