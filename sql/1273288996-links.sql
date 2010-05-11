@@ -2,7 +2,8 @@
 
 CREATE TABLE links (
     url           TEXT PRIMARY KEY,
-    portal        TEXT DEFAULT 'text', -- csv, text, pN
+    portal        INT  NOT NULL DEFAULT 0,
+    category      TEXT NOT NULL DEFAULT '',
     etag          TEXT NOT NULL DEFAULT '',
     last_modified INT  NOT NULL DEFAULT 0
 );

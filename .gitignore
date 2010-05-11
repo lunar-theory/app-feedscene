@@ -8,3 +8,5 @@ META.*
 Build
 MYMETA.*
 *.db
+cache
+

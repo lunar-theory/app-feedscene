@@ -27,7 +27,7 @@ sub init {
     $fs->conn->run(sub { shift->do('PRAGMA schema_version = 0' ) });
 }
 
-sub update {
+sub upgrade {
     my $self = shift;
     my $fs = App::FeedScene->new($self->app);
     $self->init unless -e $fs->db_name;
@@ -62,3 +62,17 @@ sub update {
 }
 
 1;
+
+=head1 Name
+
+App::FeedScene::DBA - FeedScene database administration
+
+=head1 Author
+
+David E. Wheeler <david@kineticode.com>
+
+=head1 Copyright
+
+Copyright (c) 2010 David E. Wheeler. All rights reserved.
+
+=cut

@@ -1,0 +1,48 @@
+#!/usr/bin/env perl -w
+
+use 5.12.0;
+
+use lib 'lib';
+use App::FeedScene::LinkUpdater;
+use Getopt::Long;
+Getopt::Long::Configure( qw(bundling) );
+
+GetOptions(
+    'app|a=s'    => \my $app,
+    'url|u=s'    => \my $url,
+#   'verbose|V+' => \my $verbose,
+    'help|h'     => \my $help,
+    'man|m'      => \my $man,
+    'version|v'  => \my $version,
+) or _pod2usage();
+
+_pod2usage(
+    ( $man ? ( '-sections' => '.+' ) : ()),
+    '-exitval' => 0,
+) if $help or $man;
+
+# Handle version request.
+if ($version) {
+    require File::Basename;
+    say File::Basename::basename($0), ' ', App::FeedScene->VERSION;
+    exit;
+}
+
+_pod2usage('-message' => 'Missing or invalid --app option') unless $app;
+_pod2usage('-message' => 'Missing or invalid --url option') unless $url;
+
+App::FeedScene::LinkUpdater->new(
+    app  => $app,
+    url  => $url
+)->run;
+
+sub _pod2usage {
+    require Pod::Usage;
+    Pod::Usage::pod2usage(
+        '-verbose'  => 99,
+        '-sections' => '(?i:(Usage|Options))',
+        '-exitval'  => 1,
+        @_
+    );
+}
+
