@@ -10,7 +10,7 @@ use Test::Exception;
 BEGIN { use_ok 'App::FeedScene' or die; }
 
 isa_ok my $fs = App::FeedScene->new('myapp'), 'App::FeedScene';
-END { $fs->conn->disconnect; unlink 'myapp.db' }
+END { $fs->conn->disconnect; unlink 'db/myapp.db' }
 
 is $fs->name, 'myapp', 'Name should be correct';
 isa_ok $fs->conn, 'DBIx::Connector';
@@ -23,8 +23,8 @@ isa_ok my $dbh = $fs->conn->dbh, 'DBI::db', 'The DBH';
 ok $fs->conn->connected, 'We should be connected to the database';
 
 # What are we connected to, and how?
-is $dbh->{Name}, 'dbname=myapp.db',
-    'Should be connected to "feedscene_test.db"';
+is $dbh->{Name}, 'dbname=db/myapp.db',
+    'Should be connected to "db/myapp.db"';
 ok !$dbh->{PrintError}, 'PrintError should be disabled';
 ok !$dbh->{RaiseError}, 'RaiseError should be disabled';
 ok $dbh->{AutoCommit}, 'AutoCommit should be enabled';

@@ -1,0 +1,5 @@
+FeedScene Database Directory
+============================
+
+This is the directory in which FeedScene stores all of its SQLite databases.
+This file is here mainly so that the directory will be properly stored in Git.

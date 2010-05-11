@@ -1,0 +1,53 @@
+#!/usr/bin/env perl -w
+
+use 5.12.0;
+
+use lib 'lib';
+use App::FeedScene::DBA;
+use Getopt::Long;
+Getopt::Long::Configure( qw(bundling) );
+
+GetOptions(
+    'name|n=s'   => \my $name,
+    'client|c=s' => \my $client,
+    'dir|d=s'    => \my $dir,
+#    'verbose|V+' => \my $verbose,
+    'help|h'     => \my $help,
+    'man|M'      => \my $man,
+    'version|v'  => \my $version,
+) or _pod2usage();
+
+_pod2usage(
+    ( $man ? ( '-sections' => '.+' ) : ()),
+    '-exitval' => 0,
+) if $help or $man;
+
+# Handle version request.
+if ($version) {
+    require File::Basename;
+    say File::Basename::basename($0), ' ', App::FeedScene->VERSION;
+    exit;
+}
+
+_pod2usage('-message' => 'Missing or invalid --name option') unless $name;
+
+my $command = shift or _pod2usage( '-message' => 'Missing command' );
+my $meth = App::FeedScene::DBA->can($command)
+    or _pod2usage('-message' => qq{Invalid command: "$command"});
+
+App::FeedScene::DBA->new(
+    name    => $name,
+    client  => $client,
+    sql_dir => $dir,
+)->$meth;
+
+sub _pod2usage {
+    require Pod::Usage;
+    Pod::Usage::pod2usage(
+        '-verbose'  => 99,
+        '-sections' => '(?i:(Usage|Options))',
+        '-exitval'  => 1,
+        @_
+    );
+}
+

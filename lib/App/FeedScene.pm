@@ -20,17 +20,25 @@ sub new {
         die qq{You tried to create a "$name" app but the singleton is "}
             . $SELF->name . '"';
     }
-    $SELF = bless {
-        name => $name,
-        conn => DBIx::Connector->new("dbi:SQLite:dbname=$name.db", '', '', {
-            PrintError     => 0,
-            RaiseError     => 0,
-            HandleError    => Exception::Class::DBI->handler,
-            AutoCommit     => 1,
-            sqlite_unicode => 1,
-        })
-    } => $class;
+
+    $SELF = bless { name => $name } => $class;
+    my $dsn = 'dbi:SQLite:dbname=' . $SELF->db_name;
+    my $conn = $SELF->conn(DBIx::Connector->new($dsn, '', '', {
+        PrintError     => 0,
+        RaiseError     => 0,
+        HandleError    => Exception::Class::DBI->handler,
+        AutoCommit     => 1,
+        sqlite_unicode => 1,
+        Callbacks      => {
+            connected => sub { shift->do('PRAGMA foreign_keys = ON'); return; }
+        }
+    }));
+    $conn->mode('fixup');
     return $SELF;
+}
+
+sub db_name {
+    'db/' . shift->name . '.db';
 }
 
 1;
