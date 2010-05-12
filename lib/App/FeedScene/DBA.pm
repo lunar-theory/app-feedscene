@@ -13,7 +13,10 @@ use Class::XSAccessor constructor => '_new', accessors => { map { $_ => $_ } qw(
 (my $def_dir = __FILE__) =~ s{(?:blib/)?lib/App/FeedScene/DBA[.]pm$}{sql};
 
 sub new {
-    shift->_new( client => 'sqlite3', 'sql_dir', $def_dir, @_ );
+    my $self = shift->_new(@_);
+    $self->sql_dir($def_dir) unless $self->sql_dir;
+    $self->client('sqlite3') unless $self->client;
+    return $self;
 }
 
 sub init {
