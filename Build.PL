@@ -14,6 +14,7 @@ Module::Build->new(
         'Test::Exception'  => '0.29',
         'Test::File'       => '1.29',
         'Test::MockObject' => '1.09',
+        'Test::MockModule' => '0.05',
         'Test::NoWarnings' => '1.01',
     },
     requires           => {

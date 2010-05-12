@@ -23,9 +23,9 @@ sub run {
 
 sub process {
     my $self = shift;
-    my @csv = split /\r?\n/ => shift;
-    my $csv   = Text::CSV_XS->new({ binary => 1 });
-    shift @csv;
+    my @csv  = split /\r?\n/ => shift;
+    my $csv  = Text::CSV_XS->new({ binary => 1 });
+    shift @csv; # Remove headers.
 
     my $conn = App::FeedScene->new($self->app)->conn;
     my $sth = $conn->run(sub {
@@ -36,13 +36,23 @@ sub process {
     });
 
     $conn->txn(sub {
+        my @urls;
         for my $line (@csv) {
             $csv->parse($line);
             my ($portal, $url, $category) = $csv->fields;
             $portal = 0 if $portal eq 'text';
             $sth->execute($portal, $url, $category);
+            push @urls, $url;
         }
+
+        # Remove old links.
+        $_->do(
+            'DELETE FROM links WHERE url NOT IN (' . join(', ', ('?') x @urls) . ')',
+            undef, @urls
+        ) if @urls;
+
     });
+    return $self;
 }
 
 1;
