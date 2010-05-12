@@ -63,7 +63,7 @@ fs_dba - FeedScene database administration
 
 This program initializes and updates FeedScene application SQLite databases.
 The databases are stored in the F<db> directory, and each is named for the
-C<--name> option.
+C<--app> option.
 
 =head1 Options
 

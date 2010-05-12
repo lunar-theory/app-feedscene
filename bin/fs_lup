@@ -46,3 +46,34 @@ sub _pod2usage {
     );
 }
 
+=head1 Name
+
+fs_lup - FeedScene link updater
+
+=head1 Usage
+
+  fs_lup --app APPNAME --url URL
+
+=head1 Description
+
+This program downloads a CSV file from a URL, parses it, and updates the
+C<links> table in the app database. It should be regularly run from a cron job
+to keep the list of feed URLs for an app up-to-date.
+
+=head1 Options
+
+  -a --app NAME       Name of the FeedScene app.
+  -u --url URL        URL for a CSV file
+  -h --help           Print a usage statement and exit.
+  -m --man            Print the complete documentation and exit.
+  -v --version        Print the version number and exit.
+
+=head1 Author
+
+David E. Wheeler <david@kineticode.com>
+
+=head1 Copyright
+
+Copyright (c) 2010 David E. Wheeler. All rights reserved.
+
+=cut

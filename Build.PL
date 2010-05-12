@@ -30,7 +30,7 @@ Module::Build->new(
         'Text::CSV_XS'              => '0.73',
     },
     recommends         => {
-        'Test::Pod'           => '1.20',
+        'Test::Pod'           => '1.41',
         'Test::Pod::Coverage' => '1.06',
     },
     meta_merge         => {
