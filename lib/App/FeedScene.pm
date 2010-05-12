@@ -17,8 +17,11 @@ sub new {
     my ($class, $app) = @_;
     if ($SELF) {
         return $SELF if !$app || $SELF->app eq $app;
-        die qq{You tried to create a "$app" app but the singleton is for "}
-            . $SELF->app . '"';
+        require Carp;
+        Carp::croak(
+            qq{You tried to create a "$app" app but the singleton is for "}
+            . $SELF->app . '"'
+        );
     }
 
     $SELF = bless { app => $app } => $class;

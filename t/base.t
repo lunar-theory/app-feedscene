@@ -3,9 +3,10 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 19;
+use Test::More tests => 23;
 #use Test::More 'no_plan';
 use Test::Exception;
+use Test::NoWarnings;
 
 BEGIN { use_ok 'App::FeedScene' or die; }
 
@@ -37,3 +38,7 @@ isa_ok $dbh->{Callbacks}, 'HASH', 'Should have callbacks';
 isa_ok $dbh->{Callbacks}{connected}, 'CODE', 'Should have connected callback';
 ok $dbh->selectrow_array('PRAGMA foreign_keys'),
     'Foreign key constraints should be enabled';
+my ($major, $minor, $patch) = split /[.]/ => $dbh->{sqlite_version};
+is $major, 3, 'Should have SQLite 3';
+cmp_ok $minor, '>=', 6, 'Should have SQLite 3.6 or higher';
+cmp_ok $patch, '>=', $minor == 6 ? 19 : 0, 'Should have SQLite 3.6.19 or higher';

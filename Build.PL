@@ -9,9 +9,12 @@ Module::Build->new(
         'Module::Build::DB' => '0.10',
     },
     build_requires     => {
-        'Test::More'      => '0.70',
-        'Test::Harness'   => '3.18',
-        'Test::Exception' => '0.29',
+        'Test::More'       => '0.70',
+        'Test::Harness'    => '3.18',
+        'Test::Exception'  => '0.29',
+        'Test::File'       => '1.29',
+        'Test::MockObject' => '1.09',
+        'Test::NoWarnings' => '1.01',
     },
     requires           => {
         'Class::XSAccessor'         => '1.05',

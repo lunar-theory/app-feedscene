@@ -29,8 +29,9 @@
 ^App-FeedScene
 
 # Avoid spelling test.
-pod-spelling.t$
-^MYMETA.yml$
+pod-spelling\.t$
+^MYMETA\.yml$
 
-# Avoid databases.
-*.db
+# Avoid databases and the cache.
+\.db$
+^cache

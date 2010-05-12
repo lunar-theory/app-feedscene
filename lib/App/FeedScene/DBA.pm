@@ -10,13 +10,10 @@ use Class::XSAccessor constructor => '_new', accessors => { map { $_ => $_ } qw(
     sql_dir
 ) };
 
+(my $def_dir = __FILE__) =~ s{(?:blib/)?lib/App/FeedScene/DBA[.]pm$}{sql};
+
 sub new {
-    my $self = shift->_new(@_);
-    require Carp && Carp::croak('Missing the required "app" parameter')
-        unless $self->app;
-    $self->client('sqlite3') unless $self->client;
-    $self->sql_dir('sql') unless $self->sql_dir;
-    return $self;
+    shift->_new( client => 'sqlite3', 'sql_dir', $def_dir, @_ );
 }
 
 sub init {
@@ -59,6 +56,7 @@ sub upgrade {
             shift->do("PRAGMA schema_version = $new_version");
         });
     }
+    return $self;
 }
 
 1;
