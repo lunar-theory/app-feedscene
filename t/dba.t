@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 20;
+use Test::More tests => 21;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::File;
@@ -50,7 +50,7 @@ is $fs->conn->run( sub { (shift->do('PRAGMA schema_version'))[0] }),
 # Let's make sure that the upgrade works.
 my $conn = Test::MockObject::Extends->new( $fs->conn );
 my $run = $conn->can('run');
-my @versions = (0, 42, 123);
+my @versions = (0, 42, 123, 124);
 $conn->mock(run => sub {
     $run->(@_);
     my $v = shift @versions;
