@@ -26,7 +26,7 @@ sub run {
 
     while ($sth->fetch) {
         my $res = $ua->get($url);
-        require Carp && Carp::croak($res->status_line)
+        require Carp && Carp::croak("Error retrieving $url: " . $res->status_line)
             unless $res->is_success or $res->code == HTTP_NOT_MODIFIED;
         $self->process($url, XML::Feed->parse(\$res->content))
             unless $res->code == HTTP_NOT_MODIFIED;

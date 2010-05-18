@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 24;
+use Test::More tests => 22;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
@@ -33,11 +33,11 @@ App::FeedScene->new('foo')->conn->txn(sub {
     my $sth = shift->prepare('INSERT INTO links (portal, url) VALUES(?, ?)');
     for my $spec (
         [ 0, 'simple.atom' ],
-        [ 0, 'bestweb.rss' ],
-        [ 1, 'qbn.rss' ],
-        [ 1, 'meumoleskinedigital.rss' ],
-        [ 2, 'flickr.atom' ],
-        [ 3, 'flickr.rss' ],
+        # [ 0, 'bestweb.rss' ],
+        # [ 1, 'qbn.rss' ],
+        # [ 1, 'meumoleskinedigital.rss' ],
+        # [ 2, 'flickr.atom' ],
+        # [ 3, 'flickr.rss' ],
     ) {
         $sth->execute($spec->[0], "$uri/$spec->[1]" );
     }
@@ -45,7 +45,7 @@ App::FeedScene->new('foo')->conn->txn(sub {
 
 is +App::FeedScene->new->conn->run(sub {
     (shift->selectrow_array('SELECT COUNT(*) FROM links'))[0]
-}), 6, 'Should have six links in the database';
+}), 1, 'Should have one link in the database';
 test_counts(0, 'Should have no entries');
 
 # Construct a feed updater.
@@ -77,7 +77,7 @@ $mock->unmock('is_success');
 $fup = Test::MockObject::Extends->new( $fup );
 
 my @urls = (
-    "$uri/bestweb.rss",
+#    "$uri/bestweb.rss",
     "$uri/simple.atom",
 );
 
