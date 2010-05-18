@@ -10,7 +10,7 @@ Module::Build->new(
     },
     build_requires     => {
         'Test::More'       => '0.70',
-        'Test::Harness'    => '3.18',
+        'Test::Harness'    => '3.17',
         'Test::Exception'  => '0.29',
         'Test::File'       => '1.29',
         'Test::MockObject' => '1.09',
@@ -28,6 +28,9 @@ Module::Build->new(
         'perl'                      => 5.012,
         'Pod::Usage'                => '1.36',
         'Text::CSV_XS'              => '0.73',
+        'Text::Markdown'            => '1.00',
+        'XML::Feed'                 => '0.43',
+        'XML::LibXML'               => '1.70',
     },
     recommends         => {
         'Test::Pod'           => '1.41',

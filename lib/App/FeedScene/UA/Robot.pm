@@ -20,7 +20,7 @@ sub new {
 sub host_wait {
     my ($self, $netloc) = @_;
     # First visit is for robots.txt, so let it be free.
-    return if $self->no_visits($netloc) < 2;
+    return if !$netloc || $self->no_visits($netloc) < 2;
     $self->SUPER::host_wait($netloc);
 }
 

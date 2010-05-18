@@ -6,8 +6,10 @@ use utf8;
 use Test::More tests => 18;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
+use File::Path;
 
 BEGIN { use_ok 'App::FeedScene::UA::Robot' or die; }
+END { File::Path::remove_tree 'cache/foo' };
 
 ok my $ua = App::FeedScene::UA::Robot->new('foo'), 'New UA object';
 isa_ok $ua, 'App::FeedScene::UA::Robot';
