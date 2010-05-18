@@ -1,6 +1,6 @@
--- sql/1273288996-links.sql SQL Migration
+-- sql/1273288996-feeds.sql SQL Migration
 
-CREATE TABLE links (
+CREATE TABLE feeds (
     url           TEXT PRIMARY KEY,
     portal        INT  NOT NULL DEFAULT 0,
     category      TEXT NOT NULL DEFAULT ''

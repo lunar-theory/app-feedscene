@@ -1,4 +1,4 @@
-package App::FeedScene::LinkUpdater 0.01;
+package App::FeedScene::FeedUpdater 0.01;
 
 use 5.12.0;
 use utf8;
@@ -30,7 +30,7 @@ sub process {
     my $conn = App::FeedScene->new($self->app)->conn;
     my $sth = $conn->run(sub {
         shift->prepare(q{
-            INSERT OR REPLACE INTO links (portal, url, category)
+            INSERT OR REPLACE INTO feeds (portal, url, category)
             VALUES (?, ?, ?)
         });
     });
@@ -45,9 +45,9 @@ sub process {
             push @urls, $url;
         }
 
-        # Remove old links.
+        # Remove old feeds.
         $_->do(
-            'DELETE FROM links WHERE url NOT IN (' . join(', ', ('?') x @urls) . ')',
+            'DELETE FROM feeds WHERE url NOT IN (' . join(', ', ('?') x @urls) . ')',
             undef, @urls
         ) if @urls;
 
@@ -59,7 +59,7 @@ sub process {
 
 =head1 Name
 
-App::FeedScene::LinkUpdate - FeedScene link updater
+App::FeedScene::FeedUpdater - FeedScene feed updater
 
 =head1 Author
 

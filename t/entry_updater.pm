@@ -15,7 +15,7 @@ use File::Path;
 
 BEGIN {
     use_ok 'App::FeedScene::DBA' or die;
-    use_ok 'App::FeedScene::FeedUpdate' or die;
+    use_ok 'App::FeedScene::EntryUpdater' or die;
 }
 
 END { File::Path::remove_tree 'cache/foo' };
@@ -30,7 +30,7 @@ END { unlink App::FeedScene->new->db_name };
 
 # Load some data for a portal.
 App::FeedScene->new('foo')->conn->txn(sub {
-    my $sth = shift->prepare('INSERT INTO links (portal, url) VALUES(?, ?)');
+    my $sth = shift->prepare('INSERT INTO feeds (portal, url) VALUES(?, ?)');
     for my $spec (
         [ 0, 'simple.atom' ],
         # [ 0, 'bestweb.rss' ],
@@ -44,56 +44,56 @@ App::FeedScene->new('foo')->conn->txn(sub {
 });
 
 is +App::FeedScene->new->conn->run(sub {
-    (shift->selectrow_array('SELECT COUNT(*) FROM links'))[0]
+    (shift->selectrow_array('SELECT COUNT(*) FROM feeds'))[0]
 }), 1, 'Should have one link in the database';
 test_counts(0, 'Should have no entries');
 
 # Construct a feed updater.
-ok my $fup = App::FeedScene::FeedUpdate->new(
+ok my $eup = App::FeedScene::EntryUpdater->new(
     app    => 'foo',
     portal => 0,
-), 'Create a FeedUpdate object';
+), 'Create a EntryUpdater object';
 
-isa_ok $fup, 'App::FeedScene::FeedUpdate', 'It';
-is $fup->app, 'foo', 'The app attribute should be set';
+isa_ok $eup, 'App::FeedScene::EntryUpdater', 'It';
+is $eup->app, 'foo', 'The app attribute should be set';
 
 # Test request failure.
 my $mock = Test::MockModule->new('HTTP::Response');
 $mock->mock( is_success => 0 );
 $mock->mock( code => HTTP_INTERNAL_SERVER_ERROR );
 $mock->mock( message => 'OMGWTF' );
-throws_ok { $fup->run } qr/000 Unknown code/, 'Should get exception request failure';
+throws_ok { $eup->run } qr/000 Unknown code/, 'Should get exception request failure';
 test_counts(0, 'Should still have no entries');
 
 # Test HTTP_NOT_MODIFIED.
 $mock->mock( code => HTTP_NOT_MODIFIED );
-ok $fup->run, 'Run the update';
-test_counts(0, 'Should still have no links');
+ok $eup->run, 'Run the update';
+test_counts(0, 'Should still have no feeds');
 
 # Test success.
 $mock->unmock('code');
 $mock->unmock('is_success');
 
-$fup = Test::MockObject::Extends->new( $fup );
+$eup = Test::MockObject::Extends->new( $eup );
 
 my @urls = (
 #    "$uri/bestweb.rss",
     "$uri/simple.atom",
 );
 
-$fup->mock(process => sub {
+$eup->mock(process => sub {
     my ($self, $url, $feed) = @_;
     ok +(grep { $_ eq $url } @urls), 'Should have a feed URL';
     isa_ok $feed, 'XML::Feed';
 });
 
-ok $fup->run, 'Run the update again -- should have feeds in previous two tests';
+ok $eup->run, 'Run the update again -- should have feeds in previous two tests';
 
 # Okay, now let's test the processing.
-$fup->unmock('process');
+$eup->unmock('process');
 ok my $feed = XML::Feed->parse('t/data/simple.atom'),
     'Grab a simple feed';
-ok $fup->process("$uri/simple.atom", $feed), 'Process the feed';
+ok $eup->process("$uri/simple.atom", $feed), 'Process the feed';
 test_counts(2, 'Should now have two entries');
 
 # Check the data.

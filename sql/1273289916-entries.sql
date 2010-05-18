@@ -3,7 +3,7 @@
 CREATE TABLE entries (
     id             TEXT     PRIMARY KEY,
     portal         INT      NOT NULL DEFAULT 0,
-    feed_url       TEXT     NOT NULL REFERENCES links(url) ON DELETE CASCADE,
+    feed_url       TEXT     NOT NULL REFERENCES feeds(url) ON DELETE CASCADE,
     url            TEXT     NOT NULL,
     title          TEXT     NOT NULL DEFAULT '',
     published_at   DATETIME NOT NULL,

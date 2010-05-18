@@ -1,4 +1,4 @@
-package App::FeedScene::FeedUpdate 0.01;
+package App::FeedScene::EntryUpdater 0.01;
 
 use 5.12.0;
 use utf8;
@@ -19,7 +19,7 @@ sub run {
 
     my $ua  = App::FeedScene::UA::Robot->new($self->app);
     my $sth = App::FeedScene->new($self->app)->conn->run(sub {
-        shift->prepare('SELECT url FROM links WHERE PORTAL = ?');
+        shift->prepare('SELECT url FROM feeds WHERE PORTAL = ?');
     });
     $sth->execute($self->portal);
     $sth->bind_columns(\my $url);
@@ -118,7 +118,7 @@ sub _find_enclosure {
 
 =head1 Name
 
-App::FeedScene::FeedUpdate - FeedScene feed updater
+App::FeedScene::EntryUpdater - FeedScene entry updater
 
 =head1 Author
 
