@@ -3,8 +3,8 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 22;
-#use Test::More 'no_plan';
+use Test::More tests => 23;
+use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
 use Test::MockObject::Extends;
@@ -96,7 +96,13 @@ ok my $feed = XML::Feed->parse('t/data/simple.atom'),
 ok $eup->process("$uri/simple.atom", $feed), 'Process the feed';
 test_counts(2, 'Should now have two entries');
 
-# Check the data.
+# Check the feed data.
+is_deeply +App::FeedScene->new->conn->run(sub{ shift->selectrow_arrayref(
+    'SELECT name, site_url FROM feeds WHERE url = ?',
+    undef, "$uri/simple.atom",
+)}), ['Simple Atom Feed', 'http://example.com/'], 'Feeds should be updated';
+
+# Check the entry data.
 is_deeply test_data('urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a'), {
     id             => 'urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a',
     portal         => 0,

@@ -19,7 +19,7 @@ sub run {
 
     my $ua  = App::FeedScene::UA::Robot->new($self->app);
     my $sth = App::FeedScene->new($self->app)->conn->run(sub {
-        shift->prepare('SELECT url FROM feeds WHERE PORTAL = ?');
+        shift->prepare('SELECT url FROM feeds WHERE portal = ?');
     });
     $sth->execute($self->portal);
     $sth->bind_columns(\my $url);
@@ -42,6 +42,16 @@ sub process {
 
     App::FeedScene->new($self->app)->conn->txn(sub {
         my $dbh = shift;
+
+        # Update the feed.
+        $dbh->do(q{
+            UPDATE feeds
+               SET name     = ?,
+                   site_url = ?
+             WHERE url      = ?
+        }, undef, $feed->title, $feed->link, $feed_url);
+
+        # Get ready to update the entries.
         my $sth = $dbh->prepare(q{
             INSERT OR REPLACE INTO entries (
                 id, portal, feed_url, url, title, published_at, updated_at,
