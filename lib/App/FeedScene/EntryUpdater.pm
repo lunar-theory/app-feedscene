@@ -35,7 +35,6 @@ sub run {
     return $self;
 }
 
-
 sub process {
     my ($self, $feed_url, $feed) = @_;
     my $portal = $self->portal;
@@ -75,7 +74,7 @@ sub process {
                 $entry->link,
                 $entry->title,
                 $entry->issued->iso8601,
-                $entry->modified->iso8601,
+                ($entry->modified || $entry->issued)->iso8601,
                 _find_summary($entry),
                 $entry->author,
                 $enc_type,
@@ -85,9 +84,11 @@ sub process {
             push @ids, $entry->id;
         }
 
-        $dbh->do(
-            'DELETE FROM entries WHERE id NOT IN ('. join (', ', ('?') x @ids) . ')',
-            undef, @ids
+        $dbh->do(q{
+            DELETE FROM entries
+             WHERE feed_url = ?
+               AND id NOT IN (}. join (', ', ('?') x @ids) . ')',
+            undef, $feed_url, @ids
         );
     });
 

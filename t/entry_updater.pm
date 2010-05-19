@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 23;
+#use Test::More tests => 25;
 use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
@@ -33,7 +33,7 @@ App::FeedScene->new('foo')->conn->txn(sub {
     my $sth = shift->prepare('INSERT INTO feeds (portal, url) VALUES(?, ?)');
     for my $spec (
         [ 0, 'simple.atom' ],
-        # [ 0, 'bestweb.rss' ],
+        [ 0, 'simple.rss' ],
         # [ 1, 'qbn.rss' ],
         # [ 1, 'meumoleskinedigital.rss' ],
         # [ 2, 'flickr.atom' ],
@@ -45,7 +45,7 @@ App::FeedScene->new('foo')->conn->txn(sub {
 
 is +App::FeedScene->new->conn->run(sub {
     (shift->selectrow_array('SELECT COUNT(*) FROM feeds'))[0]
-}), 1, 'Should have one link in the database';
+}), 2, 'Should have two feeds in the database';
 test_counts(0, 'Should have no entries');
 
 # Construct a feed updater.
@@ -77,8 +77,8 @@ $mock->unmock('is_success');
 $eup = Test::MockObject::Extends->new( $eup );
 
 my @urls = (
-#    "$uri/bestweb.rss",
     "$uri/simple.atom",
+    "$uri/simple.rss",
 );
 
 $eup->mock(process => sub {
@@ -88,19 +88,20 @@ $eup->mock(process => sub {
 });
 
 ok $eup->run, 'Run the update again -- should have feeds in previous two tests';
-
-# Okay, now let's test the processing.
 $eup->unmock('process');
+
+##############################################################################
+# Okay, now let's test the processing.
 ok my $feed = XML::Feed->parse('t/data/simple.atom'),
-    'Grab a simple feed';
-ok $eup->process("$uri/simple.atom", $feed), 'Process the feed';
+    'Grab a simple Atom feed';
+ok $eup->process("$uri/simple.atom", $feed), 'Process the Atom feed';
 test_counts(2, 'Should now have two entries');
 
 # Check the feed data.
 is_deeply +App::FeedScene->new->conn->run(sub{ shift->selectrow_arrayref(
     'SELECT name, site_url FROM feeds WHERE url = ?',
     undef, "$uri/simple.atom",
-)}), ['Simple Atom Feed', 'http://example.com/'], 'Feeds should be updated';
+)}), ['Simple Atom Feed', 'http://example.com/'], 'Atom feed should be updated';
 
 # Check the entry data.
 is_deeply test_data('urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a'), {
@@ -131,6 +132,23 @@ is_deeply test_data('urn:uuid:1225c695-cfb8-4ebb-bbbb-80da344efa6b'), {
     enclosure_type => '',
 }, 'Data for second entry should be correct';
 
+##############################################################################
+# Let's try a simple RSS feed.
+ok $feed = XML::Feed->parse('t/data/simple.rss'),
+    'Grab a simple RSS feed';
+ok $eup->process("$uri/simple.rss", $feed), 'Process the RSS feed';
+test_counts(4, 'Should now have four entries');
+
+# Check the entry data.
+# Check the feed data.
+is_deeply +App::FeedScene->new->conn->run(sub{ shift->selectrow_arrayref(
+    'SELECT name, site_url FROM feeds WHERE url = ?',
+    undef, "$uri/simple.rss",
+)}), ['Simple RSS Feed', 'http://example.net'], 'RSS feed should be updated';
+
+
+
+##############################################################################
 sub test_counts {
     my ($count, $descr) = @_;
     is +App::FeedScene->new->conn->run(sub {
