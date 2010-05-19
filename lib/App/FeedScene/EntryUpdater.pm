@@ -105,8 +105,17 @@ sub _find_summary {
         }
     }
 
-    # Use XML::LibXML to grab the first bit of the body, hopefully a
-    # paragraph.
+    # Use XML::LibXML to grab the first bit of the body.
+    my $content = $entry->content or return '';
+    my $doc = XML::LibXML->new->parse_html_string(
+        $content->type && $content->type eq 'text/plain'
+            ? Text::Mardown::markdown($content->body)
+            : $content->body
+    );
+
+    my $xpc = XML::LibXML::XPathContext->new( $doc->documentElement );
+    my ($node) = $doc->findnodes('/html/body/*[1]') or return '';
+    return $node->toString;
 }
 
 sub _find_enclosure {

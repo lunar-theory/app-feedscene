@@ -3,8 +3,8 @@
 use strict;
 use 5.12.0;
 use utf8;
-#use Test::More tests => 25;
-use Test::More 'no_plan';
+use Test::More tests => 31;
+#use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
 use Test::MockObject::Extends;
@@ -139,13 +139,41 @@ ok $feed = XML::Feed->parse('t/data/simple.rss'),
 ok $eup->process("$uri/simple.rss", $feed), 'Process the RSS feed';
 test_counts(4, 'Should now have four entries');
 
-# Check the entry data.
 # Check the feed data.
 is_deeply +App::FeedScene->new->conn->run(sub{ shift->selectrow_arrayref(
     'SELECT name, site_url FROM feeds WHERE url = ?',
     undef, "$uri/simple.rss",
 )}), ['Simple RSS Feed', 'http://example.net'], 'RSS feed should be updated';
 
+# Check the entry data.
+is_deeply test_data('http://example.net/2010/05/17/long-goodbye/'), {
+    id             => 'http://example.net/2010/05/17/long-goodbye/',
+    portal         => 0,
+    feed_url       => "$uri/simple.rss",
+    url            => 'http://example.net/2010/05/17/long-goodbye/',
+    title          => 'The Long Goodbye',
+    published_at   => '2010-05-17T06:58:50',
+    updated_at     => '2010-05-17T06:58:50',
+    summary        => '<p>Wherein Marlowe finds himeslf in trouble again.</p>
+',
+    author         => 'Raymond Chandler',
+    enclosure_url  => '',
+    enclosure_type => '',
+}, 'Data for first RSS entry, including Markdown-formatted summary';
+
+is_deeply test_data('http://example.net/2010/05/16/little-sister/'), {
+    id             => 'http://example.net/2010/05/16/little-sister/',
+    portal         => 0,
+    feed_url       => "$uri/simple.rss",
+    url            => 'http://example.net/2010/05/16/little-sister/',
+    title          => 'The Little Sister',
+    published_at   => '2010-05-16T06:58:50',
+    updated_at     => '2010-05-16T06:58:50',
+    summary        => '<p>Hollywood babes.</p>',
+    author         => 'Raymond Chandler',
+    enclosure_url  => '',
+    enclosure_type => '',
+}, 'Data for second RSS entry, including summary extracted from content';
 
 
 ##############################################################################
