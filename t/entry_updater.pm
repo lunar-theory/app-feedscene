@@ -154,8 +154,7 @@ is_deeply test_data('http://example.net/2010/05/17/long-goodbye/'), {
     title          => 'The Long Goodbye',
     published_at   => '2010-05-17T06:58:50',
     updated_at     => '2010-05-17T06:58:50',
-    summary        => '<p>Wherein Marlowe finds himeslf in trouble again.</p>
-',
+    summary        => '<p>Wherein Marlowe finds himeslf in trouble again.</p>',
     author         => 'Raymond Chandler',
     enclosure_url  => '',
     enclosure_type => '',
@@ -169,7 +168,9 @@ is_deeply test_data('http://example.net/2010/05/16/little-sister/'), {
     title          => 'The Little Sister',
     published_at   => '2010-05-16T06:58:50',
     updated_at     => '2010-05-16T06:58:50',
-    summary        => '<p>Hollywood babes.</p>',
+    summary        => '<p>Hollywood babes.</p>
+        <p>A killer with an ice pick.</p>
+        <p>What could be better?</p>',
     author         => 'Raymond Chandler',
     enclosure_url  => '',
     enclosure_type => '',

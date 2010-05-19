@@ -6,7 +6,7 @@ use App::FeedScene;
 use App::FeedScene::UA::Robot;
 use XML::Feed;
 use HTTP::Status qw(HTTP_NOT_MODIFIED);
-use XML::LibXML;
+use XML::LibXML qw(XML_ELEMENT_NODE);
 use Text::Markdown ();
 
 use Class::XSAccessor constructor => 'new', accessors => { map { $_ => $_ } qw(
@@ -95,27 +95,134 @@ sub process {
     return $self;
 }
 
+# http://www.w3schools.com/tags/default.asp
+# http://dev.w3.org/html5/html4-differences/#new-elements
+my %allowed = map { $_ => 1 } qw(
+    em
+    strong
+    i
+    b
+    abbr
+    acronym
+    address
+    p
+    br
+    cite
+    code
+    pre
+    del
+    dfn
+    div
+    ins
+    kbd
+    ol
+    ul
+    li
+    dl
+    dt
+    dd
+    q
+    s
+    samp
+    strike
+    tt
+    u
+    var
+    xmp
+    section
+    article
+    figure
+    figcaption
+    mark
+    meter
+    time
+    output
+    details
+    summary
+);
+
+sub _clean_html {
+    my $top = my $elem = shift;
+    while ($elem) {
+        if ($elem->nodeType == XML_ELEMENT_NODE) {
+            my $name = $elem->nodeName;
+            if ($name eq 'html') {
+                $top = $elem = $elem->lastChild;
+                next;
+            }
+
+            if ($allowed{$name}) {
+                # Delete all of its attributes and hang on to it.
+                $elem->removeAttribute($_) for $elem->attributes;
+
+                # Descend into children.
+                if (my $next = $elem->firstChild) {
+                    $elem = $next;
+                    next;
+                }
+            } else {
+                # You are not wanted, but we'll take your text.
+                my $parent = $elem->parentNode or die "Expecting parent of $elem";
+                $parent->replaceChild(
+                    XML::LibXML::Text->new( $elem->textContent ),
+                    $elem,
+                );
+            }
+        }
+
+        # Find the next node.
+        NEXT: {
+            if (my $sib = $elem->nextSibling) {
+                $elem = $sib;
+                last;
+            }
+
+            # No sibling, try parent's sibling
+            $elem = $elem->parentNode;
+            redo if $elem;
+        }
+    }
+    return join '', map { $_->toString } $top->childNodes;
+}
+
 sub _find_summary {
     my $entry = shift;
     if (my $sum = $entry->summary) {
         if (my $body = $sum->body) {
-            # We got something here.
-            return $body if !$sum->type || $sum->type ne 'text/plain';
-            return Text::Markdown::markdown($body);
+            # We got something here. Clean it up and return it.
+            return _clean_html(XML::LibXML->new->parse_html_string(
+                $sum->type && $sum->type eq 'text/plain'
+                    ? Text::Markdown::markdown($body)
+                    : $body
+            )->firstChild);
         }
     }
 
-    # Use XML::LibXML to grab the first bit of the body.
+    # Try the body of the entry.
     my $content = $entry->content or return '';
+
+    # Parse it.
     my $doc = XML::LibXML->new->parse_html_string(
         $content->type && $content->type eq 'text/plain'
             ? Text::Mardown::markdown($content->body)
             : $content->body
     );
 
-    my $xpc = XML::LibXML::XPathContext->new( $doc->documentElement );
-    my ($node) = $doc->findnodes('/html/body/*[1]') or return '';
-    return $node->toString;
+    # Fetch a reasonable amount of the content to use as a summary.
+    my $ret = '';
+    for my $elem ($doc->childNodes) {
+        if ($elem->isa('XML::LibXML::Text')) {
+            # Turn it into a paragraph.
+            my $p = XML::LibXML::Element->new('p');
+            $p->addChild($elem);
+            $ret .= $p->toString;
+        } elsif ($elem->isa('XML::LibXML::Element')) {
+            # Clean the HTML.
+            $ret .= _clean_html($elem);
+        }
+        return $ret if length $ret > 140;
+    }
+    return $ret;
 }
 
 sub _find_enclosure {
