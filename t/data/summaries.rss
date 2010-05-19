@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:wfw="http://wellformedweb.org/CommentAPI/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Simple RSS Feed</title>
+    <link>http://foo.org</link>
+    <pubDate>17 May 2010</pubDate>
+
+    <item>
+      <title>The Long Goodbye</title>
+      <link>http://foo.org/lg1</link>
+      <dc:date>2010-05-17T06:58:50-08:00</dc:date>
+      <dc:creator>Raymond Chandler</dc:creator>
+      <guid isPermaLink="false">http://foo.org/lg1</guid>
+      <description>Simple summary in plain text.</description>
+    </item>
+
+    <item>
+      <title>The Long Goodbye</title>
+      <link>http://foo.org/lg2</link>
+      <dc:date>2010-05-17T06:58:50-08:00</dc:date>
+      <dc:creator>Raymond Chandler</dc:creator>
+      <guid isPermaLink="false">http://foo.org/lg2</guid>
+      <description><![CDATA[<p>Simple summary in a paragraph.</p>]]></description>
+    </item>
+
+    <item>
+      <title>The Long Goodbye</title>
+      <link>http://foo.org/lg3</link>
+      <dc:date>2010-05-17T06:58:50-08:00</dc:date>
+      <dc:creator>Raymond Chandler</dc:creator>
+      <guid isPermaLink="false">http://foo.org/lg3</guid>
+      <description><![CDATA[<p>Paragraph <em>summary</em> with emphasis.</p>]]></description>
+    </item>
+
+    <item>
+      <title>The Long Goodbye</title>
+      <link>http://foo.org/lg4</link>
+      <dc:date>2010-05-17T06:58:50-08:00</dc:date>
+      <dc:creator>Raymond Chandler</dc:creator>
+      <guid isPermaLink="false">http://foo.org/lg4</guid>
+      <description><![CDATA[<p>Paragraph <a href="http://foo.com/">summary</a> with anchor.</p>]]></description>
+    </item>
+
+    <item>
+      <title>The Long Goodbye</title>
+      <link>http://foo.org/lg5</link>
+      <dc:date>2010-05-17T06:58:50-08:00</dc:date>
+      <dc:creator>Raymond Chandler</dc:creator>
+      <guid isPermaLink="false">http://foo.org/lg5</guid>
+      <description><![CDATA[<p>First graph.</p><p>Second graph.</p>]]></description>
+    </item>
+
+    <item>
+      <title>The Long Goodbye</title>
+      <link>http://foo.org/lg6</link>
+      <dc:date>2010-05-17T06:58:50-08:00</dc:date>
+      <dc:creator>Raymond Chandler</dc:creator>
+      <guid isPermaLink="false">http://foo.org/lg6</guid>
+      <description><![CDATA[<p>First graph.</p><p>Second graph.</p><p>Third graph with a lot more stuff in it, to get us over 140 characters, if you know what I mean.</p><p>Fourth graph should be included.</p>]]></description>
+    </item>
+
+    <item>
+      <title>The Long Goodbye</title>
+      <link>http://foo.org/lg7</link>
+      <dc:date>2010-05-17T06:58:50-08:00</dc:date>
+      <dc:creator>Raymond Chandler</dc:creator>
+      <guid isPermaLink="false">http://foo.org/lg7</guid>
+      <description><![CDATA[<p>Paragraph <em id="foo">summary</em> with em+attr.</p>]]></description>
+    </item>
+
+    <item>
+      <title>The Long Goodbye</title>
+      <link>http://foo.org/lg8</link>
+      <dc:date>2010-05-17T06:58:50-08:00</dc:date>
+      <dc:creator>Raymond Chandler</dc:creator>
+      <guid isPermaLink="false">http://foo.org/lg8</guid>
+      <description><![CDATA[<p>The <abbr title="World Health Organization">WHO</abbr> was founded in 1948.</p>]]></description>
+    </item>
+
+    <item>
+      <title>The Long Goodbye</title>
+      <link>http://foo.org/lg9</link>
+      <dc:date>2010-05-17T06:58:50-08:00</dc:date>
+      <dc:creator>Raymond Chandler</dc:creator>
+      <guid isPermaLink="false">http://foo.org/lg9</guid>
+      <description><![CDATA[<p>Paragraph <a href="http://foo.com/"><i>summary</i></a> with anchor and child element.</p>]]></description>
+    </item>
+
+    <item>
+      <title>The Long Goodbye</title>
+      <link>http://foo.org/lg10</link>
+      <dc:date>2010-05-17T06:58:50-08:00</dc:date>
+      <dc:creator>Raymond Chandler</dc:creator>
+      <guid isPermaLink="false">http://foo.org/lg10</guid>
+      <description><![CDATA[<p>Paragraph <font>summary</font> with font.</p>]]></description>
+    </item>
+
+  </channel>
+</rss>

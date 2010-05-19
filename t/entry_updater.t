@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 31;
+use Test::More tests => 46;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
@@ -34,7 +34,7 @@ App::FeedScene->new('foo')->conn->txn(sub {
     for my $spec (
         [ 0, 'simple.atom' ],
         [ 0, 'simple.rss' ],
-        # [ 1, 'qbn.rss' ],
+        [ 0, 'summaries.rss' ],
         # [ 1, 'meumoleskinedigital.rss' ],
         # [ 2, 'flickr.atom' ],
         # [ 3, 'flickr.rss' ],
@@ -45,7 +45,7 @@ App::FeedScene->new('foo')->conn->txn(sub {
 
 is +App::FeedScene->new->conn->run(sub {
     (shift->selectrow_array('SELECT COUNT(*) FROM feeds'))[0]
-}), 2, 'Should have two feeds in the database';
+}), 3, 'Should have three feeds in the database';
 test_counts(0, 'Should have no entries');
 
 # Construct a feed updater.
@@ -79,6 +79,7 @@ $eup = Test::MockObject::Extends->new( $eup );
 my @urls = (
     "$uri/simple.atom",
     "$uri/simple.rss",
+    "$uri/summaries.rss",
 );
 
 $eup->mock(process => sub {
@@ -176,6 +177,32 @@ is_deeply test_data('http://example.net/2010/05/16/little-sister/'), {
     enclosure_type => '',
 }, 'Data for second RSS entry, including summary extracted from content';
 
+
+##############################################################################
+# Test a variety of RSS summary formats.
+ok $feed = XML::Feed->parse('t/data/summaries.rss'),
+    'Grab a simple RSS feed';
+ok $eup->process("$uri/summaries.rss", $feed), 'Process the RSS feed';
+test_counts(14, 'Should now have 14 entries');
+
+my $dbh = +App::FeedScene->new->conn->dbh;
+for my $spec (
+    [ 1  => '<p>Simple summary in plain text.</p>'],
+    [ 2  => '<p>Simple summary in a paragraph.</p>'],
+    [ 3  => '<p>Paragraph <em>summary</em> with emphasis.</p>' ],
+    [ 4  => '<p>Paragraph summary with anchor.</p>'],
+    [ 5  => '<p>First graph.</p><p>Second graph.</p>'],
+    [ 6  => '<p>First graph.</p><p>Second graph.</p><p>Third graph with a lot more stuff in it, to get us over 140 characters, if you know what I mean.</p><p>Fourth graph should be included.</p>'],
+    [ 7  => '<p>Paragraph <em>summary</em> with em+attr.</p>' ],
+    [ 8  => '<p>The <abbr title="World Health Organization">WHO</abbr> was founded in 1948.</p>'],
+    [ 9  => '<p>Paragraph <i>summary</i> with anchor and child element.</p>'],
+    [ 10 => '<p>Paragraph summary with font.</p>' ],
+) {
+    is +($dbh->selectrow_array(
+        'SELECT summary FROM entries WHERE id = ?',
+        undef, "http://foo.org/lg$spec->[0]")
+     )[0], $spec->[1], "Should have proper summary for entry $spec->[0]";
+}
 
 ##############################################################################
 sub test_counts {

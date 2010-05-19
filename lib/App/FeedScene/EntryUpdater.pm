@@ -95,50 +95,85 @@ sub process {
     return $self;
 }
 
+# List of allowed elements and attributes.
 # http://www.w3schools.com/tags/default.asp
-# http://dev.w3.org/html5/html4-differences/#new-elements
-my %allowed = map { $_ => 1 } qw(
-    em
-    strong
-    i
-    b
-    abbr
-    acronym
-    address
-    p
-    br
-    cite
-    code
-    pre
-    del
-    dfn
-    div
-    ins
-    kbd
-    ol
-    ul
-    li
-    dl
-    dt
-    dd
-    q
-    s
-    samp
-    strike
-    tt
-    u
-    var
-    xmp
-    section
-    article
-    figure
-    figcaption
-    mark
-    meter
-    time
-    output
-    details
-    summary
+# http://www.w3schools.com/html5/html5_reference.asp
+my %allowed = do {
+    my $attrs = { title => 1, dir => 1, lang => 1 };
+    map { $_ => $attrs } qw(
+        abbr
+        acronym
+        address
+        article
+        b
+        bdo
+        big
+        br
+        caption
+        cite
+        code
+        dd
+        del
+        details
+        dfn
+        div
+        dl
+        dt
+        em
+        figcaption
+        figure
+        header
+        hgroup
+        i
+        ins
+        kbd
+        li
+        mark
+        meter
+        ol
+        p
+        pre
+        q
+        rp
+        rt
+        ruby
+        s
+        samp
+        section
+        small
+        span
+        strike
+        strong
+        sub
+        summary
+        sup
+        time
+        tt
+        u
+        ul
+        var
+        xmp
+    );
+};
+
+# Allow some elements may have other attributes.
+$allowed{article} = { %{ $allowed{article} }, cite => 1, pubdate  => 1 };
+$allowed{del}     = { %{ $allowed{del} },     cite => 1, datetime => 1 };
+$allowed{details} = { %{ $allowed{details} }, open => 1 };
+$allowed{ins}     = $allowed{del};
+$allowed{li}      = { %{ $allowed{li} }, value => 1 };
+$allowed{meter}   = { %{ $allowed{meter} }, map { $_ => 1 } qw(high low min max optimum value) };
+$allowed{ol}      = { %{ $allowed{ol} }, revese => 1, start => 1 };
+$allowed{q}       = { %{ $allowed{q} }, cite => 1 };
+$allowed{section} = $allowed{q};
+$allowed{time}    = { %{ $allowed{time} }, datetime => 1 };
+
+# We delete all other elements except for these, for which we keep text.
+my %keep_children = map { $_ => 1 } qw(
+    a
+    blink
+    center
+    font
 );
 
 sub _clean_html {
@@ -147,13 +182,17 @@ sub _clean_html {
         if ($elem->nodeType == XML_ELEMENT_NODE) {
             my $name = $elem->nodeName;
             if ($name eq 'html') {
-                $top = $elem = $elem->lastChild;
+                $top = $elem = $elem->lastChild || last;
+                next;
+            } elsif ($name eq 'body') {
+                $elem = $elem->firstChild || last;
                 next;
             }
 
-            if ($allowed{$name}) {
+            if (my $attrs = $allowed{$name}) {
                 # Delete all of its attributes and hang on to it.
-                $elem->removeAttribute($_) for $elem->attributes;
+                $elem->removeAttribute($_) for grep { !$attrs->{$_} }
+                    map { $_->nodeName } $elem->attributes;
 
                 # Descend into children.
                 if (my $next = $elem->firstChild) {
@@ -161,12 +200,19 @@ sub _clean_html {
                     next;
                 }
             } else {
-                # You are not wanted, but we'll take your text.
-                my $parent = $elem->parentNode or die "Expecting parent of $elem";
-                $parent->replaceChild(
-                    XML::LibXML::Text->new( $elem->textContent ),
-                    $elem,
-                );
+                # You are not wanted.
+                my $parent = $elem->parentNode;
+                if ($keep_children{$name}) {
+                    # Keep the children.
+                    my $next = $elem->firstChild;
+                    $parent->insertAfter($_, $elem) for reverse $elem->childNodes;
+                    $parent->removeChild($elem);
+                    $elem = $next;
+                    next;
+                }
+
+                # Buh-bye.
+                $parent->removeChild($elem);
             }
         }
 
