@@ -30,6 +30,7 @@ Module::Build->new(
         'Text::CSV_XS'              => '0.73',
         'XML::Feed'                 => '0.43',
         'XML::LibXML'               => '1.70',
+        'XML::RSS::LibXML'          => '0.3004',
     },
     recommends         => {
         'Test::Pod'           => '1.41',
