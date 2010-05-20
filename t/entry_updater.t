@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 47;
+use Test::More tests => 51;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
@@ -159,7 +159,7 @@ is_deeply test_data('http://example.net/2010/05/17/long-goodbye/'), {
     author         => 'Raymond Chandler',
     enclosure_url  => '',
     enclosure_type => '',
-}, 'Data for first RSS entry, including Markdown-formatted summary';
+}, 'Data for first RSS entry, including unformatted summary';
 
 is_deeply test_data('http://example.net/2010/05/16/little-sister/'), {
     id             => 'http://example.net/2010/05/16/little-sister/',
@@ -181,7 +181,7 @@ is_deeply test_data('http://example.net/2010/05/16/little-sister/'), {
 ok $feed = XML::Feed->parse('t/data/summaries.rss'),
     'Grab a simple RSS feed';
 ok $eup->process("$uri/summaries.rss", $feed), 'Process the RSS feed';
-test_counts(15, 'Should now have 15 entries');
+test_counts(19, 'Should now have 19 entries');
 
 my $dbh = +App::FeedScene->new->conn->dbh;
 for my $spec (
@@ -196,6 +196,10 @@ for my $spec (
     [ 9  => '<p>Paragraph <i>summary</i> with anchor and child element.</p>'],
     [ 10 => '<p>Paragraph summary with font.</p>' ],
     [ 11 => '<p>Simple summary in plain text with <em>emphasis</em>.</p>'],
+    [ 12 => '<p>Simple summary in plain text with separate content.</p>'],
+    [ 13 => '<p>First graph.</p><p>Second graph.</p><p>Third graph with a lot more stuff in it, to get us over 140 characters, if you know what I mean.</p><p>Fourth graph should be included.</p>'],
+    [ 14 => '<p>Summary with <em>emphasis</em> complementing content.</p>' ],
+    [ 15 => '<p>Summary with <i>emphasis</i> in anchor.</p>' ],
 ) {
     is +($dbh->selectrow_array(
         'SELECT summary FROM entries WHERE id = ?',

@@ -104,5 +104,45 @@
       <description><![CDATA[Simple summary in plain text with <em>emphasis</em>.]]></description>
     </item>
 
+    <item>
+      <title>The Long Goodbye</title>
+      <link>http://foo.org/lg12</link>
+      <dc:date>2010-05-17T06:58:50-08:00</dc:date>
+      <dc:creator>Raymond Chandler</dc:creator>
+      <guid isPermaLink="false">http://foo.org/lg12</guid>
+      <description><![CDATA[Simple summary in plain text with separate content.]]></description>
+      <content:encoded><![CDATA[<p>This is the content</p>]]></content:encoded>
+    </item>
+
+    <item>
+      <title>The Long Goodbye</title>
+      <link>http://foo.org/lg13</link>
+      <dc:date>2010-05-17T06:58:50-08:00</dc:date>
+      <dc:creator>Raymond Chandler</dc:creator>
+      <guid isPermaLink="false">http://foo.org/lg13</guid>
+      <description><![CDATA[<p>First graph.</p><p>Second graph.</p><p>Third graph with a lot more stuff in it, to get us over 140 characters, if you know what I mean.</p><p>Fourth graph should be included.</p>]]></description>
+      <content:encoded><![CDATA[<p>This is the content</p>]]></content:encoded>
+    </item>
+
+    <item>
+      <title>The Long Goodbye</title>
+      <link>http://foo.org/lg14</link>
+      <dc:date>2010-05-17T06:58:50-08:00</dc:date>
+      <dc:creator>Raymond Chandler</dc:creator>
+      <guid isPermaLink="false">http://foo.org/lg14</guid>
+      <description><![CDATA[Summary with <em>emphasis</em> complementing content.]]></description>
+      <content:encoded><![CDATA[<p>This is the content</p>]]></content:encoded>
+    </item>
+
+    <item>
+      <title>The Long Goodbye</title>
+      <link>http://foo.org/lg15</link>
+      <dc:date>2010-05-17T06:58:50-08:00</dc:date>
+      <dc:creator>Raymond Chandler</dc:creator>
+      <guid isPermaLink="false">http://foo.org/lg15</guid>
+      <description><![CDATA[<p>Summary <a href="http://foo.com/">with <i>emphasis</i></a> in anchor.</p>]]></description>
+    </item>
+
+
   </channel>
 </rss>

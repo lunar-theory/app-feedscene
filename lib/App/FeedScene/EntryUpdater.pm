@@ -7,12 +7,20 @@ use App::FeedScene::UA::Robot;
 use XML::Feed;
 use HTTP::Status qw(HTTP_NOT_MODIFIED);
 use XML::LibXML qw(XML_ELEMENT_NODE XML_TEXT_NODE);
-use Text::Markdown ();
 
 use Class::XSAccessor constructor => 'new', accessors => { map { $_ => $_ } qw(
    app
    portal
 ) };
+
+my $parser = XML::LibXML->new({
+    recover           => 2,
+    no_network        => 1,
+    suppress_errors   => 1,
+    suppress_warnings => 1,
+    no_blanks         => 1,
+    encoding          => 'utf8',
+});
 
 sub run {
     my $self = shift;
@@ -204,10 +212,10 @@ sub _clean_html {
                 my $parent = $elem->parentNode;
                 if ($keep_children{$name}) {
                     # Keep the children.
-                    my $next = $elem->firstChild;
                     $parent->insertAfter($_, $elem) for reverse $elem->childNodes;
                     $parent->removeChild($elem);
-                    $elem = $next;
+                    # 
+                    $elem = $elem->nextSibling;
                     next;
                 }
 
@@ -236,23 +244,16 @@ sub _find_summary {
     if (my $sum = $entry->summary) {
         if (my $body = $sum->body) {
             # We got something here. Clean it up and return it.
-            return join '', map { $_->toString } _clean_html(XML::LibXML->new->parse_html_string(
-                $sum->type && $sum->type eq 'text/plain'
-                    ? Text::Markdown::markdown($body)
-                    : $body
-            )->firstChild)->childNodes;
+            return join '', map { $_->toString } _clean_html(
+                $parser->parse_html_string($body)->firstChild
+            )->childNodes;
         }
     }
 
-    # Try the body of the entry.
+    # Try the content of the entry.
     my $content = $entry->content or return '';
-
-    # Parse it.
-    my $doc = XML::LibXML->new->parse_html_string(
-        $content->type && $content->type eq 'text/plain'
-            ? Text::Mardown::markdown($content->body)
-            : $content->body
-    );
+    my $body    = $content->body  or return '';
+    my $doc     = $parser->parse_html_string($body);
 
     # Fetch a reasonable amount of the content to use as a summary.
     my $ret = '';

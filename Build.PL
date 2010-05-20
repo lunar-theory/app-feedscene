@@ -28,7 +28,6 @@ Module::Build->new(
         'perl'                      => 5.012,
         'Pod::Usage'                => '1.36',
         'Text::CSV_XS'              => '0.73',
-        'Text::Markdown'            => '1.00',
         'XML::Feed'                 => '0.43',
         'XML::LibXML'               => '1.70',
     },
