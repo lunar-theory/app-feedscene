@@ -6,7 +6,7 @@ use App::FeedScene;
 use App::FeedScene::UA::Robot;
 use XML::Feed;
 use HTTP::Status qw(HTTP_NOT_MODIFIED);
-use XML::LibXML qw(XML_ELEMENT_NODE);
+use XML::LibXML qw(XML_ELEMENT_NODE XML_TEXT_NODE);
 use Text::Markdown ();
 
 use Class::XSAccessor constructor => 'new', accessors => { map { $_ => $_ } qw(
@@ -228,7 +228,7 @@ sub _clean_html {
             redo if $elem;
         }
     }
-    return join '', map { $_->toString } $top->childNodes;
+    return $top;
 }
 
 sub _find_summary {
@@ -236,11 +236,11 @@ sub _find_summary {
     if (my $sum = $entry->summary) {
         if (my $body = $sum->body) {
             # We got something here. Clean it up and return it.
-            return _clean_html(XML::LibXML->new->parse_html_string(
+            return join '', map { $_->toString } _clean_html(XML::LibXML->new->parse_html_string(
                 $sum->type && $sum->type eq 'text/plain'
                     ? Text::Markdown::markdown($body)
                     : $body
-            )->firstChild);
+            )->firstChild)->childNodes;
         }
     }
 
@@ -256,17 +256,12 @@ sub _find_summary {
 
     # Fetch a reasonable amount of the content to use as a summary.
     my $ret = '';
-    for my $elem ($doc->childNodes) {
-        if ($elem->isa('XML::LibXML::Text')) {
-            # Turn it into a paragraph.
-            my $p = XML::LibXML::Element->new('p');
-            $p->addChild($elem);
-            $ret .= $p->toString;
-        } elsif ($elem->isa('XML::LibXML::Element')) {
+    for my $elem ($doc->findnodes('/html/body')->get_node(1)->childNodes) {
+        if ($elem->nodeType == XML_ELEMENT_NODE) {
             # Clean the HTML.
-            $ret .= _clean_html($elem);
+            $ret .= _clean_html($elem)->toString;
+            return $ret if length $ret > 140;
         }
-        return $ret if length $ret > 140;
     }
     return $ret;
 }

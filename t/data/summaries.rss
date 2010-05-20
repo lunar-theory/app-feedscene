@@ -56,7 +56,7 @@
       <dc:date>2010-05-17T06:58:50-08:00</dc:date>
       <dc:creator>Raymond Chandler</dc:creator>
       <guid isPermaLink="false">http://foo.org/lg6</guid>
-      <description><![CDATA[<p>First graph.</p><p>Second graph.</p><p>Third graph with a lot more stuff in it, to get us over 140 characters, if you know what I mean.</p><p>Fourth graph should be included.</p>]]></description>
+      <description><![CDATA[<p>First graph.</p><p>Second graph.</p><p>Third graph with a lot more stuff in it, to get us over 140 characters, if you know what I mean.</p><p>Fourth graph should be excluded.</p>]]></description>
     </item>
 
     <item>
@@ -93,6 +93,15 @@
       <dc:creator>Raymond Chandler</dc:creator>
       <guid isPermaLink="false">http://foo.org/lg10</guid>
       <description><![CDATA[<p>Paragraph <font>summary</font> with font.</p>]]></description>
+    </item>
+
+    <item>
+      <title>The Long Goodbye</title>
+      <link>http://foo.org/lg11</link>
+      <dc:date>2010-05-17T06:58:50-08:00</dc:date>
+      <dc:creator>Raymond Chandler</dc:creator>
+      <guid isPermaLink="false">http://foo.org/lg11</guid>
+      <description><![CDATA[Simple summary in plain text with <em>emphasis</em>.]]></description>
     </item>
 
   </channel>

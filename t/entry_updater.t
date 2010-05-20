@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 46;
+use Test::More tests => 47;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
@@ -169,9 +169,7 @@ is_deeply test_data('http://example.net/2010/05/16/little-sister/'), {
     title          => 'The Little Sister',
     published_at   => '2010-05-16T06:58:50',
     updated_at     => '2010-05-16T06:58:50',
-    summary        => '<p>Hollywood babes.</p>
-        <p>A killer with an ice pick.</p>
-        <p>What could be better?</p>',
+    summary        => '<p>Hollywood babes.</p><p>A killer with an ice pick.</p><p>What could be better?</p>',
     author         => 'Raymond Chandler',
     enclosure_url  => '',
     enclosure_type => '',
@@ -183,7 +181,7 @@ is_deeply test_data('http://example.net/2010/05/16/little-sister/'), {
 ok $feed = XML::Feed->parse('t/data/summaries.rss'),
     'Grab a simple RSS feed';
 ok $eup->process("$uri/summaries.rss", $feed), 'Process the RSS feed';
-test_counts(14, 'Should now have 14 entries');
+test_counts(15, 'Should now have 15 entries');
 
 my $dbh = +App::FeedScene->new->conn->dbh;
 for my $spec (
@@ -192,11 +190,12 @@ for my $spec (
     [ 3  => '<p>Paragraph <em>summary</em> with emphasis.</p>' ],
     [ 4  => '<p>Paragraph summary with anchor.</p>'],
     [ 5  => '<p>First graph.</p><p>Second graph.</p>'],
-    [ 6  => '<p>First graph.</p><p>Second graph.</p><p>Third graph with a lot more stuff in it, to get us over 140 characters, if you know what I mean.</p><p>Fourth graph should be included.</p>'],
+    [ 6  => '<p>First graph.</p><p>Second graph.</p><p>Third graph with a lot more stuff in it, to get us over 140 characters, if you know what I mean.</p>'],
     [ 7  => '<p>Paragraph <em>summary</em> with em+attr.</p>' ],
     [ 8  => '<p>The <abbr title="World Health Organization">WHO</abbr> was founded in 1948.</p>'],
     [ 9  => '<p>Paragraph <i>summary</i> with anchor and child element.</p>'],
     [ 10 => '<p>Paragraph summary with font.</p>' ],
+    [ 11 => '<p>Simple summary in plain text with <em>emphasis</em>.</p>'],
 ) {
     is +($dbh->selectrow_array(
         'SELECT summary FROM entries WHERE id = ?',
