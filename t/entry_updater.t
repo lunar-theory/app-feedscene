@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 51;
+use Test::More tests => 58;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
@@ -27,15 +27,16 @@ ok my $dba = App::FeedScene::DBA->new( app => 'foo' ),
     'Create a DBA object';
 ok $dba->upgrade, 'Initialize and upgrade the database';
 END { unlink App::FeedScene->new->db_name };
+my $conn = App::FeedScene->new->conn;
 
 # Load some data for a portal.
-App::FeedScene->new('foo')->conn->txn(sub {
+$conn->txn(sub {
     my $sth = shift->prepare('INSERT INTO feeds (portal, url) VALUES(?, ?)');
     for my $spec (
         [ 0, 'simple.atom' ],
         [ 0, 'simple.rss' ],
         [ 0, 'summaries.rss' ],
-        # [ 1, 'meumoleskinedigital.rss' ],
+        [ 0, 'latin-1.atom' ],
         # [ 2, 'flickr.atom' ],
         # [ 3, 'flickr.rss' ],
     ) {
@@ -43,9 +44,9 @@ App::FeedScene->new('foo')->conn->txn(sub {
     }
 });
 
-is +App::FeedScene->new->conn->run(sub {
+is $conn->run(sub {
     (shift->selectrow_array('SELECT COUNT(*) FROM feeds'))[0]
-}), 3, 'Should have three feeds in the database';
+}), 4, 'Should have four feeds in the database';
 test_counts(0, 'Should have no entries');
 
 # Construct a feed updater.
@@ -80,6 +81,7 @@ my @urls = (
     "$uri/simple.atom",
     "$uri/simple.rss",
     "$uri/summaries.rss",
+    "$uri/latin-1.atom",
 );
 
 $eup->mock(process => sub {
@@ -99,7 +101,7 @@ ok $eup->process("$uri/simple.atom", $feed), 'Process the Atom feed';
 test_counts(2, 'Should now have two entries');
 
 # Check the feed data.
-is_deeply +App::FeedScene->new->conn->run(sub{ shift->selectrow_arrayref(
+is_deeply $conn->run(sub{ shift->selectrow_arrayref(
     'SELECT name, site_url FROM feeds WHERE url = ?',
     undef, "$uri/simple.atom",
 )}), ['Simple Atom Feed', 'http://example.com/'], 'Atom feed should be updated';
@@ -141,7 +143,7 @@ ok $eup->process("$uri/simple.rss", $feed), 'Process the RSS feed';
 test_counts(4, 'Should now have four entries');
 
 # Check the feed data.
-is_deeply +App::FeedScene->new->conn->run(sub{ shift->selectrow_arrayref(
+is_deeply $conn->run(sub{ shift->selectrow_arrayref(
     'SELECT name, site_url FROM feeds WHERE url = ?',
     undef, "$uri/simple.rss",
 )}), ['Simple RSS Feed', 'http://example.net'], 'RSS feed should be updated';
@@ -175,15 +177,30 @@ is_deeply test_data('http://example.net/2010/05/16/little-sister/'), {
     enclosure_type => '',
 }, 'Data for second RSS entry, including summary extracted from content';
 
+##############################################################################
+# Test a non-utf8 feed.
+ok $feed = XML::Feed->parse('t/data/latin-1.atom'),
+    'Grab a Latin-1 feed';
+ok $eup->process("$uri/latin-1.atom", $feed), 'Process the RSS feed';
+test_counts(5, 'Should now have five entries');
+
+my ($title, $summary) = $conn->dbh->selectrow_array(
+    'SELECT title, summary FROM entries WHERE id = ?',
+    undef, 'urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6c'
+);
+
+no utf8; # XXX WTF?
+is $title, 'Title: æåø', 'Latin-1 Title should be UTF-8';
+is $summary, '<p>Latin-1: æåø</p>', 'Latin-1 Summary should be UTF-8';
 
 ##############################################################################
 # Test a variety of RSS summary formats.
 ok $feed = XML::Feed->parse('t/data/summaries.rss'),
-    'Grab a simple RSS feed';
+    'Grab RSS feed with various summaries';
 ok $eup->process("$uri/summaries.rss", $feed), 'Process the RSS feed';
-test_counts(19, 'Should now have 19 entries');
+test_counts(20, 'Should now have 20 entries');
 
-my $dbh = +App::FeedScene->new->conn->dbh;
+my $dbh = $conn->dbh;
 for my $spec (
     [ 1  => '<p>Simple summary in plain text.</p>'],
     [ 2  => '<p>Simple summary in a paragraph.</p>'],
@@ -204,7 +221,7 @@ for my $spec (
     is +($dbh->selectrow_array(
         'SELECT summary FROM entries WHERE id = ?',
         undef, "http://foo.org/lg$spec->[0]")
-     )[0], $spec->[1], "Should have proper summary for entry $spec->[0]";
+    )[0], $spec->[1], "Should have proper summary for entry $spec->[0]";
 }
 
 ##############################################################################

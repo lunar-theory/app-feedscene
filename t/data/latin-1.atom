@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Latin-1 Atom Feed</title> 
+  <link rel="alternate" href="http://foo.org/"/>
+  <link rel="self" href="http://foo.org/foo.org.xml"/>
+  <updated>2009-12-13T18:30:02Z</updated>
+  <id>urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6</id>
+  <rights>Copyright (c) 2010</rights>
+  <author>
+    <name>Some Site</name>
+    <uri>http://foo.org/</uri>
+  </author>
+
+  <entry>
+    <title>Title: æåø</title>
+    <link rel="alternate" href="http://foo.org/story.html" />
+    <link rel="related" href="http://foo.org/" />
+    <id>urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6c</id>
+    <updated>2009-12-13T18:30:02Z</updated>
+    <published>2009-12-13T08:29:29-04:00</published>
+    <summary type="html">&lt;p&gt;Latin-1: æåø&lt;/p&gt;</summary>
+    <content type="html">&lt;p&gt;Content of the story&lt;/p&gt;</content>
+  </entry>
+
+</feed>
