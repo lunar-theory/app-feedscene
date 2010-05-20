@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 58;
+use Test::More tests => 65;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
@@ -37,8 +37,7 @@ $conn->txn(sub {
         [ 0, 'simple.rss' ],
         [ 0, 'summaries.rss' ],
         [ 0, 'latin-1.atom' ],
-        # [ 2, 'flickr.atom' ],
-        # [ 3, 'flickr.rss' ],
+        [ 0, 'latin-1.rss' ],
     ) {
         $sth->execute($spec->[0], "$uri/$spec->[1]" );
     }
@@ -46,7 +45,7 @@ $conn->txn(sub {
 
 is $conn->run(sub {
     (shift->selectrow_array('SELECT COUNT(*) FROM feeds'))[0]
-}), 4, 'Should have four feeds in the database';
+}), 5, 'Should have five feeds in the database';
 test_counts(0, 'Should have no entries');
 
 # Construct a feed updater.
@@ -82,6 +81,7 @@ my @urls = (
     "$uri/simple.rss",
     "$uri/summaries.rss",
     "$uri/latin-1.atom",
+    "$uri/latin-1.rss",
 );
 
 $eup->mock(process => sub {
@@ -193,11 +193,26 @@ is $title, 'Title: æåø', 'Latin-1 Title should be UTF-8';
 is $summary, '<p>Latin-1: æåø</p>', 'Latin-1 Summary should be UTF-8';
 
 ##############################################################################
+# Test a non-utf8 RSS feed.
+ok $feed = XML::Feed->parse('t/data/latin-1.rss'),
+    'Grab a Latin-1 feed';
+ok $eup->process("$uri/latin-1.rss", $feed), 'Process the RSS feed';
+test_counts(6, 'Should now have six entries');
+
+($title, $summary) = $conn->dbh->selectrow_array(
+    'SELECT title, summary FROM entries WHERE id = ?',
+    undef, 'urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6c'
+);
+
+is $title, 'Title: æåø', 'Latin-1 Title should be UTF-8';
+is $summary, '<p>Latin-1: æåø</p>', 'Latin-1 Summary should be UTF-8';
+
+##############################################################################
 # Test a variety of RSS summary formats.
 ok $feed = XML::Feed->parse('t/data/summaries.rss'),
     'Grab RSS feed with various summaries';
 ok $eup->process("$uri/summaries.rss", $feed), 'Process the RSS feed';
-test_counts(20, 'Should now have 20 entries');
+test_counts(21, 'Should now have 21 entries');
 
 my $dbh = $conn->dbh;
 for my $spec (
