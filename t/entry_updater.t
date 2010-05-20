@@ -178,7 +178,7 @@ is_deeply test_data('http://example.net/2010/05/16/little-sister/'), {
 }, 'Data for second RSS entry, including summary extracted from content';
 
 ##############################################################################
-# Test a non-utf8 feed.
+# Test a non-utf8 Atom feed.
 ok $feed = XML::Feed->parse('t/data/latin-1.atom'),
     'Grab a Latin-1 feed';
 ok $eup->process("$uri/latin-1.atom", $feed), 'Process the RSS feed';
@@ -189,7 +189,6 @@ my ($title, $summary) = $conn->dbh->selectrow_array(
     undef, 'urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6c'
 );
 
-no utf8; # XXX WTF?
 is $title, 'Title: æåø', 'Latin-1 Title should be UTF-8';
 is $summary, '<p>Latin-1: æåø</p>', 'Latin-1 Summary should be UTF-8';
 

@@ -22,6 +22,11 @@ my $parser = XML::LibXML->new({
     encoding          => 'utf8',
 });
 
+
+$XML::Feed::RSS::PREFERRED_PARSER = 'XML::RSS::LibXML';
+$XML::Feed::MULTIPLE_ENCLOSURES = 1;
+$XML::Atom::ForceUnicode = 1;
+
 sub run {
     my $self = shift;
 
