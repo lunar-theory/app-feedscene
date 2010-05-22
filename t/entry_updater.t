@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 65;
+use Test::More tests => 76;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
@@ -38,6 +38,7 @@ $conn->txn(sub {
         [ 0, 'summaries.rss' ],
         [ 0, 'latin-1.atom' ],
         [ 0, 'latin-1.rss' ],
+        [ 0, 'dates.rss' ],
     ) {
         $sth->execute($spec->[0], "$uri/$spec->[1]" );
     }
@@ -45,7 +46,7 @@ $conn->txn(sub {
 
 is $conn->run(sub {
     (shift->selectrow_array('SELECT COUNT(*) FROM feeds'))[0]
-}), 5, 'Should have five feeds in the database';
+}), 6, 'Should have six feeds in the database';
 test_counts(0, 'Should have no entries');
 
 # Construct a feed updater.
@@ -82,6 +83,7 @@ my @urls = (
     "$uri/summaries.rss",
     "$uri/latin-1.atom",
     "$uri/latin-1.rss",
+    "$uri/dates.rss",
 );
 
 $eup->mock(process => sub {
@@ -113,8 +115,8 @@ is_deeply test_data('urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a'), {
     feed_url       => "$uri/simple.atom",
     url            => 'http://example.com/story.html',
     title          => 'This is the title',
-    published_at   => '2009-12-13T12:29:29',
-    updated_at     => '2009-12-13T18:30:02',
+    published_at   => '2009-12-13T12:29:29Z',
+    updated_at     => '2009-12-13T18:30:02Z',
     summary        => '<p>Summary of the story</p>',
     author         => 'Ira Glass',
     enclosure_url  => '',
@@ -127,8 +129,8 @@ is_deeply test_data('urn:uuid:1225c695-cfb8-4ebb-bbbb-80da344efa6b'), {
     feed_url       => "$uri/simple.atom",
     url            => 'http://example.com/another-story.html',
     title          => 'This is another title',
-    published_at   => '2009-12-13T12:29:29',
-    updated_at     => '2009-12-13T18:30:03',
+    published_at   => '2009-12-13T12:29:29Z',
+    updated_at     => '2009-12-13T18:30:03Z',
     summary        => '<p>Summary of the second story</p>',
     author         => '',
     enclosure_url  => '',
@@ -155,8 +157,8 @@ is_deeply test_data('http://example.net/2010/05/17/long-goodbye/'), {
     feed_url       => "$uri/simple.rss",
     url            => 'http://example.net/2010/05/17/long-goodbye/',
     title          => 'The Long Goodbye',
-    published_at   => '2010-05-17T06:58:50',
-    updated_at     => '2010-05-17T06:58:50',
+    published_at   => '2010-05-17T14:58:50Z',
+    updated_at     => '2010-05-17T14:58:50Z',
     summary        => '<p>Wherein Marlowe finds himeslf in trouble again.</p>',
     author         => 'Raymond Chandler',
     enclosure_url  => '',
@@ -169,8 +171,8 @@ is_deeply test_data('http://example.net/2010/05/16/little-sister/'), {
     feed_url       => "$uri/simple.rss",
     url            => 'http://example.net/2010/05/16/little-sister/',
     title          => 'The Little Sister',
-    published_at   => '2010-05-16T06:58:50',
-    updated_at     => '2010-05-16T06:58:50',
+    published_at   => '2010-05-16T14:58:50Z',
+    updated_at     => '2010-05-16T14:58:50Z',
     summary        => '<p>Hollywood babes.</p><p>A killer with an ice pick.</p><p>What could be better?</p>',
     author         => 'Raymond Chandler',
     enclosure_url  => '',
@@ -236,6 +238,27 @@ for my $spec (
         'SELECT summary FROM entries WHERE id = ?',
         undef, "http://foo.org/lg$spec->[0]")
     )[0], $spec->[1], "Should have proper summary for entry $spec->[0]";
+}
+
+##############################################################################
+# Try a bunch of different date combinations.
+ok $feed = XML::Feed->parse('t/data/dates.rss'),
+    'Grab RSS feed with various dates';
+ok $eup->process("$uri/dates.rss", $feed), 'Process the RSS dates feed';
+test_counts(27, 'Should now have 27 entries');
+
+for my $spec (
+    [ 1 => ['2010-05-17T06:58:50Z', '2010-05-17T07:45:09Z'], 'both dates' ],
+    [ 2 => ['2010-05-17T06:58:50Z', '2010-05-17T06:58:50Z'], 'published only date' ],
+    [ 3 => ['2010-05-17T07:45:09Z', '2010-05-17T07:45:09Z'], 'modified only date' ],
+    [ 4 => ['2010-05-17T00:00:00Z', '2010-05-17T00:00:00Z'], 'floating pubDate' ],
+    [ 5 => ['2010-05-17T14:58:50Z', '2010-05-17T14:58:50Z'], 'offset date'],
+    [ 6 => ['2010-05-17T11:58:50Z', '2010-05-17T11:58:50Z'], 'zoned date'],
+) {
+    is_deeply $dbh->selectrow_arrayref(
+        'SELECT published_at, updated_at FROM entries WHERE id = ?',
+        undef, "http://baz.org/lg$spec->[0]"
+    ), $spec->[1], "Should have $spec->[2]";
 }
 
 ##############################################################################

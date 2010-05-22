@@ -80,14 +80,18 @@ sub process {
                 next unless $enc_type;
             }
 
+            my $pub_date = $entry->issued;
+            my $upd_date = $entry->modified || $pub_date or next;
+            $pub_date ||= $upd_date;
+
             $sth->execute(
                 $entry->id,
                 $portal,
                 $feed_url,
                 $entry->link,
                 $entry->title,
-                $entry->issued->iso8601,
-                ($entry->modified || $entry->issued)->iso8601,
+                $pub_date->set_time_zone('UTC')->iso8601 . 'Z',
+                $upd_date->set_time_zone('UTC')->iso8601 . 'Z',
                 _find_summary($entry),
                 $entry->author,
                 $enc_type,
