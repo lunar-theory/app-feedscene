@@ -17,12 +17,10 @@ use Class::XSAccessor constructor => 'new', accessors => { map { $_ => $_ } qw(
 ) };
 
 my $parser = XML::LibXML->new({
-    recover           => 2,
-    no_network        => 1,
-    suppress_errors   => 1,
-    suppress_warnings => 1,
-    no_blanks         => 1,
-    encoding          => 'utf8',
+    recover    => 2,
+    no_network => 1,
+    no_blanks  => 1,
+    encoding   => 'utf8',
 });
 
 
@@ -212,7 +210,7 @@ sub _clean_html {
             }
 
             if (my $attrs = $allowed{$name}) {
-                # Delete all of its attributes and hang on to it.
+                # Keep only allowed attributes.
                 $elem->removeAttribute($_) for grep { !$attrs->{$_} }
                     map { $_->nodeName } $elem->attributes;
 
@@ -256,6 +254,7 @@ sub _find_summary {
     my $entry = shift;
     if (my $sum = $entry->summary) {
         if (my $body = $sum->body) {
+            local $SIG{__WARN__}; # XXX LibXML doesn't like the video tag. Upgrade?
             # We got something here. Clean it up and return it.
             return join '', map { $_->toString } _clean_html(
                 $parser->parse_html_string($body)->firstChild
@@ -266,6 +265,7 @@ sub _find_summary {
     # Try the content of the entry.
     my $content = $entry->content or return '';
     my $body    = $content->body  or return '';
+    local $SIG{__WARN__}; # XXX LibXML doesn't like the video tag. Upgrade?
     my $doc     = $parser->parse_html_string($body);
 
     # Fetch a reasonable amount of the content to use as a summary.
@@ -284,18 +284,24 @@ my $mt = MIME::Types->new;
 
 sub _find_enclosure {
     my $entry = shift;
-    my ($enc) = $entry->enclosure;
-    return $enc->type, $enc->url if $enc;
+    for my $enc ($entry->enclosure) {
+        next unless $enc; # enclosure() returns undef instead of an empty list!
+        my $type = $enc->type or next;
+        next if $type !~ m{^(?:image|audio|video)/};
+        return $enc->type, $enc->url;
+    }
 
     # Use XML::LibXML and XPath to find something and link it up.
     for my $content ($entry->content, $entry->summary) {
         next unless $content;
         my $body = $content->body or next;
+        local $SIG{__WARN__}; # XXX LibXML doesn't like the video tag. Upgrade?
         my $doc = $parser->parse_html_string($body) or next;
-        for my $node ($doc->findnodes('//img/@src')) {
+        for my $node ($doc->findnodes('//img/@src|//audio/@href|//video/@href')) {
             my $url = $node->nodeValue or next;
+            my $type =  $mt->mimeTypeOf($url) or next;
             # XXX: Is there a type attribute in HTML?
-            return $mt->mimeTypeOf($url), $url;
+            return $type, $url if $type =~ m{^(?:image|audio|video)/};
         }
     }
 

@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 89;
+use Test::More tests => 95;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
@@ -295,35 +295,35 @@ ok $feed = XML::Feed->parse('t/data/enclosures.atom'),
     'Grab Atom feed with enclosures';
 $eup->portal(1);
 ok $eup->process("$uri/enclosures.atom", $feed), 'Process the enclosures feed';
-test_counts(32, 'Should now have 32 entries');
+test_counts(38, 'Should now have 38 entries');
 
 # First one is easy, has only one enclosure.
-is_deeply test_data('urn:uuid:37a44607-c6de-583e-8148-2f052b7e4de8'), {
+is_deeply test_data('urn:uuid:afac4e17-4775-55c0-9e61-30d7630ea909'), {
     author         => '',
     enclosure_type => 'image/jpeg',
     enclosure_url  => 'http://farm2.static.flickr.com/1169/4601733070_92cd987ff5_o.jpg',
     feed_url       => 'file://localhost/Users/david/dev/github/app-feedscene/t/data/enclosures.atom',
-    id             => 'urn:uuid:37a44607-c6de-583e-8148-2f052b7e4de8',
+    id             => 'urn:uuid:afac4e17-4775-55c0-9e61-30d7630ea909',
     portal         => 1,
     published_at   => '2009-12-13T08:29:29Z',
     summary        => '<p>Caption for the encosed image.</p>',
     title          => 'This is the title',
     updated_at     => '2009-12-13T08:29:29Z',
-    url            => 'http://flicker.com/someimage'
+    url            => 'http://flickr.com/someimage'
 }, 'Data for first entry with enclosure should be correct';
 
-is_deeply test_data('urn:uuid:b41d0522-9a05-57aa-8b53-9b6370c933f7'), {
+is_deeply test_data('urn:uuid:844df0ef-fed0-54f0-ac7d-2470fa7e9a9c'), {
     author         => '',
     enclosure_type => 'image/jpeg',
     enclosure_url  => 'http://farm2.static.flickr.com/1169/4601733070_92cd987ff6_o.jpg',
     feed_url       => 'file://localhost/Users/david/dev/github/app-feedscene/t/data/enclosures.atom',
-    id             => 'urn:uuid:b41d0522-9a05-57aa-8b53-9b6370c933f7',
+    id             => 'urn:uuid:844df0ef-fed0-54f0-ac7d-2470fa7e9a9c',
     portal         => 1,
     published_at   => '2009-12-13T08:19:29Z',
     summary        => '<p>Caption for both of the the encosed images.</p>',
     title          => 'This is the title',
     updated_at     => '2009-12-13T08:19:29Z',
-    url            => 'http://flicker.com/twoimages'
+    url            => 'http://flickr.com/twoimages'
 }, 'Data for entry with two should have just the first enclosure';
 
 # Now check those that had no enclosure but pulled it in from the content.
@@ -339,10 +339,40 @@ for my $spec (
         'image/jpeg',
         'http://flickr.com/someimage.jpg'
     ], 'two embedded JPEGs' ],
+    [ 'audio' => [
+        '<p>Caption for the enclosed audio.</p>',
+        'audio/mpeg',
+        'http://flickr.com/audio.mp3'
+    ], 'audio enclosure' ],
+    [ 'video' => [
+        '<p>Caption for the enclosed video.</p>',
+        'video/mpeg',
+        'http://flickr.com/video.mov'
+    ], 'video enclosure' ],
+    [ 'embedaudio' => [
+        '<p>Caption for the embedded audio.</p>',
+        'audio/mpeg',
+        'http://flickr.com/anotheraudio.mp3'
+    ], 'audio enclosure' ],
+    [ 'embedvideo' => [
+        '<p>Caption for the embedded video.</p>',
+        'video/quicktime',
+        'http://flickr.com/anothervideo.mov'
+    ], 'video enclosure' ],
+    [ 'skipunwanted' => [
+        '<p>Caption for the enclosed audio.</p>',
+        'audio/mpeg',
+        'http://flickr.com/audio.mp3'
+    ], 'audio enclosure' ],
+    [ 'skipembed' => [
+        '<p>Caption for the embedded audio.</p>',
+        'audio/mpeg',
+        'http://flickr.com/audio.mp3'
+    ], 'audio enclosure' ],
 ) {
     is_deeply $dbh->selectrow_arrayref(
         'SELECT summary, enclosure_type, enclosure_url FROM entries WHERE id = ?',
-        undef, _uuid($feed->link, "http://flicker.com/$spec->[0]")
+        undef, _uuid($feed->link, "http://flickr.com/$spec->[0]")
     ), $spec->[1], "Should have proper enclosure for $spec->[0]";
 }
 
