@@ -25,6 +25,7 @@ Module::Build->new(
         'Exception::Class::DBI'     => '1.00',
         'LWP'                       => '5.835',
         'LWP::UserAgent::WithCache' => '0.11',
+        'MIME::Types'               => '1.29',
         'OSSP::uuid'                => '1.0602',
         'perl'                      => 5.012,
         'Pod::Usage'                => '1.36',

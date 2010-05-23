@@ -5,9 +5,11 @@ use utf8;
 use App::FeedScene;
 use App::FeedScene::UA::Robot;
 use XML::Feed;
+use XML::Feed::Enclosure;
 use HTTP::Status qw(HTTP_NOT_MODIFIED);
 use XML::LibXML qw(XML_ELEMENT_NODE XML_TEXT_NODE);
 use OSSP::uuid;
+use MIME::Types;
 
 use Class::XSAccessor constructor => 'new', accessors => { map { $_ => $_ } qw(
    app
@@ -75,6 +77,7 @@ sub process {
         my @ids;
         for my $entry ($feed->entries) {
             my ($enc_type, $enc_url) = ('', '');
+
             if ($portal) {
                 # Need some media for non-text portals.
                 ($enc_type, $enc_url) = _find_enclosure($entry);
@@ -220,18 +223,17 @@ sub _clean_html {
                 }
             } else {
                 # You are not wanted.
-                my $parent = $elem->parentNode;
+                my $parent  = $elem->parentNode;
+                my $sibling = $elem->nextSibling;
                 if ($keep_children{$name}) {
                     # Keep the children.
                     $parent->insertAfter($_, $elem) for reverse $elem->childNodes;
-                    $parent->removeChild($elem);
-                    # 
-                    $elem = $elem->nextSibling;
-                    next;
                 }
 
-                # Buh-bye.
+                # Take it out jump to the next sibling.
                 $parent->removeChild($elem);
+                $elem = $sibling;
+                next;
             }
         }
 
@@ -278,31 +280,38 @@ sub _find_summary {
     return $ret;
 }
 
+my $mt = MIME::Types->new;
+
 sub _find_enclosure {
     my $entry = shift;
-    if (my ($enc) = $entry->enclosure) {
-        return $enc->type, $enc->url;
+    my ($enc) = $entry->enclosure;
+    return $enc->type, $enc->url if $enc;
+
+    # Use XML::LibXML and XPath to find something and link it up.
+    for my $content ($entry->content, $entry->summary) {
+        next unless $content;
+        my $body = $content->body or next;
+        my $doc = $parser->parse_html_string($body) or next;
+        for my $node ($doc->findnodes('//img/@src')) {
+            my $url = $node->nodeValue or next;
+            # XXX: Is there a type attribute in HTML?
+            return $mt->mimeTypeOf($url), $url;
+        }
     }
 
-    # Try to find an image in the content.
-    my $content = $entry->content;
-
-    # Use XML::LibXML and XPath to find an img, video, or audio tag and link
-    # it up.
-
     # Nothing to see.
-    return '', '';
+    return;
 }
 
-my $ugen = OSSP::uuid->new;
-my $uuid_ns = OSSP::uuid->new;
+my $uuid_gen = OSSP::uuid->new;
+my $uuid_ns  = OSSP::uuid->new;
 
 sub _uuid {
     my ($site_url, $entry_url) = @_;
     $uuid_ns->load('ns:URL');
-    $ugen->make('v5', $uuid_ns, $site_url); # Make UUID for site URL.
-    $ugen->make('v5', $ugen, $entry_url); # Make UUID for site + entry URLs.
-    return 'urn:uuid:' . $ugen->export('str');
+    $uuid_gen->make('v5', $uuid_ns, $site_url); # Make UUID for site URL.
+    $uuid_gen->make('v5', $uuid_gen, $entry_url); # Make UUID for site + entry URLs.
+    return 'urn:uuid:' . $uuid_gen->export('str');
 }
 
 1;

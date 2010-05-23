@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 82;
+use Test::More tests => 89;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
@@ -42,6 +42,7 @@ $conn->txn(sub {
         [ 0, 'latin-1.rss' ],
         [ 0, 'dates.rss' ],
         [ 0, 'conflict.rss' ],
+        [ 1, 'enclosures.atom' ],
     ) {
         $sth->execute($spec->[0], "$uri/$spec->[1]" );
     }
@@ -49,7 +50,7 @@ $conn->txn(sub {
 
 is $conn->run(sub {
     (shift->selectrow_array('SELECT COUNT(*) FROM feeds'))[0]
-}), 7, 'Should have seven feeds in the database';
+}), 8, 'Should have eight feeds in the database';
 test_counts(0, 'Should have no entries');
 
 # Construct a feed updater.
@@ -287,6 +288,63 @@ is_deeply $dbh->selectall_arrayref(
         'file://localhost/Users/david/dev/github/app-feedscene/t/data/conflict.rss'
     ]
 ], 'Should have two rows with the same link but different IDs  and feed URLs';
+
+##############################################################################
+# Try a feed with enclosures.
+ok $feed = XML::Feed->parse('t/data/enclosures.atom'),
+    'Grab Atom feed with enclosures';
+$eup->portal(1);
+ok $eup->process("$uri/enclosures.atom", $feed), 'Process the enclosures feed';
+test_counts(32, 'Should now have 32 entries');
+
+# First one is easy, has only one enclosure.
+is_deeply test_data('urn:uuid:37a44607-c6de-583e-8148-2f052b7e4de8'), {
+    author         => '',
+    enclosure_type => 'image/jpeg',
+    enclosure_url  => 'http://farm2.static.flickr.com/1169/4601733070_92cd987ff5_o.jpg',
+    feed_url       => 'file://localhost/Users/david/dev/github/app-feedscene/t/data/enclosures.atom',
+    id             => 'urn:uuid:37a44607-c6de-583e-8148-2f052b7e4de8',
+    portal         => 1,
+    published_at   => '2009-12-13T08:29:29Z',
+    summary        => '<p>Caption for the encosed image.</p>',
+    title          => 'This is the title',
+    updated_at     => '2009-12-13T08:29:29Z',
+    url            => 'http://flicker.com/someimage'
+}, 'Data for first entry with enclosure should be correct';
+
+is_deeply test_data('urn:uuid:b41d0522-9a05-57aa-8b53-9b6370c933f7'), {
+    author         => '',
+    enclosure_type => 'image/jpeg',
+    enclosure_url  => 'http://farm2.static.flickr.com/1169/4601733070_92cd987ff6_o.jpg',
+    feed_url       => 'file://localhost/Users/david/dev/github/app-feedscene/t/data/enclosures.atom',
+    id             => 'urn:uuid:b41d0522-9a05-57aa-8b53-9b6370c933f7',
+    portal         => 1,
+    published_at   => '2009-12-13T08:19:29Z',
+    summary        => '<p>Caption for both of the the encosed images.</p>',
+    title          => 'This is the title',
+    updated_at     => '2009-12-13T08:19:29Z',
+    url            => 'http://flicker.com/twoimages'
+}, 'Data for entry with two should have just the first enclosure';
+
+# Now check those that had no enclosure but pulled it in from the content.
+
+for my $spec (
+    [ 'embeddedimage' => [
+        '<p>Caption for the embedded image.</p>',
+        'image/jpeg',
+        'http://flickr.com/someimage.jpg'
+    ], 'embedded JPEG' ],
+    [ 'embedtwo' => [
+        '<p>Caption for both of the embedded images.</p>',
+        'image/jpeg',
+        'http://flickr.com/someimage.jpg'
+    ], 'two embedded JPEGs' ],
+) {
+    is_deeply $dbh->selectrow_arrayref(
+        'SELECT summary, enclosure_type, enclosure_url FROM entries WHERE id = ?',
+        undef, _uuid($feed->link, "http://flicker.com/$spec->[0]")
+    ), $spec->[1], "Should have proper enclosure for $spec->[0]";
+}
 
 ##############################################################################
 sub test_counts {
