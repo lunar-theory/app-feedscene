@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:wfw="http://wellformedweb.org/CommentAPI/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Simple RSS Feed</title>
+    <link>http://howdy.net</link>
+
+    <item>
+      <title>The Long Goodbye</title>
+      <link>http://example.net/2010/05/17/long-goodbye/</link>
+      <dc:date>2010-05-17T06:58:50-08:00</dc:date>
+      <dc:creator>Raymond Chandler</dc:creator>
+      <description>This feed has a link that conflicts with another link, and
+      has no GUID. This is common for blogs like Daring Fireball that link
+      directly to other blogs in their feeds (although DF of course has decent
+      GUIDs, so it shouldn't be a problem there, I just want to be
+      careful.</description>
+    </item>
+  </channel>
+</rss>

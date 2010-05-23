@@ -7,6 +7,7 @@ use App::FeedScene::UA::Robot;
 use XML::Feed;
 use HTTP::Status qw(HTTP_NOT_MODIFIED);
 use XML::LibXML qw(XML_ELEMENT_NODE XML_TEXT_NODE);
+use OSSP::uuid;
 
 use Class::XSAccessor constructor => 'new', accessors => { map { $_ => $_ } qw(
    app
@@ -83,9 +84,10 @@ sub process {
             my $pub_date = $entry->issued;
             my $upd_date = $entry->modified || $pub_date or next;
             $pub_date ||= $upd_date;
+            my $uuid = _uuid($feed->link, $entry->link);
 
             $sth->execute(
-                $entry->id,
+                $uuid,
                 $portal,
                 $feed_url,
                 $entry->link,
@@ -98,7 +100,7 @@ sub process {
                 $enc_url,
             );
 
-            push @ids, $entry->id;
+            push @ids, $uuid;
         }
 
         $dbh->do(q{
@@ -290,6 +292,17 @@ sub _find_enclosure {
 
     # Nothing to see.
     return '', '';
+}
+
+my $ugen = OSSP::uuid->new;
+my $uuid_ns = OSSP::uuid->new;
+
+sub _uuid {
+    my ($site_url, $entry_url) = @_;
+    $uuid_ns->load('ns:URL');
+    $ugen->make('v5', $uuid_ns, $site_url); # Make UUID for site URL.
+    $ugen->make('v5', $ugen, $entry_url); # Make UUID for site + entry URLs.
+    return 'urn:uuid:' . $ugen->export('str');
 }
 
 1;
