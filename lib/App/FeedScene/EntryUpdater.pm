@@ -23,6 +23,10 @@ my $parser = XML::LibXML->new({
     encoding   => 'utf8',
 });
 
+my $libxml_options = {
+    suppress_errors   => 1,
+    suppress_warnings => 1,
+};
 
 $XML::Feed::RSS::PREFERRED_PARSER = 'XML::RSS::LibXML';
 $XML::Feed::MULTIPLE_ENCLOSURES = 1;
@@ -254,10 +258,9 @@ sub _find_summary {
     my $entry = shift;
     if (my $sum = $entry->summary) {
         if (my $body = $sum->body) {
-            local $SIG{__WARN__}; # XXX LibXML doesn't like the video tag. Upgrade?
             # We got something here. Clean it up and return it.
             return join '', map { $_->toString } _clean_html(
-                $parser->parse_html_string($body)->firstChild
+                $parser->parse_html_string($body, $libxml_options)->firstChild
             )->childNodes;
         }
     }
@@ -265,8 +268,7 @@ sub _find_summary {
     # Try the content of the entry.
     my $content = $entry->content or return '';
     my $body    = $content->body  or return '';
-    local $SIG{__WARN__}; # XXX LibXML doesn't like the video tag. Upgrade?
-    my $doc     = $parser->parse_html_string($body);
+    my $doc     = $parser->parse_html_string($body, $libxml_options);
 
     # Fetch a reasonable amount of the content to use as a summary.
     my $ret = '';
@@ -295,8 +297,7 @@ sub _find_enclosure {
     for my $content ($entry->content, $entry->summary) {
         next unless $content;
         my $body = $content->body or next;
-        local $SIG{__WARN__}; # XXX LibXML doesn't like the video tag. Upgrade?
-        my $doc = $parser->parse_html_string($body) or next;
+        my $doc = $parser->parse_html_string($body, $libxml_options) or next;
         for my $node ($doc->findnodes('//img/@src|//audio/@href|//video/@href')) {
             my $url = $node->nodeValue or next;
             my $type =  $mt->mimeTypeOf($url) or next;
