@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 81;
+use Test::More tests => 82;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
@@ -278,9 +278,20 @@ is_deeply $dbh->selectall_arrayref(
 
 ##############################################################################
 # Try a feed with enclosures.
+my $ua_mock = Test::MockModule->new('LWP::UserAgent');
+my @types = qw(
+    text/html
+    text/html
+    image/jpeg
+);
+$ua_mock->mock(head => sub {
+    my ($self, $url) = @_;
+    HTTP::Response->new(200, 'OK', ['Content-Type' => shift @types]);
+});
+
 $eup->portal(1);
 ok $eup->process("$uri/enclosures.atom"), 'Process  Atom feed with enclosures';
-test_counts(39, 'Should now have 39 entries');
+test_counts(40, 'Should now have 40 entries');
 
 # First one is easy, has only one enclosure.
 is_deeply test_data('urn:uuid:afac4e17-4775-55c0-9e61-30d7630ea909'), {
@@ -359,6 +370,11 @@ for my $spec (
         'audio/mpeg',
         'http://flickr.com/audio.mp3'
     ], 'direct link' ],
+    [ 'redirimage' => [
+        '<p>Caption for the image link.</p>',
+        'image/jpeg',
+        'http://flickr.com/redirimage'
+    ], 'redirected link' ],
 ) {
     is_deeply $dbh->selectrow_arrayref(
         'SELECT summary, enclosure_type, enclosure_url FROM entries WHERE id = ?',

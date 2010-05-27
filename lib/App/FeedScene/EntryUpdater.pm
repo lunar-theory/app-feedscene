@@ -86,7 +86,7 @@ sub process {
 
             if ($portal) {
                 # Need some media for non-text portals.
-                ($enc_type, $enc_url) = _find_enclosure($entry);
+                ($enc_type, $enc_url) = $self->_find_enclosure($entry);
                 next unless $enc_type;
             }
 
@@ -288,17 +288,12 @@ sub _find_summary {
 
 
 sub _find_enclosure {
-    my $entry = shift;
+    my ($self, $entry) = @_;
     for my $enc ($entry->enclosure) {
         next unless $enc; # enclosure() returns undef instead of an empty list!
         my $type = $enc->type or next;
         next if $type !~ m{^(?:image|audio|video)/};
         return $enc->type, $enc->url;
-    }
-
-    # Look at the direct link.
-    if (my $type = _get_type($entry->link)) {
-        return $type, $entry->link if $type =~ m{^(?:image|audio|video)/};
     }
 
     # Use XML::LibXML and XPath to find something and link it up.
@@ -308,10 +303,15 @@ sub _find_enclosure {
         my $doc = $parser->parse_html_string($body, $libxml_options) or next;
         for my $node ($doc->findnodes('//img/@src|//audio/@href|//video/@href')) {
             my $url = $node->nodeValue or next;
-            my $type = _get_type($url) or next;
+            my $type = $self->_get_type($url) or next;
             # XXX: Is there a type attribute in HTML?
             return $type, $url if $type =~ m{^(?:image|audio|video)/};
         }
+    }
+
+    # Look at the direct link.
+    if (my $type = $self->_get_type($entry->link)) {
+        return $type, $entry->link if $type =~ m{^(?:image|audio|video)/};
     }
 
     # Nothing to see.
@@ -331,8 +331,20 @@ sub _uuid {
 
 my $mt = MIME::Types->new;
 sub _get_type {
-    my $url = shift;
-    return $mt->mimeTypeOf($url);
+    my ($self, $url) = @_;
+    if (my $type = $mt->mimeTypeOf($url)) {
+        return $type;
+    }
+
+    # Maybe the thing redirects? Ask it for its content type.
+    # XXX For some reason, WithCache is very slow with this request. So use UserAgent instead.
+    my $ua = LWP::UserAgent->new(
+        agent => 'feedscene/' . App::FeedScene->VERSION,
+        from  => 'bot@designsceneapp.com'
+    );
+
+    my $res = $ua->head($url);
+    return $res->is_success ? scalar $res->content_type : undef;
 }
 
 1;
