@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 96;
+use Test::More tests => 81;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
@@ -53,7 +53,7 @@ is $conn->run(sub {
 }), 8, 'Should have eight feeds in the database';
 test_counts(0, 'Should have no entries');
 
-# Construct a feed updater.
+# Construct a entry updater.
 ok my $eup = App::FeedScene::EntryUpdater->new(
     app    => 'foo',
     portal => 0,
@@ -61,23 +61,6 @@ ok my $eup = App::FeedScene::EntryUpdater->new(
 
 isa_ok $eup, 'App::FeedScene::EntryUpdater', 'It';
 is $eup->app, 'foo', 'The app attribute should be set';
-
-# Test request failure.
-my $mock = Test::MockModule->new('HTTP::Response');
-$mock->mock( is_success => 0 );
-$mock->mock( code => HTTP_INTERNAL_SERVER_ERROR );
-$mock->mock( message => 'OMGWTF' );
-throws_ok { $eup->run } qr/000 Unknown code/, 'Should get exception request failure';
-test_counts(0, 'Should still have no entries');
-
-# Test HTTP_NOT_MODIFIED.
-$mock->mock( code => HTTP_NOT_MODIFIED );
-ok $eup->run, 'Run the update';
-test_counts(0, 'Should still have no feeds');
-
-# Test success.
-$mock->unmock('code');
-$mock->unmock('is_success');
 
 $eup = Test::MockObject::Extends->new( $eup );
 
@@ -92,19 +75,35 @@ my @urls = (
 );
 
 $eup->mock(process => sub {
-    my ($self, $url, $feed) = @_;
+    my ($self, $url) = @_;
     ok +(grep { $_ eq $url } @urls), 'Should have a feed URL';
-    isa_ok $feed, 'XML::Feed';
 });
 
 ok $eup->run, 'Run the update again -- should have feeds in previous two tests';
 $eup->unmock('process');
 
 ##############################################################################
+# Test request failure.
+my $mock = Test::MockModule->new('HTTP::Response');
+$mock->mock( is_success => 0 );
+$mock->mock( code => HTTP_INTERNAL_SERVER_ERROR );
+$mock->mock( message => 'OMGWTF' );
+throws_ok { $eup->process("$uri/simple.atom") }
+    qr/000 Unknown code/, 'Should get exception request failure';
+test_counts(0, 'Should still have no entries');
+
+# Test HTTP_NOT_MODIFIED.
+$mock->mock( code => HTTP_NOT_MODIFIED );
+ok $eup->process("$uri/simple.atom"), 'Process a feed';
+test_counts(0, 'Should still have no entries');
+
+# Test success.
+$mock->unmock('code');
+$mock->unmock('is_success');
+
+##############################################################################
 # Okay, now let's test the processing.
-ok my $feed = XML::Feed->parse('t/data/simple.atom'),
-    'Grab a simple Atom feed';
-ok $eup->process("$uri/simple.atom", $feed), 'Process the Atom feed';
+ok $eup->process("$uri/simple.atom"), 'Process simple Atom feed';
 test_counts(2, 'Should now have two entries');
 
 # Check the feed data.
@@ -144,9 +143,7 @@ is_deeply test_data('urn:uuid:4386a769-775f-5b78-a6f0-02e3ac8a457d'), {
 
 ##############################################################################
 # Let's try a simple RSS feed.
-ok $feed = XML::Feed->parse('t/data/simple.rss'),
-    'Grab a simple RSS feed';
-ok $eup->process("$uri/simple.rss", $feed), 'Process the RSS feed';
+ok $eup->process("$uri/simple.rss"), 'Process simple RSS feed';
 test_counts(4, 'Should now have four entries');
 
 # Check the feed data.
@@ -186,9 +183,7 @@ is_deeply test_data('urn:uuid:f7d5ce8a-d0d5-56bc-99c3-05592f4dc22c'), {
 
 ##############################################################################
 # Test a non-utf8 Atom feed.
-ok $feed = XML::Feed->parse('t/data/latin-1.atom'),
-    'Grab a Latin-1 feed';
-ok $eup->process("$uri/latin-1.atom", $feed), 'Process the RSS feed';
+ok $eup->process("$uri/latin-1.atom"), 'Process Latin-2 Atom feed';
 test_counts(5, 'Should now have five entries');
 
 my ($title, $summary) = $conn->dbh->selectrow_array(
@@ -201,9 +196,7 @@ is $summary, '<p>Latin-1: æåø</p>', 'Latin-1 Summary should be UTF-8';
 
 ##############################################################################
 # Test a non-utf8 RSS feed.
-ok $feed = XML::Feed->parse('t/data/latin-1.rss'),
-    'Grab a Latin-1 feed';
-ok $eup->process("$uri/latin-1.rss", $feed), 'Process the RSS feed';
+ok $eup->process("$uri/latin-1.rss"), 'Process Latin-1 RSS feed';
 test_counts(6, 'Should now have six entries');
 
 ($title, $summary) = $conn->dbh->selectrow_array(
@@ -216,9 +209,7 @@ is $summary, '<p>Latin-1: æåø</p>', 'Latin-1 Summary should be UTF-8';
 
 ##############################################################################
 # Test a variety of RSS summary formats.
-ok $feed = XML::Feed->parse('t/data/summaries.rss'),
-    'Grab RSS feed with various summaries';
-ok $eup->process("$uri/summaries.rss", $feed), 'Process the RSS feed';
+ok $eup->process("$uri/summaries.rss"), 'Process RSS feed with various summaries';
 test_counts(21, 'Should now have 21 entries');
 
 my $dbh = $conn->dbh;
@@ -241,15 +232,13 @@ for my $spec (
 ) {
     is +($dbh->selectrow_array(
         'SELECT summary FROM entries WHERE id = ?',
-        undef, _uuid($feed->link, "http://foo.org/lg$spec->[0]")
+        undef, _uuid('http://foo.org', "http://foo.org/lg$spec->[0]")
     ))[0], $spec->[1], "Should have proper summary for entry $spec->[0]";
 }
 
 ##############################################################################
 # Try a bunch of different date combinations.
-ok $feed = XML::Feed->parse('t/data/dates.rss'),
-    'Grab RSS feed with various dates';
-ok $eup->process("$uri/dates.rss", $feed), 'Process the RSS dates feed';
+ok $eup->process("$uri/dates.rss"), 'Process RSS feed with various dates';
 test_counts(27, 'Should now have 27 entries');
 
 for my $spec (
@@ -263,15 +252,13 @@ for my $spec (
     is_deeply $dbh->selectrow_arrayref(
         'SELECT published_at, updated_at FROM entries WHERE id = ?',
         undef,
-        _uuid($feed->link, "http://baz.org/lg$spec->[0]")
+        _uuid('http://baz.org', "http://baz.org/lg$spec->[0]")
     ), $spec->[1], "Should have $spec->[2]";
 }
 
 ##############################################################################
 # Try a feed with a duplicate URI and no GUID.
-ok $feed = XML::Feed->parse('t/data/conflict.rss'),
-    'Grab RSS feed with a duplicate link';
-ok $eup->process("$uri/conflict.rss", $feed), 'Process the conflicting RSS feed';
+ok $eup->process("$uri/conflict.rss"), 'Process RSS feed with a duplicate link';
 test_counts(28, 'Should now have 28 entries');
 
 # So now we should have two records with the same URL but different IDs.
@@ -291,10 +278,8 @@ is_deeply $dbh->selectall_arrayref(
 
 ##############################################################################
 # Try a feed with enclosures.
-ok $feed = XML::Feed->parse('t/data/enclosures.atom'),
-    'Grab Atom feed with enclosures';
 $eup->portal(1);
-ok $eup->process("$uri/enclosures.atom", $feed), 'Process the enclosures feed';
+ok $eup->process("$uri/enclosures.atom"), 'Process  Atom feed with enclosures';
 test_counts(39, 'Should now have 39 entries');
 
 # First one is easy, has only one enclosure.
@@ -377,7 +362,7 @@ for my $spec (
 ) {
     is_deeply $dbh->selectrow_arrayref(
         'SELECT summary, enclosure_type, enclosure_url FROM entries WHERE id = ?',
-        undef, _uuid($feed->link, "http://flickr.com/$spec->[0]")
+        undef, _uuid('http://example.com/', "http://flickr.com/$spec->[0]")
     ), $spec->[1], "Should have proper enclosure for $spec->[0]";
 }
 

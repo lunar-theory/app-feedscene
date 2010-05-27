@@ -14,6 +14,7 @@ use MIME::Types;
 use Class::XSAccessor constructor => 'new', accessors => { map { $_ => $_ } qw(
    app
    portal
+   ua
 ) };
 
 my $parser = XML::LibXML->new({
@@ -35,7 +36,7 @@ $XML::Atom::ForceUnicode = 1;
 sub run {
     my $self = shift;
 
-    my $ua  = App::FeedScene::UA::Robot->new($self->app);
+    $self->ua(App::FeedScene::UA::Robot->new($self->app));
     my $sth = App::FeedScene->new($self->app)->conn->run(sub {
         shift->prepare('SELECT url FROM feeds WHERE portal = ?');
     });
@@ -43,19 +44,22 @@ sub run {
     $sth->bind_columns(\my $url);
 
     while ($sth->fetch) {
-        my $res = $ua->get($url);
-        require Carp && Carp::croak("Error retrieving $url: " . $res->status_line)
-            unless $res->is_success or $res->code == HTTP_NOT_MODIFIED;
-        $self->process($url, XML::Feed->parse(\$res->content))
-            unless $res->code == HTTP_NOT_MODIFIED;
+        $self->process($url);
     }
 
     return $self;
 }
 
 sub process {
-    my ($self, $feed_url, $feed) = @_;
+    my ($self, $feed_url) = @_;
     my $portal = $self->portal;
+
+    my $res = $self->ua->get($feed_url);
+    require Carp && Carp::croak("Error retrieving $feed_url: " . $res->status_line)
+        unless $res->is_success or $res->code == HTTP_NOT_MODIFIED;
+    return $self if $res->code == HTTP_NOT_MODIFIED;
+
+    my $feed = XML::Feed->parse(\$res->content);
 
     App::FeedScene->new($self->app)->conn->txn(sub {
         my $dbh = shift;
