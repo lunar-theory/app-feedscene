@@ -2,7 +2,7 @@ package App::FeedScene::UA::Robot;
 
 use 5.12.0;
 use utf8;
-use base 'App::FeedScene::UA';
+use parent 'App::FeedScene::UA';
 use LWP::RobotUA;
 
 do {

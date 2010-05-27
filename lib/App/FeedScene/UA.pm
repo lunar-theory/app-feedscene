@@ -2,7 +2,7 @@ package App::FeedScene::UA;
 
 use 5.12.0;
 use utf8;
-use base 'LWP::UserAgent::WithCache';
+use parent 'LWP::UserAgent::WithCache';
 use App::FeedScene;
 
 (my $cache_dir = __FILE__) =~ s{(?:blib/)?lib/App/FeedScene/UA[.]pm$}{cache};
