@@ -5,15 +5,22 @@ use utf8;
 use base 'App::FeedScene::UA';
 use LWP::RobotUA;
 
-# Monkey-patch to support RobotUA.
-@LWP::UserAgent::WithCache::ISA = ('LWP::RobotUA');
+do {
+    # Import the RobotUA interface. This way we get its behavior without
+    # having to change LWP::UserAgent::WithCache's inheritance.
+    no strict 'refs';
+    while ( my ($k, $v) = each %{'LWP::RobotUA::'} ) {
+        *{$k} = *{$v}{CODE} if *{$v}{CODE} && $k !~ /^(?:new|host_wait)$/;
+    }
+};
 
 sub new {
     my ($class, $app) = (shift, shift);
+    # Force RobotUA configuration.
+    local @LWP::UserAgent::WithCache::ISA = ('LWP::RobotUA');
     return $class->SUPER::new(
         $app,
-        from  => 'bot@designsceneapp.com',
-        delay => 1, # be very nice -- max one hit every ten minutes!
+        delay => 1, # be very nice -- max one hit per minute.
     );
 }
 
@@ -21,7 +28,7 @@ sub host_wait {
     my ($self, $netloc) = @_;
     # First visit is for robots.txt, so let it be free.
     return if !$netloc || $self->no_visits($netloc) < 2;
-    $self->SUPER::host_wait($netloc);
+    $self->LWP::RobotUA::host_wait($netloc);
 }
 
 1;

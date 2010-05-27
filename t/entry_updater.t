@@ -278,7 +278,7 @@ is_deeply $dbh->selectall_arrayref(
 
 ##############################################################################
 # Try a feed with enclosures.
-my $ua_mock = Test::MockModule->new('LWP::UserAgent');
+my $ua_mock = Test::MockModule->new('App::FeedScene::UA');
 my @types = qw(
     text/html
     text/html

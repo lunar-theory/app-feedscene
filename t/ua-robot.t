@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 18;
+use Test::More tests => 17;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
 use File::Path;
@@ -15,7 +15,6 @@ ok my $ua = App::FeedScene::UA::Robot->new('foo'), 'New UA object';
 isa_ok $ua, 'App::FeedScene::UA::Robot';
 isa_ok $ua, 'App::FeedScene::UA';
 isa_ok $ua, 'LWP::UserAgent::WithCache';
-isa_ok $ua, 'LWP::RobotUA';
 isa_ok $ua, 'LWP::UserAgent';
 
 is $ua->agent, 'feedscene/' . App::FeedScene->VERSION,

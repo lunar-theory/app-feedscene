@@ -337,13 +337,7 @@ sub _get_type {
     }
 
     # Maybe the thing redirects? Ask it for its content type.
-    # XXX For some reason, WithCache is very slow with this request. So use UserAgent instead.
-    my $ua = LWP::UserAgent->new(
-        agent => 'feedscene/' . App::FeedScene->VERSION,
-        from  => 'bot@designsceneapp.com'
-    );
-
-    my $res = $ua->head($url);
+    my $res = App::FeedScene::UA->new($self->app)->head($url);
     return $res->is_success ? scalar $res->content_type : undef;
 }
 
