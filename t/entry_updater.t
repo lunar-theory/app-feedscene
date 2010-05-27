@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 95;
+use Test::More tests => 96;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
@@ -295,7 +295,7 @@ ok $feed = XML::Feed->parse('t/data/enclosures.atom'),
     'Grab Atom feed with enclosures';
 $eup->portal(1);
 ok $eup->process("$uri/enclosures.atom", $feed), 'Process the enclosures feed';
-test_counts(38, 'Should now have 38 entries');
+test_counts(39, 'Should now have 39 entries');
 
 # First one is easy, has only one enclosure.
 is_deeply test_data('urn:uuid:afac4e17-4775-55c0-9e61-30d7630ea909'), {
@@ -369,6 +369,11 @@ for my $spec (
         'audio/mpeg',
         'http://flickr.com/audio.mp3'
     ], 'audio enclosure' ],
+    [ 'audio.mp3' => [
+        '<p>Caption for the audio link.</p>',
+        'audio/mpeg',
+        'http://flickr.com/audio.mp3'
+    ], 'direct link' ],
 ) {
     is_deeply $dbh->selectrow_arrayref(
         'SELECT summary, enclosure_type, enclosure_url FROM entries WHERE id = ?',

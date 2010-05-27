@@ -282,7 +282,6 @@ sub _find_summary {
     return $ret;
 }
 
-my $mt = MIME::Types->new;
 
 sub _find_enclosure {
     my $entry = shift;
@@ -293,6 +292,11 @@ sub _find_enclosure {
         return $enc->type, $enc->url;
     }
 
+    # Look at the direct link.
+    if (my $type = _get_type($entry->link)) {
+        return $type, $entry->link if $type =~ m{^(?:image|audio|video)/};
+    }
+
     # Use XML::LibXML and XPath to find something and link it up.
     for my $content ($entry->content, $entry->summary) {
         next unless $content;
@@ -300,7 +304,7 @@ sub _find_enclosure {
         my $doc = $parser->parse_html_string($body, $libxml_options) or next;
         for my $node ($doc->findnodes('//img/@src|//audio/@href|//video/@href')) {
             my $url = $node->nodeValue or next;
-            my $type =  $mt->mimeTypeOf($url) or next;
+            my $type = _get_type($url) or next;
             # XXX: Is there a type attribute in HTML?
             return $type, $url if $type =~ m{^(?:image|audio|video)/};
         }
@@ -319,6 +323,12 @@ sub _uuid {
     $uuid_gen->make('v5', $uuid_ns, $site_url); # Make UUID for site URL.
     $uuid_gen->make('v5', $uuid_gen, $entry_url); # Make UUID for site + entry URLs.
     return 'urn:uuid:' . $uuid_gen->export('str');
+}
+
+my $mt = MIME::Types->new;
+sub _get_type {
+    my $url = shift;
+    return $mt->mimeTypeOf($url);
 }
 
 1;

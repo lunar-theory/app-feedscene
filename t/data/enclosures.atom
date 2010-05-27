@@ -93,10 +93,17 @@
   </entry>
 
   <entry>
-    <title>Skiip Unwanted Embed</title>
+    <title>Skip Unwanted Embed</title>
     <link rel="alternate" href="http://flickr.com/skipembed" />
     <published>2009-12-13T08:29:29Z</published>
     <summary type="html">&lt;audio href=&quot;http://flickr.com/whatever.html&quot; /&gt;&lt;p&gt;Caption for the embedded audio.&lt;/p&gt;&lt;audio href=&quot;http://flickr.com/audio.mp3&quot; /&gt;</summary>
+  </entry>
+
+  <entry>
+    <title>Direct Link</title>
+    <link rel="alternate" href="http://flickr.com/audio.mp3" />
+    <published>2009-12-13T08:29:29Z</published>
+    <summary type="html">&lt;p&gt;Caption for the audio link.&lt;/p&gt;</summary>
   </entry>
 
 
