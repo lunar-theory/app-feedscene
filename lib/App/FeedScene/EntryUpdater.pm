@@ -303,15 +303,14 @@ sub _find_enclosure {
         my $doc = $parser->parse_html_string($body, $libxml_options) or next;
         for my $node ($doc->findnodes('//img/@src|//audio/@src|//video/@src')) {
             my $url = $node->nodeValue or next;
-            my $type = $self->_get_type($url) or next;
+            (my($type), $url) = $self->_get_type($url) or next;
             return $type, $url if $type =~ m{^(?:image|audio|video)/};
         }
     }
 
     # Look at the direct link.
-    if (my $type = $self->_get_type($entry->link)) {
-        return $type, $entry->link if $type =~ m{^(?:image|audio|video)/};
-    }
+    my ($type, $url) = $self->_get_type($entry->link);
+    return $type, $url if $type && $type =~ m{^(?:image|audio|video)/};
 
     # Nothing to see.
     return;
@@ -332,12 +331,12 @@ my $mt = MIME::Types->new;
 sub _get_type {
     my ($self, $url) = @_;
     if (my $type = $mt->mimeTypeOf($url)) {
-        return $type;
+        return $type, $url;
     }
 
     # Maybe the thing redirects? Ask it for its content type.
     my $res = $self->ua->head($url);
-    return $res->is_success ? scalar $res->content_type : undef;
+    return $res->is_success ? (scalar $res->content_type, $res->request->uri) : undef;
 }
 
 1;

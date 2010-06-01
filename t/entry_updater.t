@@ -274,7 +274,7 @@ is_deeply $dbh->selectall_arrayref(
         'urn:uuid:bd1ce00c-ab8c-50bc-81c9-60ece4baa685',
         'file://localhost/Users/david/dev/github/app-feedscene/t/data/conflict.rss'
     ]
-], 'Should have two rows with the same link but different IDs  and feed URLs';
+], 'Should have two rows with the same link but different IDs and feed URLs';
 
 ##############################################################################
 # Try a feed with enclosures.
@@ -286,7 +286,11 @@ my @types = qw(
 );
 $ua_mock->mock(head => sub {
     my ($self, $url) = @_;
-    HTTP::Response->new(200, 'OK', ['Content-Type' => shift @types]);
+    my $r = HTTP::Response->new(200, 'OK', ['Content-Type' => shift @types]);
+    $r->request( HTTP::Request->new(
+        GET => $url =~ /redirimage$/ ? 'http://flickr.com/realimage.jpg' : $url)
+    );
+    return $r;
 });
 
 $eup->portal(1);
@@ -373,7 +377,7 @@ for my $spec (
     [ 'redirimage' => [
         '<p>Caption for the image link.</p>',
         'image/jpeg',
-        'http://flickr.com/redirimage'
+        'http://flickr.com/realimage.jpg'
     ], 'redirected link' ],
 ) {
     is_deeply $dbh->selectrow_arrayref(
