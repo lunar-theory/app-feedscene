@@ -5,12 +5,12 @@ use utf8;
 use parent 'App::FeedScene::UA';
 use LWP::RobotUA;
 
-do {
+FUCKTYPE: {
     # Import the RobotUA interface. This way we get its behavior without
     # having to change LWP::UserAgent::WithCache's inheritance.
     no strict 'refs';
     while ( my ($k, $v) = each %{'LWP::RobotUA::'} ) {
-        *{$k} = *{$v}{CODE} if *{$v}{CODE} && $k !~ /^(?:new|host_wait)$/;
+        *{$k} = *{$v}{CODE} if *{$v}{CODE} and not *{$k}{CODE};
     }
 };
 
