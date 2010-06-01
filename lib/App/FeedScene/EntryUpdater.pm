@@ -336,7 +336,7 @@ sub _get_type {
     }
 
     # Maybe the thing redirects? Ask it for its content type.
-    my $res = App::FeedScene::UA->new($self->app)->head($url);
+    my $res = $self->ua->head($url);
     return $res->is_success ? scalar $res->content_type : undef;
 }
 
