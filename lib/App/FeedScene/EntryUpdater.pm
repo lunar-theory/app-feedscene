@@ -184,7 +184,7 @@ my %allowed = do {
     );
 };
 
-# Allow some elements may have other attributes.
+# A few elements may retain other attributes.
 $allowed{article} = { %{ $allowed{article} }, cite => 1, pubdate  => 1 };
 $allowed{del}     = { %{ $allowed{del} },     cite => 1, datetime => 1 };
 $allowed{details} = { %{ $allowed{details} }, open => 1 };
@@ -277,11 +277,12 @@ sub _find_summary {
     # Fetch a reasonable amount of the content to use as a summary.
     my $ret = '';
     for my $elem ($doc->findnodes('/html/body')->get_node(1)->childNodes) {
-        if ($elem->nodeType == XML_ELEMENT_NODE) {
-            # Clean the HTML.
-            $ret .= _clean_html($elem)->toString;
-            return $ret if length $ret > 140;
-        }
+        next if $elem->nodeType != XML_ELEMENT_NODE;
+        next unless $allowed{$elem->nodeName} or $keep_children{$elem->nodeName};
+
+        # Clean the HTML.
+        $ret .= _clean_html($elem)->toString;
+        return $ret if length $ret > 140;
     }
     return $ret;
 }

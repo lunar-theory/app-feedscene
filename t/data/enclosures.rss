@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:wfw="http://wellformedweb.org/CommentAPI/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/">
+  <channel>
+    <title>Simple Atom Feed</title> 
+    <link>http://example.org/</link>
+    <pubDate>2010-05-17T06:58:50-08:00</pubDate>
+
+    <item>
+      <title>This is the title</title>
+      <link>http://flickr.org/someimage</link>
+      <enclosure type="image/jpeg" url="http://farm2.static.flickr.org/1169/4601733070_92cd987ff5_o.jpg" />
+      <dc:date>2009-12-13T08:29:29Z</dc:date>
+      <description>&lt;p&gt;Caption for the encosed image.&lt;/p&gt;</description>
+    </item>
+
+    <item>
+      <title>This is the title</title>
+      <link>http://flickr.org/twoimages</link>
+      <enclosure type="image/jpeg" url="http://farm2.static.flickr.org/1169/4601733070_92cd987ff6_o.jpg" />
+      <enclosure type="image/jpeg" url="http://farm2.static.flickr.org/1169/4601733070_92cd987ff7_o.jpg" />
+      <dc:date>2009-12-13T08:19:29Z</dc:date>
+      <description>&lt;p&gt;Caption for both of the the encosed images.&lt;/p&gt;</description>
+    </item>
+
+    <item>
+      <title>This is the title</title>
+      <link>http://flickr.org/embeddedimage</link>
+      <dc:date>2009-12-13T08:18:29Z</dc:date>
+      <description>&lt;img src=&quot;http://flickr.org/someimage.jpg&quot; width=&quot;240&quot; height=&quot;240&quot; alt=&quot;Batista Cappucino&quot; /&gt;&lt;p&gt;Caption for the embedded image.&lt;/p&gt;</description>
+    </item>
+
+    <item>
+      <title>This is the title</title>
+      <link>http://flickr.org/embedtwo</link>
+      <dc:date>2009-12-13T08:18:29Z</dc:date>
+      <description>&lt;img src=&quot;http://flickr.org/someimage.jpg&quot; width=&quot;240&quot; height=&quot;240&quot; alt=&quot;Batista Cappucino&quot; /&gt;&lt;p&gt;Caption for both of the embedded images.&lt;/p&gt;&lt;img src=&quot;http://flickr.org/anotherimage.jpg&quot; /&gt;</description>
+    </item>
+
+    <item>
+      <title>This is the title</title>
+      <link>http://flickr.org/audio</link>
+      <enclosure type="audio/mpeg" url="http://flickr.org/audio.mp3" />
+      <dc:date>2009-12-13T08:29:29Z</dc:date>
+      <description>&lt;p&gt;Caption for the enclosed audio.&lt;/p&gt;</description>
+    </item>
+
+    <item>
+      <title>This is the title</title>
+      <link>http://flickr.org/video</link>
+      <enclosure type="video/mpeg" url="http://flickr.org/video.mov" />
+      <dc:date>2009-12-13T08:29:29Z</dc:date>
+      <description>&lt;p&gt;Caption for the enclosed video.&lt;/p&gt;</description>
+    </item>
+
+    <item>
+      <title>This is the title</title>
+      <link>http://flickr.org/embedaudio</link>
+      <dc:date>2009-12-13T08:29:29Z</dc:date>
+      <description>&lt;audio src=&quot;http://flickr.org/anotheraudio.mp3&quot; /&gt;&lt;p&gt;Caption for the embedded audio.&lt;/p&gt;</description>
+    </item>
+
+    <item>
+      <title>This is the title</title>
+      <link>http://flickr.org/embedvideo</link>
+      <dc:date>2009-12-13T08:29:29Z</dc:date>
+      <description>&lt;video src=&quot;http://flickr.org/anothervideo.mov&quot; /&gt;&lt;p&gt;Caption for the embedded video.&lt;/p&gt;</description>
+    </item>
+
+    <item>
+      <title>Unwanted Enclosure</title>
+      <link>http://flickr.org/unwanted</link>
+      <enclosure type="text/html" url="http://flickr.org/hi.html" />
+      <dc:date>2009-12-13T08:29:29Z</dc:date>
+      <description>&lt;p&gt;Caption for the enclosed audio.&lt;/p&gt;</description>
+    </item>
+
+    <item>
+      <title>Skip Unwanted Enclosure</title>
+      <link>http://flickr.org/skipunwanted</link>
+      <enclosure type="text/html" url="http://flickr.org/hi.html" />
+      <enclosure type="audio/mpeg" url="http://flickr.org/audio.mp3" />
+      <dc:date>2009-12-13T08:29:29Z</dc:date>
+      <description>&lt;p&gt;Caption for the enclosed audio.&lt;/p&gt;</description>
+    </item>
+
+    <item>
+      <title>Unwanted Embed</title>
+      <link>http://flickr.org/unwantedembed</link>
+      <dc:date>2009-12-13T08:29:29Z</dc:date>
+      <description>&lt;audio src=&quot;http://flickr.org/whatever.html&quot; /&gt;&lt;p&gt;Caption for the embedded audio.&lt;/p&gt;</description>
+    </item>
+
+    <item>
+      <title>Skip Unwanted Embed</title>
+      <link>http://flickr.org/skipembed</link>
+      <dc:date>2009-12-13T08:29:29Z</dc:date>
+      <description>&lt;audio src=&quot;http://flickr.org/whatever.html&quot; /&gt;&lt;p&gt;Caption for the embedded audio.&lt;/p&gt;&lt;audio src=&quot;http://flickr.org/audio.mp3&quot; /&gt;</description>
+    </item>
+
+    <item>
+      <title>Direct Link</title>
+      <link>http://flickr.org/audio.mp3</link>
+      <dc:date>2009-12-13T08:29:29Z</dc:date>
+      <description>&lt;p&gt;Caption for the audio link.&lt;/p&gt;</description>
+    </item>
+
+    <item>
+      <title>Redirect Link</title>
+      <link>http://flickr.org/redirimage</link>
+      <dc:date>2009-12-13T08:29:29Z</dc:date>
+      <description>&lt;p&gt;Caption for the image link.&lt;/p&gt;</description>
+    </item>
+
+  </channel>
+</rss>

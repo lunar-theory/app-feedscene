@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 82;
+use Test::More tests => 96;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
@@ -43,6 +43,7 @@ $conn->txn(sub {
         [ 0, 'dates.rss' ],
         [ 0, 'conflict.rss' ],
         [ 1, 'enclosures.atom' ],
+        [ 1, 'enclosures.rss' ],
     ) {
         $sth->execute($spec->[0], "$uri/$spec->[1]" );
     }
@@ -50,7 +51,7 @@ $conn->txn(sub {
 
 is $conn->run(sub {
     (shift->selectrow_array('SELECT COUNT(*) FROM feeds'))[0]
-}), 8, 'Should have eight feeds in the database';
+}), 9, 'Should have nine feeds in the database';
 test_counts(0, 'Should have no entries');
 
 # Construct a entry updater.
@@ -283,19 +284,24 @@ my @types = qw(
     text/html
     text/html
     image/jpeg
+    text/html
+    text/html
+    image/jpeg
 );
 $ua_mock->mock(head => sub {
     my ($self, $url) = @_;
     my $r = HTTP::Response->new(200, 'OK', ['Content-Type' => shift @types]);
-    $r->request( HTTP::Request->new(
-        GET => $url =~ /redirimage$/ ? 'http://flickr.com/realimage.jpg' : $url)
-    );
+    (my $u = $url) =~ s{redirimage$}{realimage.jpg};
+    $r->request( HTTP::Request->new(GET => $u) );
     return $r;
 });
 
 $eup->portal(1);
-ok $eup->process("$uri/enclosures.atom"), 'Process  Atom feed with enclosures';
+ok $eup->process("$uri/enclosures.atom"), 'Process Atom feed with enclosures';
 test_counts(40, 'Should now have 40 entries');
+
+ok $eup->process("$uri/enclosures.rss"), 'Process RSS feed with enclosures';
+test_counts(52, 'Should now have 52 entries');
 
 # First one is easy, has only one enclosure.
 is_deeply test_data('urn:uuid:afac4e17-4775-55c0-9e61-30d7630ea909'), {
@@ -326,8 +332,36 @@ is_deeply test_data('urn:uuid:844df0ef-fed0-54f0-ac7d-2470fa7e9a9c'), {
     url            => 'http://flickr.com/twoimages'
 }, 'Data for entry with two should have just the first enclosure';
 
-# Now check those that had no enclosure but pulled it in from the content.
+# Look at the RSS versions, too.
+is_deeply test_data('urn:uuid:c6598d85-1d0a-51dd-aa77-23deac7cada5'), {
+    author         => '',
+    enclosure_type => 'image/jpeg',
+    enclosure_url  => 'http://farm2.static.flickr.org/1169/4601733070_92cd987ff5_o.jpg',
+    feed_url       => 'file://localhost/Users/david/dev/github/app-feedscene/t/data/enclosures.rss',
+    id             => 'urn:uuid:c6598d85-1d0a-51dd-aa77-23deac7cada5',
+    portal         => 1,
+    published_at   => '2009-12-13T08:29:29Z',
+    summary        => '<p>Caption for the encosed image.</p>',
+    title          => 'This is the title',
+    updated_at     => '2009-12-13T08:29:29Z',
+    url            => 'http://flickr.org/someimage'
+}, 'Data for first entry with enclosure should be correct';
 
+is_deeply test_data('urn:uuid:4aef01ff-75c3-5dcb-a53f-878e3042f3cf'), {
+    author         => '',
+    enclosure_type => 'image/jpeg',
+    enclosure_url  => 'http://farm2.static.flickr.org/1169/4601733070_92cd987ff6_o.jpg',
+    feed_url       => 'file://localhost/Users/david/dev/github/app-feedscene/t/data/enclosures.rss',
+    id             => 'urn:uuid:4aef01ff-75c3-5dcb-a53f-878e3042f3cf',
+    portal         => 1,
+    published_at   => '2009-12-13T08:19:29Z',
+    summary        => '<p>Caption for both of the the encosed images.</p>',
+    title          => 'This is the title',
+    updated_at     => '2009-12-13T08:19:29Z',
+    url            => 'http://flickr.org/twoimages'
+}, 'Data for entry with two should have just the first enclosure';
+
+# Now check for various enclosure configurations in both Atom and RSS.
 for my $spec (
     [ 'embeddedimage' => [
         '<p>Caption for the embedded image.</p>',
@@ -383,7 +417,13 @@ for my $spec (
     is_deeply $dbh->selectrow_arrayref(
         'SELECT summary, enclosure_type, enclosure_url FROM entries WHERE id = ?',
         undef, _uuid('http://example.com/', "http://flickr.com/$spec->[0]")
-    ), $spec->[1], "Should have proper enclosure for $spec->[0]";
+    ), $spec->[1], "Should have proper Atom enclosure for $spec->[0]";
+
+    $spec->[1][2] =~ s{[.]com}{.org};
+    is_deeply $dbh->selectrow_arrayref(
+        'SELECT summary, enclosure_type, enclosure_url FROM entries WHERE id = ?',
+        undef, _uuid('http://example.org/', "http://flickr.org/$spec->[0]")
+    ), $spec->[1], "Should have proper RSS enclosure for $spec->[0]";
 }
 
 ##############################################################################
