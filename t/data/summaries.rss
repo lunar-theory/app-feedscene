@@ -143,6 +143,42 @@
       <description><![CDATA[<p>Summary <a href="http://foo.com/">with <i>emphasis</i></a> in anchor.</p>]]></description>
     </item>
 
+    <item>
+      <title>The Long Goodbye</title>
+      <link>http://foo.org/lg16</link>
+      <dc:date>2010-05-17T06:58:50-08:00</dc:date>
+      <dc:creator>Raymond Chandler</dc:creator>
+      <guid isPermaLink="false">http://foo.org/lg15</guid>
+      <description><![CDATA[<img src="foo.png" /><p>Summary with leading img.</p>]]></description>
+    </item>
+
+    <item>
+      <title>The Long Goodbye</title>
+      <link>http://foo.org/lg17</link>
+      <dc:date>2010-05-17T06:58:50-08:00</dc:date>
+      <dc:creator>Raymond Chandler</dc:creator>
+      <guid isPermaLink="false">http://foo.org/lg17</guid>
+      <description><![CDATA[<p>Summary with trailing img.</p><img src="foo.png" />]]></description>
+    </item>
+
+    <item>
+      <title>The Long Goodbye</title>
+      <link>http://foo.org/lg18</link>
+      <dc:date>2010-05-17T06:58:50-08:00</dc:date>
+      <dc:creator>Raymond Chandler</dc:creator>
+      <guid isPermaLink="false">http://foo.org/lg18</guid>
+      <description><![CDATA[<center><p>Centered Summary paragraph</p></center>]]></description>
+    </item>
+
+    <item>
+      <title>The Long Goodbye</title>
+      <link>http://foo.org/lg19</link>
+      <dc:date>2010-05-17T06:58:50-08:00</dc:date>
+      <dc:creator>Raymond Chandler</dc:creator>
+      <guid isPermaLink="false">http://foo.org/lg19</guid>
+      <description><![CDATA[<center>Centered Summary</center>]]></description>
+    </item>
+
 
   </channel>
 </rss>

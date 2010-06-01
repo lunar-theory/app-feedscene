@@ -22,6 +22,7 @@ my $parser = XML::LibXML->new({
     no_network => 1,
     no_blanks  => 1,
     encoding   => 'utf8',
+    no_cdata   => 1,
 });
 
 my $libxml_options = {
@@ -229,14 +230,14 @@ sub _clean_html {
                 }
             } else {
                 # You are not wanted.
-                my $parent  = $elem->parentNode;
-                my $sibling = $elem->nextSibling;
+                my $parent = $elem->parentNode;
                 if ($keep_children{$name}) {
                     # Keep the children.
                     $parent->insertAfter($_, $elem) for reverse $elem->childNodes;
                 }
 
                 # Take it out jump to the next sibling.
+                my $sibling = $elem->nextSibling;
                 $parent->removeChild($elem);
                 $elem = $sibling;
                 next;
@@ -276,9 +277,26 @@ sub _find_summary {
 
     # Fetch a reasonable amount of the content to use as a summary.
     my $ret = '';
-    for my $elem ($doc->findnodes('/html/body')->get_node(1)->childNodes) {
+    my @nodes = $doc->findnodes('/html/body')->get_node(1)->childNodes;
+    while (@nodes) {
+        my $elem = shift @nodes;
         next if $elem->nodeType != XML_ELEMENT_NODE;
-        next unless $allowed{$elem->nodeName} or $keep_children{$elem->nodeName};
+        unless ($allowed{$elem->nodeName}) {
+            # We don't want this element.
+            if ($keep_children{$elem->nodeName}) {
+                # But we want its children.
+                unshift @nodes, map {
+                    if ($_->nodeType == XML_TEXT_NODE) {
+                        my $n = XML::LibXML::Element->new('p');
+                        $n->addChild($_);
+                        $n;
+                    } else {
+                        $_;
+                    }
+                } $elem->childNodes;
+            }
+            next;
+        }
 
         # Clean the HTML.
         $ret .= _clean_html($elem)->toString;

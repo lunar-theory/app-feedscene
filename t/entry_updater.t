@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 96;
+use Test::More tests => 100;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
@@ -211,7 +211,7 @@ is $summary, '<p>Latin-1: æåø</p>', 'Latin-1 Summary should be UTF-8';
 ##############################################################################
 # Test a variety of RSS summary formats.
 ok $eup->process("$uri/summaries.rss"), 'Process RSS feed with various summaries';
-test_counts(21, 'Should now have 21 entries');
+test_counts(25, 'Should now have 25 entries');
 
 my $dbh = $conn->dbh;
 for my $spec (
@@ -230,6 +230,10 @@ for my $spec (
     [ 13 => '<p>First graph.</p><p>Second graph.</p><p>Third graph with a lot more stuff in it, to get us over 140 characters, if you know what I mean.</p><p>Fourth graph should be included.</p>'],
     [ 14 => '<p>Summary with <em>emphasis</em> complementing content.</p>' ],
     [ 15 => '<p>Summary with <i>emphasis</i> in anchor.</p>' ],
+    [ 16 => '<p>Summary with leading img.</p>' ],
+    [ 17 => '<p>Summary with trailing img.</p>' ],
+    [ 18 => '<p>Centered Summary paragraph</p>' ],
+    [ 19 => '<p>Centered Summary</p>' ],
 ) {
     is +($dbh->selectrow_array(
         'SELECT summary FROM entries WHERE id = ?',
@@ -240,7 +244,7 @@ for my $spec (
 ##############################################################################
 # Try a bunch of different date combinations.
 ok $eup->process("$uri/dates.rss"), 'Process RSS feed with various dates';
-test_counts(27, 'Should now have 27 entries');
+test_counts(31, 'Should now have 31 entries');
 
 for my $spec (
     [ 1 => ['2010-05-17T06:58:50Z', '2010-05-17T07:45:09Z'], 'both dates' ],
@@ -260,7 +264,7 @@ for my $spec (
 ##############################################################################
 # Try a feed with a duplicate URI and no GUID.
 ok $eup->process("$uri/conflict.rss"), 'Process RSS feed with a duplicate link';
-test_counts(28, 'Should now have 28 entries');
+test_counts(32, 'Should now have 32 entries');
 
 # So now we should have two records with the same URL but different IDs.
 is_deeply $dbh->selectall_arrayref(
@@ -298,10 +302,10 @@ $ua_mock->mock(head => sub {
 
 $eup->portal(1);
 ok $eup->process("$uri/enclosures.atom"), 'Process Atom feed with enclosures';
-test_counts(40, 'Should now have 40 entries');
+test_counts(44, 'Should now have 44 entries');
 
 ok $eup->process("$uri/enclosures.rss"), 'Process RSS feed with enclosures';
-test_counts(52, 'Should now have 52 entries');
+test_counts(56, 'Should now have 56 entries');
 
 # First one is easy, has only one enclosure.
 is_deeply test_data('urn:uuid:afac4e17-4775-55c0-9e61-30d7630ea909'), {
