@@ -301,7 +301,7 @@ sub _find_enclosure {
         next unless $content;
         my $body = $content->body or next;
         my $doc = $parser->parse_html_string($body, $libxml_options) or next;
-        for my $node ($doc->findnodes('//img/@src|//audio/@href|//video/@href')) {
+        for my $node ($doc->findnodes('//img/@src|//audio/@src|//video/@src')) {
             my $url = $node->nodeValue or next;
             my $type = $self->_get_type($url) or next;
             # XXX: Is there a type attribute in HTML?

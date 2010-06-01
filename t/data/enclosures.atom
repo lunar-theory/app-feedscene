@@ -58,14 +58,14 @@
     <title>This is the title</title>
     <link rel="alternate" href="http://flickr.com/embedaudio" />
     <published>2009-12-13T08:29:29Z</published>
-    <summary type="html">&lt;audio href=&quot;http://flickr.com/anotheraudio.mp3&quot; /&gt;&lt;p&gt;Caption for the embedded audio.&lt;/p&gt;</summary>
+    <summary type="html">&lt;audio src=&quot;http://flickr.com/anotheraudio.mp3&quot; /&gt;&lt;p&gt;Caption for the embedded audio.&lt;/p&gt;</summary>
   </entry>
 
   <entry>
     <title>This is the title</title>
     <link rel="alternate" href="http://flickr.com/embedvideo" />
     <published>2009-12-13T08:29:29Z</published>
-    <summary type="html">&lt;video href=&quot;http://flickr.com/anothervideo.mov&quot; /&gt;&lt;p&gt;Caption for the embedded video.&lt;/p&gt;</summary>
+    <summary type="html">&lt;video src=&quot;http://flickr.com/anothervideo.mov&quot; /&gt;&lt;p&gt;Caption for the embedded video.&lt;/p&gt;</summary>
   </entry>
 
   <entry>
@@ -89,14 +89,14 @@
     <title>Unwanted Embed</title>
     <link rel="alternate" href="http://flickr.com/unwantedembed" />
     <published>2009-12-13T08:29:29Z</published>
-    <summary type="html">&lt;audio href=&quot;http://flickr.com/whatever.html&quot; /&gt;&lt;p&gt;Caption for the embedded audio.&lt;/p&gt;</summary>
+    <summary type="html">&lt;audio src=&quot;http://flickr.com/whatever.html&quot; /&gt;&lt;p&gt;Caption for the embedded audio.&lt;/p&gt;</summary>
   </entry>
 
   <entry>
     <title>Skip Unwanted Embed</title>
     <link rel="alternate" href="http://flickr.com/skipembed" />
     <published>2009-12-13T08:29:29Z</published>
-    <summary type="html">&lt;audio href=&quot;http://flickr.com/whatever.html&quot; /&gt;&lt;p&gt;Caption for the embedded audio.&lt;/p&gt;&lt;audio href=&quot;http://flickr.com/audio.mp3&quot; /&gt;</summary>
+    <summary type="html">&lt;audio src=&quot;http://flickr.com/whatever.html&quot; /&gt;&lt;p&gt;Caption for the embedded audio.&lt;/p&gt;&lt;audio src=&quot;http://flickr.com/audio.mp3&quot; /&gt;</summary>
   </entry>
 
   <entry>
