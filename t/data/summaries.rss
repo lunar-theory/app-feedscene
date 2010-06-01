@@ -179,6 +179,15 @@
       <description><![CDATA[<center>Centered Summary</center>]]></description>
     </item>
 
+    <item>
+      <title>The Long Goodbye</title>
+      <link>http://foo.org/lg20</link>
+      <dc:date>2010-05-17T06:58:50-08:00</dc:date>
+      <dc:creator>Raymond Chandler</dc:creator>
+      <guid isPermaLink="false">http://foo.org/lg20</guid>
+      <description><![CDATA[Summary with no tag but a <a href="foo">link</a>.]]></description>
+    </item>
+
 
   </channel>
 </rss>
