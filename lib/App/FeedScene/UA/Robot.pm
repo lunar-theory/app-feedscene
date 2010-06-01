@@ -36,7 +36,7 @@ sub host_wait {
 
 =head1 Name
 
-App::FeedScene::UA - FeedScene Internet user agent
+App::FeedScene::UA::Robot - FeedScene robots.txt-respecting internet user agent
 
 =head1 Author
 
