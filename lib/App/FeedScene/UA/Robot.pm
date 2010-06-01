@@ -15,17 +15,18 @@ FUCKTYPE: {
 };
 
 sub new {
-    my ($class, $app) = (shift, shift);
+    my ($class, $app, $delay) = @_;
     # Force RobotUA configuration.
     local @LWP::UserAgent::WithCache::ISA = ('LWP::RobotUA');
-    return $class->SUPER::new(
-        $app,
-        delay => 1, # be very nice -- max one hit per minute.
-    );
+    my $self = $class->SUPER::new($app, delay => $delay);
+    $self->delay(0) unless $delay;
+    return $self;
 }
 
 sub host_wait {
     my ($self, $netloc) = @_;
+    # Return false if no delay.
+    return unless $self->delay;
     # First visit is for robots.txt, so let it be free.
     return if !$netloc || $self->no_visits($netloc) < 2;
     $self->LWP::RobotUA::host_wait($netloc);
