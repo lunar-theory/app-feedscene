@@ -304,7 +304,6 @@ sub _find_enclosure {
         for my $node ($doc->findnodes('//img/@src|//audio/@src|//video/@src')) {
             my $url = $node->nodeValue or next;
             my $type = $self->_get_type($url) or next;
-            # XXX: Is there a type attribute in HTML?
             return $type, $url if $type =~ m{^(?:image|audio|video)/};
         }
     }
