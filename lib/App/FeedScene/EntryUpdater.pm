@@ -4,6 +4,7 @@ use 5.12.0;
 use utf8;
 use App::FeedScene;
 use App::FeedScene::UA;
+use lib '/Users/david/dev/perl/XML-Feed/lib';
 use XML::Feed;
 use XML::Feed::Enclosure;
 use HTTP::Status qw(HTTP_NOT_MODIFIED);
@@ -15,6 +16,7 @@ use Class::XSAccessor constructor => 'new', accessors => { map { $_ => $_ } qw(
    app
    portal
    ua
+   verbose
 ) };
 
 my $parser = XML::LibXML->new({
@@ -30,12 +32,14 @@ my $libxml_options = {
     suppress_warnings => 1,
 };
 
-$XML::Feed::RSS::PREFERRED_PARSER = 'XML::RSS::LibXML';
+$XML::Feed::Format::RSS::PREFERRED_PARSER = 'XML::RSS::LibXML';
 $XML::Feed::MULTIPLE_ENCLOSURES = 1;
 $XML::Atom::ForceUnicode = 1;
 
 sub run {
     my $self = shift;
+    say "Updating ", $self->app, ' portal ', $self->portal
+        if $self->verbose;
 
     $self->ua(App::FeedScene::UA->new($self->app));
     my $sth = App::FeedScene->new($self->app)->conn->run(sub {
@@ -54,6 +58,7 @@ sub run {
 sub process {
     my ($self, $feed_url) = @_;
     my $portal = $self->portal;
+    say "  Processing $feed_url" if $self->verbose;
 
     my $res = $self->ua->get($feed_url);
     require Carp && Carp::croak("Error retrieving $feed_url: " . $res->status_line)
@@ -261,6 +266,7 @@ sub _clean_html {
 
 sub _find_summary {
     my $entry = shift;
+    use Carp;
     if (my $sum = $entry->summary) {
         if (my $body = $sum->body) {
             # We got something here. Clean it up and return it.

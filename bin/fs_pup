@@ -11,7 +11,7 @@ GetOptions(
     'app|a=s'    => \my $app,
     'portal|p=i' => \my $portal,
     'all'        => \my $all,
-#   'verbose|V+' => \my $verbose,
+    'verbose|V+' => \my $verbose,
     'help|h'     => \my $help,
     'man|m'      => \my $man,
     'version|v'  => \my $version,
@@ -37,6 +37,7 @@ for my $p (defined $portal ? ($portal) : (0..6)) {
     App::FeedScene::EntryUpdater->new(
         app    => $app,
         portal => $p,
+        verbose => $verbose,
     )->run;
 }
 
@@ -70,6 +71,7 @@ FeedScene feed.
   -a --app NAME       Name of the FeedScene app.
   -u --portal PORTAL  Portal number to update.
      --all            Update all portals.
+  -V --verbose        Output status messages to STDERR.
   -h --help           Print a usage statement and exit.
   -m --man            Print the complete documentation and exit.
   -v --version        Print the version number and exit.
