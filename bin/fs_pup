@@ -52,22 +52,24 @@ sub _pod2usage {
 
 =head1 Name
 
-fs_lup - FeedScene link updater
+fs_lup - FeedScene portal updater
 
 =head1 Usage
 
-  fs_lup --app APPNAME --url URL
+  fs_lup --app APPNAME --portal PORTAL
 
 =head1 Description
 
-This program downloads a CSV file from a URL, parses it, and updates the
-C<links> table in the app database. It should be regularly run from a cron job
-to keep the list of feed URLs for an app up-to-date.
+This program updates a portal (or all portals) in the database by reading
+the list of feeds from the portal, fetching them, parsing their contents,
+and then storing them in the database ready to be generated into an updated
+FeedScene feed.
 
 =head1 Options
 
   -a --app NAME       Name of the FeedScene app.
-  -u --url URL        URL for a CSV file
+  -u --portal PORTAL  Portal number to update.
+     --all            Update all portals.
   -h --help           Print a usage statement and exit.
   -m --man            Print the complete documentation and exit.
   -v --version        Print the version number and exit.
