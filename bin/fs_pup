@@ -3,13 +3,14 @@
 use 5.12.0;
 
 use lib 'lib';
-use App::FeedScene::LinkUpdater;
+use App::FeedScene::EntryUpdater;
 use Getopt::Long;
 Getopt::Long::Configure( qw(bundling) );
 
 GetOptions(
     'app|a=s'    => \my $app,
-    'url|u=s'    => \my $url,
+    'portal|p=i' => \my $portal,
+    'all'        => \my $all,
 #   'verbose|V+' => \my $verbose,
     'help|h'     => \my $help,
     'man|m'      => \my $man,
@@ -29,12 +30,15 @@ if ($version) {
 }
 
 _pod2usage('-message' => 'Missing or invalid --app option') unless $app;
-_pod2usage('-message' => 'Missing or invalid --url option') unless $url;
+_pod2usage('-message' => 'Missing or invalid --portal or --all option')
+    unless defined $portal || $all;
 
-App::FeedScene::LinkUpdater->new(
-    app  => $app,
-    url  => $url
-)->run;
+for my $p (defined $portal ? ($portal) : (0..6)) {
+    App::FeedScene::EntryUpdater->new(
+        app    => $app,
+        portal => $p,
+    )->run;
+}
 
 sub _pod2usage {
     require Pod::Usage;

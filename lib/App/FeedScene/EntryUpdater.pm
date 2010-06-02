@@ -3,7 +3,7 @@ package App::FeedScene::EntryUpdater 0.01;
 use 5.12.0;
 use utf8;
 use App::FeedScene;
-use App::FeedScene::UA::Robot;
+use App::FeedScene::UA;
 use XML::Feed;
 use XML::Feed::Enclosure;
 use HTTP::Status qw(HTTP_NOT_MODIFIED);
@@ -37,7 +37,7 @@ $XML::Atom::ForceUnicode = 1;
 sub run {
     my $self = shift;
 
-    $self->ua(App::FeedScene::UA::Robot->new($self->app));
+    $self->ua(App::FeedScene::UA->new($self->app));
     my $sth = App::FeedScene->new($self->app)->conn->run(sub {
         shift->prepare('SELECT url FROM feeds WHERE portal = ?');
     });
