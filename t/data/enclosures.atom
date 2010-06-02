@@ -12,6 +12,7 @@
     <link rel="enclosure" type="image/jpeg" href="http://farm2.static.flickr.com/1169/4601733070_92cd987ff5_o.jpg" />
     <published>2009-12-13T08:29:29Z</published>
     <summary type="html">&lt;p&gt;Caption for the encosed image.&lt;/p&gt;</summary>
+    <content type="html">&lt;p&gt;Content&lt;/p&gt;</content>
   </entry>
 
   <entry>
@@ -21,6 +22,7 @@
     <link rel="enclosure" type="image/jpeg" href="http://farm2.static.flickr.com/1169/4601733070_92cd987ff7_o.jpg" />
     <published>2009-12-13T08:19:29Z</published>
     <summary type="html">&lt;p&gt;Caption for both of the the encosed images.&lt;/p&gt;</summary>
+    <content type="html">&lt;p&gt;Content&lt;/p&gt;</content>
   </entry>
 
   <entry>
@@ -28,6 +30,7 @@
     <link rel="alternate" href="http://flickr.com/embeddedimage" />
     <published>2009-12-13T08:18:29Z</published>
     <summary type="html">&lt;img src=&quot;http://flickr.com/someimage.jpg&quot; width=&quot;240&quot; height=&quot;240&quot; alt=&quot;Batista Cappucino&quot; /&gt;&lt;p&gt;Caption for the embedded image.&lt;/p&gt;</summary>
+    <content type="html">&lt;p&gt;Content&lt;/p&gt;</content>
   </entry>
 
   <entry>
@@ -35,6 +38,7 @@
     <link rel="alternate" href="http://flickr.com/embedtwo" />
     <published>2009-12-13T08:18:29Z</published>
     <summary type="html">&lt;img src=&quot;http://flickr.com/someimage.jpg&quot; width=&quot;240&quot; height=&quot;240&quot; alt=&quot;Batista Cappucino&quot; /&gt;&lt;p&gt;Caption for both of the embedded images.&lt;/p&gt;&lt;img src=&quot;http://flickr.com/anotherimage.jpg&quot; /&gt;</summary>
+    <content type="html">&lt;p&gt;Content&lt;/p&gt;</content>
   </entry>
 
   <entry>
@@ -43,6 +47,7 @@
     <link rel="enclosure" type="audio/mpeg" href="http://flickr.com/audio.mp3" />
     <published>2009-12-13T08:29:29Z</published>
     <summary type="html">&lt;p&gt;Caption for the enclosed audio.&lt;/p&gt;</summary>
+    <content type="html">&lt;p&gt;Content&lt;/p&gt;</content>
   </entry>
 
   <entry>
@@ -51,14 +56,15 @@
     <link rel="enclosure" type="video/mpeg" href="http://flickr.com/video.mov" />
     <published>2009-12-13T08:29:29Z</published>
     <summary type="html">&lt;p&gt;Caption for the enclosed video.&lt;/p&gt;</summary>
+    <content type="html">&lt;p&gt;Content&lt;/p&gt;</content>
   </entry>
-
 
   <entry>
     <title>This is the title</title>
     <link rel="alternate" href="http://flickr.com/embedaudio" />
     <published>2009-12-13T08:29:29Z</published>
     <summary type="html">&lt;audio src=&quot;http://flickr.com/anotheraudio.mp3&quot; /&gt;&lt;p&gt;Caption for the embedded audio.&lt;/p&gt;</summary>
+    <content type="html">&lt;p&gt;Content&lt;/p&gt;</content>
   </entry>
 
   <entry>
@@ -66,6 +72,7 @@
     <link rel="alternate" href="http://flickr.com/embedvideo" />
     <published>2009-12-13T08:29:29Z</published>
     <summary type="html">&lt;video src=&quot;http://flickr.com/anothervideo.mov&quot; /&gt;&lt;p&gt;Caption for the embedded video.&lt;/p&gt;</summary>
+    <content type="html">&lt;p&gt;Content&lt;/p&gt;</content>
   </entry>
 
   <entry>
@@ -74,6 +81,7 @@
     <link rel="enclosure" type="text/html" href="http://flickr.com/hi.html" />
     <published>2009-12-13T08:29:29Z</published>
     <summary type="html">&lt;p&gt;Caption for the enclosed audio.&lt;/p&gt;</summary>
+    <content type="html">&lt;p&gt;Content&lt;/p&gt;</content>
   </entry>
 
   <entry>
@@ -83,6 +91,7 @@
     <link rel="enclosure" type="audio/mpeg" href="http://flickr.com/audio.mp3" />
     <published>2009-12-13T08:29:29Z</published>
     <summary type="html">&lt;p&gt;Caption for the enclosed audio.&lt;/p&gt;</summary>
+    <content type="html">&lt;p&gt;Content&lt;/p&gt;</content>
   </entry>
 
   <entry>
@@ -90,6 +99,7 @@
     <link rel="alternate" href="http://flickr.com/unwantedembed" />
     <published>2009-12-13T08:29:29Z</published>
     <summary type="html">&lt;audio src=&quot;http://flickr.com/whatever.html&quot; /&gt;&lt;p&gt;Caption for the embedded audio.&lt;/p&gt;</summary>
+    <content type="html">&lt;p&gt;Content&lt;/p&gt;</content>
   </entry>
 
   <entry>
@@ -97,6 +107,7 @@
     <link rel="alternate" href="http://flickr.com/skipembed" />
     <published>2009-12-13T08:29:29Z</published>
     <summary type="html">&lt;audio src=&quot;http://flickr.com/whatever.html&quot; /&gt;&lt;p&gt;Caption for the embedded audio.&lt;/p&gt;&lt;audio src=&quot;http://flickr.com/audio.mp3&quot; /&gt;</summary>
+    <content type="html">&lt;p&gt;Content&lt;/p&gt;</content>
   </entry>
 
   <entry>
@@ -104,6 +115,7 @@
     <link rel="alternate" href="http://flickr.com/audio.mp3" />
     <published>2009-12-13T08:29:29Z</published>
     <summary type="html">&lt;p&gt;Caption for the audio link.&lt;/p&gt;</summary>
+    <content type="html">&lt;p&gt;Content&lt;/p&gt;</content>
   </entry>
 
   <entry>
@@ -111,7 +123,7 @@
     <link rel="alternate" href="http://flickr.com/redirimage" />
     <published>2009-12-13T08:29:29Z</published>
     <summary type="html">&lt;p&gt;Caption for the image link.&lt;/p&gt;</summary>
+    <content type="html">&lt;p&gt;Content&lt;/p&gt;</content>
   </entry>
-
 
 </feed>

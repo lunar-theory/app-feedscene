@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 102;
+use Test::More tests => 101;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
@@ -19,9 +19,6 @@ BEGIN {
 }
 
 END { File::Path::remove_tree 'cache/foo' };
-
-is $XML::Feed::Format::RSS::PREFERRED_PARSER, 'XML::RSS::LibXML',
-    'Should have selected XML::RSS::LibXML parser';
 
 my $uri = 'file://localhost' . File::Spec->rel2abs('t/data');
 

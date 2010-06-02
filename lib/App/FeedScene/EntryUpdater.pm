@@ -4,9 +4,9 @@ use 5.12.0;
 use utf8;
 use App::FeedScene;
 use App::FeedScene::UA;
-use lib '/Users/david/dev/perl/XML-Feed/lib';
-use XML::Feed;
-use XML::Feed::Enclosure;
+use Data::Feed;
+use Data::Feed::Parser::Atom;
+use Data::Feed::Parser::RSS;
 use HTTP::Status qw(HTTP_NOT_MODIFIED);
 use XML::LibXML qw(XML_ELEMENT_NODE XML_TEXT_NODE);
 use OSSP::uuid;
@@ -19,22 +19,22 @@ use Class::XSAccessor constructor => 'new', accessors => { map { $_ => $_ } qw(
    verbose
 ) };
 
-my $parser = XML::LibXML->new({
+my $libxml_options = {
     recover    => 2,
     no_network => 1,
     no_blanks  => 1,
     encoding   => 'utf8',
     no_cdata   => 1,
-});
+};
+my $parser = XML::LibXML->new($libxml_options);
 
-my $libxml_options = {
+my $parse_options = {
     suppress_errors   => 1,
     suppress_warnings => 1,
 };
 
-$XML::Feed::Format::RSS::PREFERRED_PARSER = 'XML::RSS::LibXML';
-$XML::Feed::MULTIPLE_ENCLOSURES = 1;
 $XML::Atom::ForceUnicode = 1;
+$Data::Feed::Parser::RSS::PARSER_CLASS = 'App::FeedScene::Parser::RSS';
 
 sub run {
     my $self = shift;
@@ -65,7 +65,7 @@ sub process {
         unless $res->is_success or $res->code == HTTP_NOT_MODIFIED;
     return $self if $res->code == HTTP_NOT_MODIFIED;
 
-    my $feed = XML::Feed->parse(\$res->content);
+    my $feed = Data::Feed->parse(\$res->content);
 
     App::FeedScene->new($self->app)->conn->txn(sub {
         my $dbh = shift;
@@ -271,7 +271,7 @@ sub _find_summary {
         if (my $body = $sum->body) {
             # We got something here. Clean it up and return it.
             return join '', map { $_->toString } _clean_html(
-                $parser->parse_html_string($body, $libxml_options)->firstChild
+                $parser->parse_html_string($body, $parse_options)->firstChild
             )->childNodes;
         }
     }
@@ -279,7 +279,7 @@ sub _find_summary {
     # Try the content of the entry.
     my $content = $entry->content or return '';
     my $body    = $content->body  or return '';
-    my $doc     = $parser->parse_html_string($body, $libxml_options);
+    my $doc     = $parser->parse_html_string($body, $parse_options);
 
     # Fetch a reasonable amount of the content to use as a summary.
     my $ret = '';
@@ -314,8 +314,7 @@ sub _find_summary {
 
 sub _find_enclosure {
     my ($self, $entry) = @_;
-    for my $enc ($entry->enclosure) {
-        next unless $enc; # enclosure() returns undef instead of an empty list!
+    for my $enc ($entry->enclosures) {
         my $type = $enc->type or next;
         next if $type !~ m{^(?:image|audio|video)/};
         return $enc->type, $enc->url;
@@ -325,7 +324,7 @@ sub _find_enclosure {
     for my $content ($entry->content, $entry->summary) {
         next unless $content;
         my $body = $content->body or next;
-        my $doc = $parser->parse_html_string($body, $libxml_options) or next;
+        my $doc = $parser->parse_html_string($body, $parse_options) or next;
         for my $node ($doc->findnodes('//img/@src|//audio/@src|//video/@src')) {
             my $url = $node->nodeValue or next;
             (my($type), $url) = $self->_get_type($url) or next;
@@ -362,6 +361,12 @@ sub _get_type {
     # Maybe the thing redirects? Ask it for its content type.
     my $res = $self->ua->head($url);
     return $res->is_success ? (scalar $res->content_type, $res->request->uri) : undef;
+}
+
+RSSPARSER: {
+    package App::FeedScene::Parser::RSS;
+    use parent 'XML::RSS::LibXML';
+    sub create_libxml { $parser }
 }
 
 1;

@@ -10,36 +10,42 @@
       <link>http://baz.org/lg1</link>
       <dc:date>2010-05-17T06:58:50Z</dc:date>
       <dcterms:modified>2010-05-17T07:45:09Z</dcterms:modified>
+      <content:encoded><![CDATA[whatever]]></content:encoded>
     </item>
 
     <item>
       <title>The Long Goodbye</title>
       <link>http://baz.org/lg2</link>
       <dc:date>2010-05-17T06:58:50Z</dc:date>
+      <content:encoded><![CDATA[whatever]]></content:encoded>
     </item>
 
     <item>
       <title>The Long Goodbye</title>
       <link>http://baz.org/lg3</link>
       <dcterms:modified>2010-05-17T07:45:09Z</dcterms:modified>
+      <content:encoded><![CDATA[whatever]]></content:encoded>
     </item>
 
     <item>
       <title>The Long Goodbye</title>
       <link>http://baz.org/lg4</link>
       <pubDate>17 May 2010</pubDate>
+      <content:encoded><![CDATA[whatever]]></content:encoded>
     </item>
 
     <item>
       <title>The Long Goodbye</title>
       <link>http://baz.org/lg5</link>
       <dc:date>2010-05-17T06:58:50-08:00</dc:date>
+      <content:encoded><![CDATA[whatever]]></content:encoded>
     </item>
 
     <item>
       <title>The Long Goodbye</title>
       <link>http://baz.org/lg6</link>
       <dc:date>2010-05-17T06:58:50 America/Chicago</dc:date>
+      <content:encoded><![CDATA[whatever]]></content:encoded>
     </item>
 
   </channel>

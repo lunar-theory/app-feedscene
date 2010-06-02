@@ -19,6 +19,7 @@ Module::Build->new(
     },
     requires           => {
         'Class::XSAccessor'         => '1.05',
+        'Data::Feed'                => '0.00011',
         'DBD::SQLite'               => '1.29',
         'DBI'                       => '1.608',
         'DBIx::Connector'           => '0.34',
@@ -30,7 +31,6 @@ Module::Build->new(
         'perl'                      => 5.012,
         'Pod::Usage'                => '1.36',
         'Text::CSV_XS'              => '0.73',
-        'XML::Feed'                 => '0.43',
         'XML::LibXML'               => '1.70',
         'XML::RSS::LibXML'          => '0.3004',
     },
