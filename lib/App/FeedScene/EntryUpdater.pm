@@ -87,7 +87,9 @@ sub process {
         });
 
         my @ids;
+        my $be_verbose = ($self->verbose || 0) > 1;
         for my $entry ($feed->entries) {
+            say '    ', $entry->link if $be_verbose;
             my ($enc_type, $enc_url) = ('', '');
 
             if ($portal) {

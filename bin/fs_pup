@@ -71,7 +71,7 @@ FeedScene feed.
   -a --app NAME       Name of the FeedScene app.
   -u --portal PORTAL  Portal number to update.
      --all            Update all portals.
-  -V --verbose        Output status messages to STDERR.
+  -V --verbose        Incremental verbosity to STDERR.
   -h --help           Print a usage statement and exit.
   -m --man            Print the complete documentation and exit.
   -v --version        Print the version number and exit.
