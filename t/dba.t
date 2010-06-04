@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 25;
+use Test::More tests => 21;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::File;
@@ -28,18 +28,6 @@ ok $dba = App::FeedScene::DBA->new( app => 'hey' ),
     'Create another DBA object';
 
 is $dba->app,     'hey',     'The app attribute should be set';
-is $dba->client,  'sqlite3', 'The client attribute should be the default';
-is $dba->sql_dir, File::Spec->rel2abs('sql'),
-    'The sql_dir attribute should be the default';
-
-# Try default values with undefs.
-ok $dba = App::FeedScene::DBA->new(
-    app     => 'yo',
-    client  => undef,
-    sql_dir => undef,
-), 'Create a DBA object with undefs';
-
-is $dba->app,     'yo',      'The app attribute should be set';
 is $dba->client,  'sqlite3', 'The client attribute should be the default';
 is $dba->sql_dir, File::Spec->rel2abs('sql'),
     'The sql_dir attribute should be the default';

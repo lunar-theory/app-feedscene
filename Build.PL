@@ -18,7 +18,6 @@ Module::Build->new(
         'Test::NoWarnings' => '1.01',
     },
     requires           => {
-        'Class::XSAccessor'         => '1.05',
         'Data::Feed'                => '0.00013',
         'DBD::SQLite'               => '1.29',
         'DBI'                       => '1.608',
@@ -27,13 +26,14 @@ Module::Build->new(
         'LWP'                       => '5.835',
         'LWP::UserAgent::WithCache' => '0.11',
         'MIME::Types'               => '1.29',
+        'Moose'                     => '1.06',
         'OSSP::uuid'                => '1.0602',
         'perl'                      => 5.012,
         'Pod::Usage'                => '1.36',
         'Text::CSV_XS'              => '0.73',
+        'URI'                       => '1.54',
         'XML::LibXML'               => '1.70',
         'XML::RSS::LibXML'          => '0.3006',
-        'URI'                       => '1.54',
     },
     recommends         => {
         'Test::Pod'           => '1.41',

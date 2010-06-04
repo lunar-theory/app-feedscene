@@ -6,13 +6,14 @@ use DBD::SQLite 1.29;
 use DBIx::Connector 0.34;
 use Exception::Class::DBI 1.0;
 Exception::Class::DBI->Trace(1);
+use Moose;
 
 our $SELF;
 
-use Class::XSAccessor accessors => { map { $_ => $_ } qw(
-    app
-    conn
-) };
+has app  => (is => 'rw', isa => 'Str');
+has conn => (is => 'rw', isa => 'DBIx::Connector');
+
+no Moose;
 
 sub new {
     my ($class, $app) = @_;

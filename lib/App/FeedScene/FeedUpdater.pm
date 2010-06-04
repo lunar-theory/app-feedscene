@@ -6,11 +6,12 @@ use App::FeedScene;
 use App::FeedScene::UA;
 use Text::CSV_XS;
 use HTTP::Status qw(HTTP_NOT_MODIFIED);
+use Moose;
 
-use Class::XSAccessor constructor => 'new', accessors => { map { $_ => $_ } qw(
-   app
-   url
-) };
+has app => (is => 'rw', isa => 'Str');
+has url => (is => 'rw', isa => 'Str');
+
+no Moose;
 
 sub run {
     my $self = shift;

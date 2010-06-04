@@ -3,21 +3,14 @@ package App::FeedScene::DBA;
 use 5.12.0;
 use utf8;
 use App::FeedScene;
-
-use Class::XSAccessor constructor => '_new', accessors => { map { $_ => $_ } qw(
-    app
-    client
-    sql_dir
-) };
+use Moose;
 
 (my $def_dir = __FILE__) =~ s{(?:blib/)?lib/App/FeedScene/DBA[.]pm$}{sql};
+has app     => (is => 'rw', isa => 'Str');
+has client  => (is => 'rw', isa => 'Str', default => 'sqlite3');
+has sql_dir => (is => 'rw', isa => 'Str', default => $def_dir );
 
-sub new {
-    my $self = shift->_new(@_);
-    $self->sql_dir($def_dir) unless $self->sql_dir;
-    $self->client('sqlite3') unless $self->client;
-    return $self;
-}
+no Moose;
 
 sub init {
     my $self = shift;

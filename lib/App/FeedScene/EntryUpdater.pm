@@ -13,12 +13,14 @@ use OSSP::uuid;
 use MIME::Types;
 use URI;
 
-use Class::XSAccessor constructor => 'new', accessors => { map { $_ => $_ } qw(
-   app
-   portal
-   ua
-   verbose
-) };
+use Moose;
+
+has app     => (is => 'rw', isa => 'Str');
+has portal  => (is => 'rw', isa => 'Int');
+has ua      => (is => 'rw', isa => 'App::FeedScene::UA');
+has verbose => (is => 'rw', isa => 'Int');
+
+no Moose;
 
 my $libxml_options = {
     recover    => 2,
