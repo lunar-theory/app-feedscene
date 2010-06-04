@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-  <title>Simple Atom Feed</title> 
+  <title>Simple Atom Feed</title>
+  <subtitle>Witty and clever</subtitle>
   <link rel="alternate" href="http://example.com/"/>
   <link rel="self" href="http://example.com/example.com.xml"/>
+  <icon>http://example.com/favicon.png</icon>
+  <rights>© 2010 Big Fat Example</rights>
   <updated>2009-12-13T18:30:02Z</updated>
   <id>urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6</id>
   <rights>Copyright (c) 2010</rights>

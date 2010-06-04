@@ -3,8 +3,8 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 101;
-#use Test::More 'no_plan';
+#use Test::More tests => 101;
+use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
 use Test::MockObject::Extends;
@@ -109,9 +109,15 @@ test_counts(2, 'Should now have two entries');
 
 # Check the feed data.
 is_deeply $conn->run(sub{ shift->selectrow_arrayref(
-    'SELECT name, site_url FROM feeds WHERE url = ?',
+    'SELECT title, subtitle, site_url, icon_url, rights FROM feeds WHERE url = ?',
     undef, "$uri/simple.atom",
-)}), ['Simple Atom Feed', 'http://example.com/'], 'Atom feed should be updated';
+)}), [
+    'Simple Atom Feed',
+    'Witty and clever',
+    'http://example.com/',
+    'http://example.com/favicon.png',
+    '© 2010 Big Fat Example',
+], 'Atom feed should be updated';
 
 # Check the entry data.
 is_deeply test_data('urn:uuid:e287d28b-5a4b-575c-b9da-d3dc894b9aa2'), {
@@ -149,7 +155,7 @@ test_counts(4, 'Should now have four entries');
 
 # Check the feed data.
 is_deeply $conn->run(sub{ shift->selectrow_arrayref(
-    'SELECT name, site_url FROM feeds WHERE url = ?',
+    'SELECT title, site_url FROM feeds WHERE url = ?',
     undef, "$uri/simple.rss",
 )}), ['Simple RSS Feed', 'http://example.net'], 'RSS feed should be updated';
 

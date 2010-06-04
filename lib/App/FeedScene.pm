@@ -5,6 +5,7 @@ use utf8;
 use DBD::SQLite 1.29;
 use DBIx::Connector 0.34;
 use Exception::Class::DBI 1.0;
+Exception::Class::DBI->Trace(1);
 
 our $SELF;
 

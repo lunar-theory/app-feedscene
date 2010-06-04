@@ -71,12 +71,24 @@ sub process {
         my $dbh = shift;
 
         # Update the feed.
-        $dbh->do(q{
-            UPDATE feeds
-               SET name     = ?,
-                   site_url = ?
-             WHERE url      = ?
-        }, undef, $feed->title, $feed->link, $feed_url);
+        $dbh->do(
+            q{
+                UPDATE feeds
+                   SET title    = ?,
+                       subtitle = ?,
+                       site_url = ?,
+                       icon_url = ?,
+                       rights   = ?
+                 WHERE url      = ?
+            },
+            undef,
+            $feed->title,
+            $feed->description || '',
+            $feed->link,
+            $feed->icon || '',
+            $feed->copyright || '',
+            $feed_url
+        );
 
         # Get ready to update the entries.
         my $sth = $dbh->prepare(q{
