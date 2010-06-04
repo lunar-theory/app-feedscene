@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-#use Test::More tests => 101;
+#use Test::More tests => 102;
 use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
@@ -310,6 +310,18 @@ $ua_mock->mock(head => sub {
 $eup->portal(1);
 ok $eup->process("$uri/enclosures.atom"), 'Process Atom feed with enclosures';
 test_counts(45, 'Should now have 45 entries');
+
+# Check the feed data.
+is_deeply $conn->run(sub{ shift->selectrow_arrayref(
+    'SELECT title, subtitle, site_url, icon_url, rights FROM feeds WHERE url = ?',
+    undef, "$uri/enclosures.atom",
+)}), [
+    'Enclosures Atom Feed',
+    '',
+    'http://example.com/',
+    'http://example.com/fav.ico',
+    '',
+], 'Feed record should be updated';
 
 ok $eup->process("$uri/enclosures.rss"), 'Process RSS feed with enclosures';
 test_counts(57, 'Should now have 57 entries');

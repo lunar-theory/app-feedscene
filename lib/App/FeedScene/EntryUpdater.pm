@@ -11,6 +11,7 @@ use HTTP::Status qw(HTTP_NOT_MODIFIED);
 use XML::LibXML qw(XML_ELEMENT_NODE XML_TEXT_NODE);
 use OSSP::uuid;
 use MIME::Types;
+use URI;
 
 use Class::XSAccessor constructor => 'new', accessors => { map { $_ => $_ } qw(
    app
@@ -65,7 +66,9 @@ sub process {
         unless $res->is_success or $res->code == HTTP_NOT_MODIFIED;
     return $self if $res->code == HTTP_NOT_MODIFIED;
 
-    my $feed = Data::Feed->parse(\$res->content);
+    my $feed     = Data::Feed->parse(\$res->content);
+    my $base_url = $feed->base || $feed->link;
+    my $site_url = URI->new_abs($feed->link, $base_url);
 
     App::FeedScene->new($self->app)->conn->txn(sub {
         my $dbh = shift;
@@ -84,8 +87,8 @@ sub process {
             undef,
             $feed->title,
             $feed->description || '',
-            $feed->link,
-            $feed->icon || '',
+            $site_url,
+            $feed->icon ? URI->new_abs($feed->icon, $base_url) : '',
             $feed->copyright || '',
             $feed_url
         );
@@ -102,24 +105,25 @@ sub process {
         my $be_verbose = ($self->verbose || 0) > 1;
         for my $entry ($feed->entries) {
             say '    ', $entry->link if $be_verbose;
+            my $entry_link = URI->new_abs($entry->link, $base_url);
             my ($enc_type, $enc_url) = ('', '');
 
             if ($portal) {
                 # Need some media for non-text portals.
-                ($enc_type, $enc_url) = $self->_find_enclosure($entry);
+                ($enc_type, $enc_url) = $self->_find_enclosure($entry, $entry_link);
                 next unless $enc_type;
             }
 
             my $pub_date = $entry->issued;
             my $upd_date = $entry->modified || $pub_date or next;
             $pub_date ||= $upd_date;
-            my $uuid = _uuid($feed->link, $entry->link);
+            my $uuid = _uuid($site_url, $entry_link);
 
             $sth->execute(
                 $uuid,
                 $portal,
                 $feed_url,
-                $entry->link,
+                $entry_link,
                 $entry->title,
                 $pub_date->set_time_zone('UTC')->iso8601 . 'Z',
                 $upd_date->set_time_zone('UTC')->iso8601 . 'Z',
@@ -327,7 +331,7 @@ sub _find_summary {
 
 
 sub _find_enclosure {
-    my ($self, $entry) = @_;
+    my ($self, $entry, $entry_link) = @_;
     for my $enc ($entry->enclosures) {
         my $type = $enc->type or next;
         next if $type !~ m{^(?:image|audio|video)/};
@@ -347,7 +351,7 @@ sub _find_enclosure {
     }
 
     # Look at the direct link.
-    my ($type, $url) = $self->_get_type($entry->link);
+    my ($type, $url) = $self->_get_type($entry_link);
     return $type, $url if $type && $type =~ m{^(?:image|audio|video)/};
 
     # Nothing to see.

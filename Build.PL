@@ -19,7 +19,7 @@ Module::Build->new(
     },
     requires           => {
         'Class::XSAccessor'         => '1.05',
-        'Data::Feed'                => '0.00011',
+        'Data::Feed'                => '0.00013',
         'DBD::SQLite'               => '1.29',
         'DBI'                       => '1.608',
         'DBIx::Connector'           => '0.34',
@@ -32,7 +32,8 @@ Module::Build->new(
         'Pod::Usage'                => '1.36',
         'Text::CSV_XS'              => '0.73',
         'XML::LibXML'               => '1.70',
-        'XML::RSS::LibXML'          => '0.3004',
+        'XML::RSS::LibXML'          => '0.3006',
+        'URI'                       => '1.54',
     },
     recommends         => {
         'Test::Pod'           => '1.41',
