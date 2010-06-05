@@ -115,7 +115,7 @@ is_deeply $conn->run(sub{ shift->selectrow_arrayref(
     'Simple Atom Feed',
     'Witty and clever',
     'http://example.com/',
-    'http://example.com/favicon.png',
+    'http://www.google.com/s2/favicons?domain=example.com',
     '© 2010 Big Fat Example',
 ], 'Atom feed should be updated';
 
@@ -319,7 +319,7 @@ is_deeply $conn->run(sub{ shift->selectrow_arrayref(
     'Enclosures Atom Feed',
     '',
     'http://example.com/',
-    'http://example.com/fav.ico',
+    'http://www.google.com/s2/favicons?domain=example.com',
     '',
 ], 'Feed record should be updated';
 

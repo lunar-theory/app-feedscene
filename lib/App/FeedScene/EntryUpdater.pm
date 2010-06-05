@@ -69,7 +69,7 @@ sub process {
     return $self if $res->code == HTTP_NOT_MODIFIED;
 
     my $feed     = Data::Feed->parse(\$res->content);
-    my $base_url = $feed->base || $feed->link;
+    my $base_url = URI->new($feed->base || $feed->link);
     my $site_url = URI->new_abs($feed->link, $base_url);
 
     App::FeedScene->new($self->app)->conn->txn(sub {
@@ -90,7 +90,7 @@ sub process {
             $feed->title,
             $feed->description || '',
             $site_url,
-            $feed->icon ? URI->new_abs($feed->icon, $base_url) : '',
+            'http://www.google.com/s2/favicons?domain=' . $base_url->host,
             $feed->copyright || '',
             $feed_url
         );
