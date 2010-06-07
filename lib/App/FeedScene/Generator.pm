@@ -9,25 +9,58 @@ use Moose;
 use File::Spec;
 use File::Path;
 
-my $domain  = 'lunar-theory.com';
+my $domain  = 'kineticode.com';
 my $company = 'Lunar Theory';
 
 (my $def_dir = __FILE__) =~ s{(?:blib/)?lib/App/FeedScene/Generator[.]pm$}{feeds};
-has app => (is => 'rw', isa => 'Str', required => 1 );
-has dir => (is => 'rw', isa => 'Str', default => $def_dir );
+has app => (is => 'rw', isa => 'Str',  required => 1 );
+has dir => (is => 'rw', isa => 'Str',  default => $def_dir );
+has strict => (is => 'rw', isa => 'Bool', default => 0 );
 
 no Moose;
 
 sub go {
     my $self = shift;
     my $xb   = XML::Builder->new(encoding => 'utf-8');
-    my $a    = $xb->ns( 'http://www.w3.org/2005/Atom' => '' );
+    my $a    = $xb->ns('http://www.w3.org/2005/Atom' => '');
     my $now  = DateTime->now;
     my $app  = $self->app;
     my $path = $self->filepath;
+    my $conn = App::FeedScene->new($self->app)->conn;
+    my $fs;
 
     File::Path::make_path($self->dir);
     open my $fh, '>', $path or die qq{Cannot open "$path": $!\n};
+
+    # Assemble sources.
+    my ($sources, @entries);
+    if ($self->strict) {
+        $sources = '';
+    } else {
+        my $fsxb = XML::Builder->new(encoding => 'utf-8');
+        $fs = $fsxb->ns("http://$domain/2010/FeedScene" => '');
+        my @sources;
+        $conn->run(sub {
+            # Get together sources.
+            my $sth = shift->prepare(q{
+                SELECT url, title, rights, icon_url
+                  FROM feeds
+                 ORDER BY portal, url
+            });
+            $sth->execute;
+            $sth->bind_columns(\my ($url, $title, $rights, $icon_url));
+            while ($sth->fetch) {
+                push @sources, $fs->source(
+                    $fs->id($url),
+                    $fs->link({rel  => 'self', href => $url }),
+                    $fs->title($title),
+                    $fs->rights($rights),
+                    $fs->icon($icon_url)
+                );
+            }
+            $sources = $fsxb->root($fs->sources(@sources));
+        });
+    }
 
     print {$fh} $xb->document(
         $a->feed(
@@ -48,6 +81,8 @@ sub go {
                 $a->name($company),
                 $a->uri("http://$domain/")
             ),
+            $sources,
+            @entries,
         )
     );
     close $fh or die qq{Canot close "$path": $!\n};

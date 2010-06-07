@@ -31,7 +31,7 @@ ok $dba->upgrade, 'Initialize and upgrade the database';
 END { unlink App::FeedScene->new->db_name };
 my $conn = App::FeedScene->new->conn;
 
-# Load some data for a portal.
+# Load some portal data.
 $conn->txn(sub {
     my $sth = shift->prepare('INSERT INTO feeds (portal, url) VALUES(?, ?)');
     for my $spec (
