@@ -33,27 +33,30 @@ sub go {
     open my $fh, '>', $path or die qq{Cannot open "$path": $!\n};
 
     # Assemble sources.
-    my ($sources, @entries);
+    my ($sources, $feed_cols);
     if ($self->strict) {
-        $sources = '';
+        $sources   = '';
+        $feed_cols = ', feed_url, feed_title, feed_subtitle, site_url, icon_url, rights';
     } else {
-        my $fsxb = XML::Builder->new(encoding => 'utf-8');
-        $fs = $fsxb->ns("http://$domain/2010/FeedScene" => '');
+        $feed_cols = '';
+        my $fsxb   = XML::Builder->new(encoding => 'utf-8');
+        $fs        = $fsxb->ns("http://$domain/2010/FeedScene" => '');
         my @sources;
         $conn->run(sub {
             # Get together sources.
             my $sth = shift->prepare(q{
-                SELECT id, url, title, rights, icon_url
+                SELECT id, url, title, subtitle, rights, icon_url
                   FROM feeds
                  ORDER BY portal, url
             });
             $sth->execute;
-            $sth->bind_columns(\my ($id, $url, $title, $rights, $icon_url));
+            $sth->bind_columns(\my ($id, $url, $title, $subtitle, $rights, $icon_url));
             while ($sth->fetch) {
                 push @sources, $fs->source(
                     $fs->id($id),
-                    $fs->link({rel  => 'self', href => $url }),
+                    $fs->link({rel => 'self', href => $url }),
                     $fs->title($title),
+                    $fs->subtitle($subtitle),
                     $fs->rights($rights),
                     $fs->icon($icon_url)
                 );
@@ -61,6 +64,50 @@ sub go {
             $sources = $fsxb->root($fs->sources(@sources));
         });
     }
+
+    # Assemble the entries.
+    my @entries;
+    $conn->run(sub {
+        my $sth = shift->prepare(qq{
+            SELECT id, url, title, published_at, updated_at, summary, author,
+                   enclosure_url, enclosure_type, feed_id, portal$feed_cols
+              FROM feed_entries
+             ORDER BY portal, published_at DESC
+        });
+        $sth->execute;
+        while (my $row = $sth->fetchrow_hashref) {
+            push @entries, $a->entry(
+                $a->id($row->{id}),
+                $a->link({rel => 'alternate', href => $row->{url} }),
+                $a->title($row->{title}),
+                $a->published($row->{published_at}),
+                $a->updated($row->{updated_at}),
+                $a->category({
+                    scheme => "http://$domain/ns/portal",
+                    term => $row->{portal},
+                }),
+                $a->summary({ type => 'html' }, $row->{summary} ),
+                $a->author( $a->name($row->{author}) ),
+                $a->source(
+                    $a->id($row->{feed_id}),
+                    $self->strict ? (
+                        $a->link({ rel => 'self', href => $row->{feed_url} }),
+                        $a->title($row->{feed_title}),
+                        $a->subtitle($row->{feed_subtitle}),
+                        $a->rights($row->{rights}),
+                        $a->icon($row->{icon_url}),
+                    ) : (),
+                ),
+                ($row->{enclosure_url} ? (
+                    $a->link({
+                        rel => 'enclosure',
+                        type => $row->{enclosure_type},
+                        href => $row->{enclosure_url},
+                    })
+                ) : ()),
+            );
+        }
+    });
 
     print {$fh} $xb->document(
         $a->feed(

@@ -87,9 +87,9 @@ sub process {
         # Get ready to update the entries.
         my $sth = $dbh->prepare(q{
             INSERT OR REPLACE INTO entries (
-                id, portal, feed_id, url, title, published_at, updated_at,
+                id, feed_id, url, title, published_at, updated_at,
                 summary, author, enclosure_type, enclosure_url
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         });
 
         my @ids;
@@ -112,7 +112,6 @@ sub process {
 
             $sth->execute(
                 $uuid,
-                $portal,
                 $feed_id,
                 $entry_link,
                 $entry->title,
