@@ -31,9 +31,9 @@ ok $dba->upgrade, 'Initialize and upgrade the database';
 END { unlink App::FeedScene->new->db_name };
 my $conn = App::FeedScene->new->conn;
 
-# Load some portal data.
+# Load some feed data.
 $conn->txn(sub {
-    my $sth = shift->prepare('INSERT INTO feeds (portal, url) VALUES(?, ?)');
+    my $sth = shift->prepare('INSERT INTO feeds (portal, id, url) VALUES(?, ?, ?)');
     for my $spec (
         [ 0, 'simple.atom' ],
         [ 0, 'simple.rss' ],
@@ -45,7 +45,7 @@ $conn->txn(sub {
         [ 1, 'enclosures.atom' ],
         [ 1, 'enclosures.rss' ],
     ) {
-        $sth->execute($spec->[0], "$uri/$spec->[1]" );
+        $sth->execute(@{ $spec }, "$uri/$spec->[1]" );
     }
 });
 

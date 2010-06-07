@@ -43,15 +43,15 @@ sub go {
         $conn->run(sub {
             # Get together sources.
             my $sth = shift->prepare(q{
-                SELECT url, title, rights, icon_url
+                SELECT id, url, title, rights, icon_url
                   FROM feeds
                  ORDER BY portal, url
             });
             $sth->execute;
-            $sth->bind_columns(\my ($url, $title, $rights, $icon_url));
+            $sth->bind_columns(\my ($id, $url, $title, $rights, $icon_url));
             while ($sth->fetch) {
                 push @sources, $fs->source(
-                    $fs->id($url),
+                    $fs->id($id),
                     $fs->link({rel  => 'self', href => $url }),
                     $fs->title($title),
                     $fs->rights($rights),

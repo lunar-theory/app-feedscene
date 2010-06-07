@@ -18,7 +18,7 @@ BEGIN {
 
 # Set an absolute time.
 my $time = '2010-06-05T17:29:41Z';
-Test::MockTime::set_absolute_time($time);
+Test::MockTime::set_fixed_time($time);
 my $domain  = 'kineticode.com';
 my $company = 'Lunar Theory';
 
@@ -33,14 +33,14 @@ my $uri = 'file://localhost' . File::Spec->rel2abs('t/data');
 my $conn = App::FeedScene->new->conn;
 $conn->txn(sub {
     my $sth = shift->prepare(q{
-        INSERT INTO feeds (url, portal, title, rights, icon_url)
-        VALUES(?, ?, ?, ?, ?)
+        INSERT INTO feeds (url, id, portal, title, rights, icon_url)
+        VALUES(?, ?, ?, ?, ?, ?)
     });
     for my $spec (
         [ 'simple.atom', 0,     'Simple Feed', 'Copyright', 'http://foo.com/fav.png' ],
         [ 'enclosures.atom', 1, 'Enclosures Feed', 'CC-SG', 'http://bar.com/fav.png' ],
     ) {
-        $sth->execute("$uri/" . shift @{$spec}, @{$spec});
+        $sth->execute("$uri/$spec->[0]", @{$spec});
     }
 });
 
@@ -94,7 +94,7 @@ $tx->ok('/a:feed/fs:sources', 'Should have sources', sub {
     $_->is('count(./fs:source)', 2, 'Should have two sources');
     $_->ok('./fs:source[1]', 'First source', sub {
         $_->is('count(./*)', 5, 'Should have five source subelements');
-        $_->is('./fs:id', "$uri/simple.atom", 'ID should be correct');
+        $_->is('./fs:id', "simple.atom", 'ID should be correct');
         $_->is('./fs:link/@rel', 'self', 'Should have self link');
         $_->is('./fs:link/@href', "$uri/simple.atom", 'Link URL should be correct');
         $_->is('./fs:title', 'Simple Feed', 'Title should be correct');
@@ -103,7 +103,7 @@ $tx->ok('/a:feed/fs:sources', 'Should have sources', sub {
     });
     $_->ok('./fs:source[2]', 'Second source', sub {
         $_->is('count(./*)', 5, 'Should have five source subelements');
-        $_->is('./fs:id', "$uri/enclosures.atom", 'ID should be correct');
+        $_->is('./fs:id', "enclosures.atom", 'ID should be correct');
         $_->is('./fs:link/@rel', 'self', 'Should have self link');
         $_->is('./fs:link/@href', "$uri/enclosures.atom", 'Link URL should be correct');
         $_->is('./fs:title', 'Enclosures Feed', 'Title should be correct');

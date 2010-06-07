@@ -1,7 +1,7 @@
 -- sql/1273289916-entries.sql SQL Migration
 
 CREATE TABLE entries (
-    id             TEXT     PRIMARY KEY,
+    id             TEXT     NOT NULL PRIMARY KEY,
     portal         INT      NOT NULL DEFAULT 0,
     feed_id        TEXT     NOT NULL REFERENCES feeds(id) ON DELETE CASCADE ON UPDATE CASCADE,
     url            TEXT     NOT NULL,
