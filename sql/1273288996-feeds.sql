@@ -1,7 +1,8 @@
 -- sql/1273288996-feeds.sql SQL Migration
 
 CREATE TABLE feeds (
-    url       TEXT PRIMARY KEY,
+    id        TEXT PRIMARY KEY,
+    url       TEXT NOT NULL DEFAULT '',
     title     TEXT NOT NULL DEFAULT '',
     subtitle  TEXT NOT NULL DEFAULT '',
     site_url  TEXT NOT NULL DEFAULT '',

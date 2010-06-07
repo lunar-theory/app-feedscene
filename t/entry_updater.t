@@ -123,7 +123,7 @@ is_deeply $conn->run(sub{ shift->selectrow_arrayref(
 is_deeply test_data('urn:uuid:e287d28b-5a4b-575c-b9da-d3dc894b9aa2'), {
     id             => 'urn:uuid:e287d28b-5a4b-575c-b9da-d3dc894b9aa2',
     portal         => 0,
-    feed_url       => "$uri/simple.atom",
+    feed_id        => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6',
     url            => 'http://example.com/story.html',
     title          => 'This is the title',
     published_at   => '2009-12-13T12:29:29Z',
@@ -137,7 +137,7 @@ is_deeply test_data('urn:uuid:e287d28b-5a4b-575c-b9da-d3dc894b9aa2'), {
 is_deeply test_data('urn:uuid:4386a769-775f-5b78-a6f0-02e3ac8a457d'), {
     id             => 'urn:uuid:4386a769-775f-5b78-a6f0-02e3ac8a457d',
     portal         => 0,
-    feed_url       => "$uri/simple.atom",
+    feed_id        => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6',
     url            => 'http://example.com/another-story.html',
     title          => 'This is another title',
     published_at   => '2009-12-13T12:29:29Z',
@@ -163,7 +163,7 @@ is_deeply $conn->run(sub{ shift->selectrow_arrayref(
 is_deeply test_data('urn:uuid:5a47d6e5-41dd-586b-ad03-c26c67425134'), {
     id             => 'urn:uuid:5a47d6e5-41dd-586b-ad03-c26c67425134',
     portal         => 0,
-    feed_url       => "$uri/simple.rss",
+    feed_id        => "$uri/simple.rss",
     url            => 'http://example.net/2010/05/17/long-goodbye/',
     title          => 'The Long Goodbye',
     published_at   => '2010-05-17T14:58:50Z',
@@ -177,7 +177,7 @@ is_deeply test_data('urn:uuid:5a47d6e5-41dd-586b-ad03-c26c67425134'), {
 is_deeply test_data('urn:uuid:f7d5ce8a-d0d5-56bc-99c3-05592f4dc22c'), {
     id             => 'urn:uuid:f7d5ce8a-d0d5-56bc-99c3-05592f4dc22c',
     portal         => 0,
-    feed_url       => "$uri/simple.rss",
+    feed_id        => "$uri/simple.rss",
     url            => 'http://example.net/2010/05/16/little-sister/',
     title          => 'The Little Sister',
     published_at   => '2010-05-16T14:58:50Z',
@@ -275,7 +275,7 @@ test_counts(33, 'Should now have 33 entries');
 
 # So now we should have two records with the same URL but different IDs.
 is_deeply $dbh->selectall_arrayref(
-    'SELECT id, feed_url FROM entries WHERE url = ? ORDER BY id',
+    'SELECT id, feed_id FROM entries WHERE url = ? ORDER BY id',
     undef, 'http://example.net/2010/05/17/long-goodbye/'
 ), [
     [
@@ -331,7 +331,7 @@ is_deeply test_data('urn:uuid:afac4e17-4775-55c0-9e61-30d7630ea909'), {
     author         => '',
     enclosure_type => 'image/jpeg',
     enclosure_url  => 'http://farm2.static.flickr.com/1169/4601733070_92cd987ff5_o.jpg',
-    feed_url       => 'file://localhost/Users/david/dev/github/app-feedscene/t/data/enclosures.atom',
+    feed_id        => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af7',
     id             => 'urn:uuid:afac4e17-4775-55c0-9e61-30d7630ea909',
     portal         => 1,
     published_at   => '2009-12-13T08:29:29Z',
@@ -345,7 +345,7 @@ is_deeply test_data('urn:uuid:844df0ef-fed0-54f0-ac7d-2470fa7e9a9c'), {
     author         => '',
     enclosure_type => 'image/jpeg',
     enclosure_url  => 'http://farm2.static.flickr.com/1169/4601733070_92cd987ff6_o.jpg',
-    feed_url       => 'file://localhost/Users/david/dev/github/app-feedscene/t/data/enclosures.atom',
+    feed_id        => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af7',
     id             => 'urn:uuid:844df0ef-fed0-54f0-ac7d-2470fa7e9a9c',
     portal         => 1,
     published_at   => '2009-12-13T08:19:29Z',
@@ -360,7 +360,7 @@ is_deeply test_data('urn:uuid:c6598d85-1d0a-51dd-aa77-23deac7cada5'), {
     author         => '',
     enclosure_type => 'image/jpeg',
     enclosure_url  => 'http://farm2.static.flickr.org/1169/4601733070_92cd987ff5_o.jpg',
-    feed_url       => 'file://localhost/Users/david/dev/github/app-feedscene/t/data/enclosures.rss',
+    feed_id        => "$uri/enclosures.rss",
     id             => 'urn:uuid:c6598d85-1d0a-51dd-aa77-23deac7cada5',
     portal         => 1,
     published_at   => '2009-12-13T08:29:29Z',
@@ -374,7 +374,7 @@ is_deeply test_data('urn:uuid:4aef01ff-75c3-5dcb-a53f-878e3042f3cf'), {
     author         => '',
     enclosure_type => 'image/jpeg',
     enclosure_url  => 'http://farm2.static.flickr.org/1169/4601733070_92cd987ff6_o.jpg',
-    feed_url       => 'file://localhost/Users/david/dev/github/app-feedscene/t/data/enclosures.rss',
+    feed_id        => "$uri/enclosures.rss",
     id             => 'urn:uuid:4aef01ff-75c3-5dcb-a53f-878e3042f3cf',
     portal         => 1,
     published_at   => '2009-12-13T08:19:29Z',

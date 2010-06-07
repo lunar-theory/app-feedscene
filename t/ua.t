@@ -8,6 +8,7 @@ use Test::More tests => 10;
 use Test::NoWarnings;
 
 BEGIN { use_ok 'App::FeedScene::UA' or die; }
+END { File::Path::remove_tree 'cache/foo' };
 
 ok my $ua = App::FeedScene::UA->new('foo'), 'New UA object';
 isa_ok $ua, 'App::FeedScene::UA';

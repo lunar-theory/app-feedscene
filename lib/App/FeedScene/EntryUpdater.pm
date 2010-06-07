@@ -4,9 +4,7 @@ use 5.12.0;
 use utf8;
 use App::FeedScene;
 use App::FeedScene::UA;
-use Data::Feed;
-use Data::Feed::Parser::Atom;
-use Data::Feed::Parser::RSS;
+use App::FeedScene::Parser;
 use HTTP::Status qw(HTTP_NOT_MODIFIED);
 use XML::LibXML qw(XML_ELEMENT_NODE XML_TEXT_NODE);
 use OSSP::uuid;
@@ -22,22 +20,10 @@ has verbose => (is => 'rw', isa => 'Int');
 
 no Moose;
 
-my $libxml_options = {
-    recover    => 2,
-    no_network => 1,
-    no_blanks  => 1,
-    encoding   => 'utf8',
-    no_cdata   => 1,
-};
-my $parser = XML::LibXML->new($libxml_options);
-
 my $parse_options = {
     suppress_errors   => 1,
     suppress_warnings => 1,
 };
-
-$XML::Atom::ForceUnicode = 1;
-$Data::Feed::Parser::RSS::PARSER_CLASS = 'App::FeedScene::Parser::RSS';
 
 sub run {
     my $self = shift;
@@ -68,9 +54,10 @@ sub process {
         unless $res->is_success or $res->code == HTTP_NOT_MODIFIED;
     return $self if $res->code == HTTP_NOT_MODIFIED;
 
-    my $feed     = Data::Feed->parse(\$res->content);
+    my $feed     = App::FeedScene::Parser->parse(\$res->content);
     my $base_url = URI->new($feed->base || $feed->link);
     my $site_url = URI->new_abs($feed->link, $base_url);
+    my $feed_id  = $feed->can('id') ? $feed->id || $feed_url : $feed_url;
 
     App::FeedScene->new($self->app)->conn->txn(sub {
         my $dbh = shift;
@@ -79,7 +66,8 @@ sub process {
         $dbh->do(
             q{
                 UPDATE feeds
-                   SET title    = ?,
+                   SET id       = ?,
+                       title    = ?,
                        subtitle = ?,
                        site_url = ?,
                        icon_url = ?,
@@ -87,6 +75,7 @@ sub process {
                  WHERE url      = ?
             },
             undef,
+            $feed_id,
             $feed->title,
             $feed->description || '',
             $site_url,
@@ -98,7 +87,7 @@ sub process {
         # Get ready to update the entries.
         my $sth = $dbh->prepare(q{
             INSERT OR REPLACE INTO entries (
-                id, portal, feed_url, url, title, published_at, updated_at,
+                id, portal, feed_id, url, title, published_at, updated_at,
                 summary, author, enclosure_type, enclosure_url
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         });
@@ -124,7 +113,7 @@ sub process {
             $sth->execute(
                 $uuid,
                 $portal,
-                $feed_url,
+                $feed_id,
                 $entry_link,
                 $entry->title,
                 $pub_date->set_time_zone('UTC')->iso8601 . 'Z',
@@ -140,9 +129,9 @@ sub process {
 
         $dbh->do(q{
             DELETE FROM entries
-             WHERE feed_url = ?
+             WHERE feed_id = ?
                AND id NOT IN (}. join (', ', ('?') x @ids) . ')',
-            undef, $feed_url, @ids
+            undef, $feed_id, @ids
         );
     });
 
@@ -291,7 +280,9 @@ sub _find_summary {
         if (my $body = $sum->body) {
             # We got something here. Clean it up and return it.
             return join '', map { $_->toString } _clean_html(
-                $parser->parse_html_string($body, $parse_options)->firstChild
+                App::FeedScene::Parser->libxml->parse_html_string(
+                    $body, $parse_options
+                )->firstChild
             )->childNodes;
         }
     }
@@ -299,7 +290,7 @@ sub _find_summary {
     # Try the content of the entry.
     my $content = $entry->content or return '';
     my $body    = $content->body  or return '';
-    my $doc     = $parser->parse_html_string($body, $parse_options);
+    my $doc     = App::FeedScene::Parser->libxml->parse_html_string($body, $parse_options);
 
     # Fetch a reasonable amount of the content to use as a summary.
     my $ret = '';
@@ -344,7 +335,9 @@ sub _find_enclosure {
     for my $content ($entry->content, $entry->summary) {
         next unless $content;
         my $body = $content->body or next;
-        my $doc = $parser->parse_html_string($body, $parse_options) or next;
+        my $doc = App::FeedScene::Parser->libxml->parse_html_string(
+            $body, $parse_options
+        ) or next;
         for my $node ($doc->findnodes('//img/@src|//audio/@src|//video/@src')) {
             my $url = $node->nodeValue or next;
             (my($type), $url) = $self->_get_type($url) or next;
@@ -381,12 +374,6 @@ sub _get_type {
     # Maybe the thing redirects? Ask it for its content type.
     my $res = $self->ua->head($url);
     return $res->is_success ? (scalar $res->content_type, $res->request->uri) : undef;
-}
-
-RSSPARSER: {
-    package App::FeedScene::Parser::RSS;
-    use parent 'XML::RSS::LibXML';
-    sub create_libxml { $parser }
 }
 
 1;

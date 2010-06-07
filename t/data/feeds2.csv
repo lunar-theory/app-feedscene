@@ -1,13 +1,8 @@
 Portal,Feed URL,Category
-text,http://strongrrl.com/rss.xml
-text,http://kineticode.com/feeds/rss/rss.xml
+text,http://www.strongrrl.com/rss.xml
+text,http://www.kineticode.com/feeds/rss/rss.xml
 1,http://www.lunarboy.com/category/lögo-designs/feed,Lögos & Branding
 1,http://ideas.example.com/atom/skinny,Typography
-2,http://justatheory.com/brandnew/atom.xml,Lögos & Branding
-2,http://feeds.feedburner.com/XYZWhatever,Infographics
-3,http://feeds.feedburner.com/Shiznit?format=xml,Design
-3,http://foo.example.com/feed/,Design
-4,http://feeds.feedburner.com/FKJSDLFJ,Lögos & Branding
-5,http://feeds.feedburner.com/dfkadfadsf,Design
-5,http://bricolagecms.org/rss,Design
+2,http://www.justatheory.com/brandnew/atom.xml,Lögos & Branding
+6,http://pipes.yahoo.com/pipes/pipe.run?Size=Medium&_id=f000000&_render=rss,Lögos & Branding
 6,http://www.designsceneapp.com/rss/,Typography

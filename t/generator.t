@@ -76,7 +76,7 @@ is $gen->link, "http://$domain/feeds/" . $gen->filename,
 
 ##############################################################################
 # Test non-strict output.
-#END { File::Path::remove_tree($gen->dir) if -d $gen->dir; }
+END { File::Path::remove_tree($gen->dir) if -d $gen->dir; }
 ok $gen->go, 'Go!';
 my $tx = Test::XPath->new(
     file  => $gen->filepath,

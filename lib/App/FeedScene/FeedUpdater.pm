@@ -4,6 +4,7 @@ use 5.12.0;
 use utf8;
 use App::FeedScene;
 use App::FeedScene::UA;
+use App::FeedScene::Parser;
 use Text::CSV_XS;
 use HTTP::Status qw(HTTP_NOT_MODIFIED);
 use Moose;
@@ -26,31 +27,67 @@ sub process {
     my $self = shift;
     my @csv  = split /\r?\n/ => shift;
     my $csv  = Text::CSV_XS->new({ binary => 1 });
+    my $ua   = App::FeedScene::UA->new($self->app);
     shift @csv; # Remove headers.
 
     my $conn = App::FeedScene->new($self->app)->conn;
-    my $sth = $conn->run(sub {
-        shift->prepare(q{
-            INSERT OR REPLACE INTO feeds (portal, url, category)
-            VALUES (?, ?, ?)
+    my $sth = $conn->run(sub { use strict;
+        my $upd = $_->prepare(q{
+            UPDATE feeds
+               SET url      = ?,
+                   title    = ?,
+                   subtitle = ?,
+                   site_url = ?,
+                   icon_url = ?,
+                   rights   = ?,
+                   portal   = ?,
+                   category = ?
+             WHERE id       = ?
         });
-    });
 
-    $conn->txn(sub {
-        my @urls;
+        my $ins = $_->prepare(q{
+            INSERT INTO feeds (url, title, subtitle, site_url, icon_url,
+                               rights, portal, category, id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        });
+
+        my @ids;
         for my $line (@csv) {
             $csv->parse($line);
-            my ($portal, $url, $category) = $csv->fields;
-            $portal = 0 if $portal eq 'text';
-            $sth->execute($portal, $url, $category);
-            push @urls, $url;
+            my ($portal, $feed_url, $category) = $csv->fields;
+            my $res = $ua->get($feed_url);
+            require Carp && Carp::croak("Error retrieving $feed_url: " . $res->status_line)
+                unless $res->is_success;
+
+            $portal      = 0 if $portal eq 'text';
+            my $feed     = App::FeedScene::Parser->parse(\$res->content);
+                           # XXX Generate from URL?
+            my $id       = $feed->can('id') ? $feed->id || $feed_url : $feed_url;
+            my $site_url = $feed->base
+                         ? URI->new_abs($feed->link, $feed->base)
+                         : URI->new($feed->link);
+
+            my @params = (
+                $feed_url,
+                $feed->title,
+                $feed->description || '',
+                $site_url,
+                'http://www.google.com/s2/favicons?domain=' . $site_url->host,
+                $feed->copyright || '',
+                $portal,
+                $category || '',
+                $id,
+            );
+
+            $ins->execute(@params) unless $upd->execute(@params) > 0;
+            push @ids, $id;
         }
 
         # Remove old feeds.
         $_->do(
-            'DELETE FROM feeds WHERE url NOT IN (' . join(', ', ('?') x @urls) . ')',
-            undef, @urls
-        ) if @urls;
+            'DELETE FROM feeds WHERE id NOT IN (' . join(', ', ('?') x @ids) . ')',
+            undef, @ids
+        ) if @ids;
 
     });
     return $self;
