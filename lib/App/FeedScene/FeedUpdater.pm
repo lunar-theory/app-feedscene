@@ -35,21 +35,18 @@ sub process {
     shift @csv; # Remove headers.
 
     my $conn = App::FeedScene->new($self->app)->conn;
-    my $sth = $conn->run(sub { use strict;
-        my $upd = $_->prepare(q{
+    my $sth = $conn->run(sub {
+        my $dbh = shift;
+        my $sel = $dbh->prepare(q{SELECT id FROM feeds WHERE url = ?});
+
+        my $upd = $dbh->prepare(q{
             UPDATE feeds
-               SET url      = ?,
-                   title    = ?,
-                   subtitle = ?,
-                   site_url = ?,
-                   icon_url = ?,
-                   rights   = ?,
-                   portal   = ?,
+               SET portal   = ?,
                    category = ?
              WHERE id       = ?
         });
 
-        my $ins = $_->prepare(q{
+        my $ins = $dbh->prepare(q{
             INSERT INTO feeds (url, title, subtitle, site_url, icon_url,
                                rights, portal, category, id)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -59,15 +56,23 @@ sub process {
         for my $line (@csv) {
             $csv->parse($line);
             my ($portal, $feed_url, $category) = $csv->fields;
+            $portal = 0 if $portal eq 'text';
             say STDERR "$portal: $feed_url" if $self->verbose;
             my $res = $ua->get($feed_url);
             require Carp && Carp::croak("Error retrieving $feed_url: " . $res->status_line)
                 unless $res->is_success;
 
-            $portal      = 0 if $portal eq 'text';
+            # Skip to the next entry if we've already got this URL.
+            my ($id) = $dbh->selectrow_array($sel, undef, $feed_url);
+            if ($id) {
+                push @ids, $id;
+                $upd->execute($portal, $category || '', $id);
+                next;
+            }
+
             my $feed     = App::FeedScene::Parser->parse(\$res->content);
                            # XXX Generate from URL?
-            my $id       = $feed->can('id') ? $feed->id || $feed_url : $feed_url;
+            $id          = $feed->can('id') ? $feed->id || $feed_url : $feed_url;
             my $site_url = $feed->link;
             $site_url    = $site_url->[0] if ref $site_url;
             $site_url    = $feed->base
@@ -75,7 +80,7 @@ sub process {
                          : URI->new($site_url);
             my $host     = $site_url ? $site_url->host : URI->new($feed_url)->host;
 
-            my @params = (
+            $ins->execute(
                 $feed_url,
                 $feed->title,
                 $feed->description || '',
@@ -87,12 +92,11 @@ sub process {
                 $id,
             );
 
-            $ins->execute(@params) unless $upd->execute(@params) > 0;
             push @ids, $id;
         }
 
         # Remove old feeds.
-        $_->do(
+        $dbh->do(
             'DELETE FROM feeds WHERE id NOT IN (' . join(', ', ('?') x @ids) . ')',
             undef, @ids
         ) if @ids;
