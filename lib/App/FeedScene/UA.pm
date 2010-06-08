@@ -18,6 +18,8 @@ sub new {
     );
 }
 
+sub cache { shift->{cache} }
+
 1;
 
 =head1 Name

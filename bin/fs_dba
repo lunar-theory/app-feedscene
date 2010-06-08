@@ -36,9 +36,9 @@ my $meth = App::FeedScene::DBA->can($command)
     or _pod2usage('-message' => qq{Invalid command: "$command"});
 
 App::FeedScene::DBA->new(
-    app     => $app,
-    client  => $client,
-    sql_dir => $dir,
+    app    => $app,
+    ($client ? (client => $client) : ()),
+    ($dir    ? (dir => $dir) : ()),
 )->$meth;
 
 sub _pod2usage {

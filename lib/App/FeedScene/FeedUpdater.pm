@@ -9,14 +9,18 @@ use Text::CSV_XS;
 use HTTP::Status qw(HTTP_NOT_MODIFIED);
 use Moose;
 
-has app => (is => 'rw', isa => 'Str');
-has url => (is => 'rw', isa => 'Str');
+has app     => (is => 'rw', isa => 'Str');
+has url     => (is => 'rw', isa => 'Str');
+has ua      => (is => 'rw', isa => 'App::FeedScene::UA');
+has verbose => (is => 'rw', isa => 'Bool');
 
 no Moose;
 
 sub run {
     my $self = shift;
-    my $res = App::FeedScene::UA->new($self->app)->get($self->url);
+    my $ua = $self->ua(App::FeedScene::UA->new($self->app));
+    $ua->cache->clear;
+    my $res = $ua->get($self->url);
     require Carp && Carp::croak($res->status_line)
         unless $res->is_success or $res->code == HTTP_NOT_MODIFIED;
     $self->process($res->decoded_content)
@@ -27,7 +31,7 @@ sub process {
     my $self = shift;
     my @csv  = split /\r?\n/ => shift;
     my $csv  = Text::CSV_XS->new({ binary => 1 });
-    my $ua   = App::FeedScene::UA->new($self->app);
+    my $ua   = $self->ua;
     shift @csv; # Remove headers.
 
     my $conn = App::FeedScene->new($self->app)->conn;
@@ -55,6 +59,7 @@ sub process {
         for my $line (@csv) {
             $csv->parse($line);
             my ($portal, $feed_url, $category) = $csv->fields;
+            say STDERR "$portal: $feed_url" if $self->verbose;
             my $res = $ua->get($feed_url);
             require Carp && Carp::croak("Error retrieving $feed_url: " . $res->status_line)
                 unless $res->is_success;
@@ -63,16 +68,19 @@ sub process {
             my $feed     = App::FeedScene::Parser->parse(\$res->content);
                            # XXX Generate from URL?
             my $id       = $feed->can('id') ? $feed->id || $feed_url : $feed_url;
-            my $site_url = $feed->base
-                         ? URI->new_abs($feed->link, $feed->base)
-                         : URI->new($feed->link);
+            my $site_url = $feed->link;
+            $site_url    = $site_url->[0] if ref $site_url;
+            $site_url    = $feed->base
+                         ? URI->new_abs($site_url, $feed->base)
+                         : URI->new($site_url);
+            my $host     = $site_url ? $site_url->host : URI->new($feed_url)->host;
 
             my @params = (
                 $feed_url,
                 $feed->title,
                 $feed->description || '',
                 $site_url,
-                'http://www.google.com/s2/favicons?domain=' . $site_url->host,
+                "http://www.google.com/s2/favicons?domain=$host",
                 $feed->copyright || '',
                 $portal,
                 $category || '',

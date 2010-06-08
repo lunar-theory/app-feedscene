@@ -10,7 +10,7 @@ Getopt::Long::Configure( qw(bundling) );
 GetOptions(
     'app|a=s'    => \my $app,
     'url|u=s'    => \my $url,
-#   'verbose|V+' => \my $verbose,
+   'verbose|V+' => \my $verbose,
     'help|h'     => \my $help,
     'man|m'      => \my $man,
     'version|v'  => \my $version,
@@ -32,8 +32,9 @@ _pod2usage('-message' => 'Missing or invalid --app option') unless $app;
 _pod2usage('-message' => 'Missing or invalid --url option') unless $url;
 
 App::FeedScene::FeedUpdater->new(
-    app  => $app,
-    url  => $url
+    app     => $app,
+    url     => $url,
+    verbose => $verbose,
 )->run;
 
 sub _pod2usage {
@@ -48,11 +49,11 @@ sub _pod2usage {
 
 =head1 Name
 
-fs_lup - FeedScene feed updater
+fs_fup - FeedScene feed updater
 
 =head1 Usage
 
-  fs_lup --app APPNAME --url URL
+  fs_fup --app APPNAME --url URL
 
 =head1 Description
 
@@ -64,6 +65,7 @@ to keep the list of feed URLs for an app up-to-date.
 
   -a --app NAME       Name of the FeedScene app.
   -u --url URL        URL for a CSV file with feed links.
+  -V --verbose        Incremental verbosity to STDERR.
   -h --help           Print a usage statement and exit.
   -m --man            Print the complete documentation and exit.
   -v --version        Print the version number and exit.
