@@ -36,29 +36,30 @@ sub go {
     my ($sources, $feed_cols);
     if ($self->strict) {
         $sources   = '';
-        $feed_cols = ', feed_url, feed_title, feed_subtitle, site_url, icon_url, rights';
+        $feed_cols = ', feed_url, feed_title, feed_subtitle, site_url'
+                   . ', icon_url, feed_updated_at, rights';
     } else {
         $feed_cols = '';
         my $fsxb   = XML::Builder->new(encoding => 'utf-8');
         $fs        = $fsxb->ns("http://$domain/2010/FeedScene" => '');
-        my @sources;
         $conn->run(sub {
             # Get together sources.
             my $sth = shift->prepare(q{
-                SELECT id, url, title, subtitle, rights, icon_url
+                SELECT id, url, title, subtitle, rights, updated_at, icon_url
                   FROM feeds
                  ORDER BY portal, url
             });
             $sth->execute;
-            $sth->bind_columns(\my ($id, $url, $title, $subtitle, $rights, $icon_url));
-            while ($sth->fetch) {
+            my @sources;
+            while (my $row = $sth->fetchrow_hashref) {
                 push @sources, $fs->source(
-                    $fs->id($id),
-                    $fs->link({rel => 'self', href => $url }),
-                    $fs->title($title),
-                    $fs->subtitle($subtitle),
-                    $fs->rights($rights),
-                    $fs->icon($icon_url)
+                    $fs->id($row->{id}),
+                    $fs->link({rel => 'self', href => $row->{url} }),
+                    $fs->title($row->{title} || $row->{url}),
+                    ($row->{subtitle} ? ($fs->subtitle($row->{subtitle})) : ()),
+                    $fs->updated($row->{updated_at}),
+                    ($row->{rights} ? ($fs->rights($row->{rights})) : ()),
+                    $fs->icon($row->{icon_url}),
                 );
             }
             $sources = $fsxb->root($fs->sources(@sources));
@@ -94,6 +95,7 @@ sub go {
                         $a->link({ rel => 'self', href => $row->{feed_url} }),
                         $a->title($row->{feed_title}),
                         $a->subtitle($row->{feed_subtitle}),
+                        $a->updated($row->{feed_updated_at}),
                         $a->rights($row->{rights}),
                         $a->icon($row->{icon_url}),
                     ) : (),

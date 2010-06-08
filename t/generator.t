@@ -2,7 +2,7 @@
 
 use 5.12.0;
 use utf8;
-use Test::More tests => 164;
+use Test::More tests => 168;
 #use Test::More 'no_plan';
 use Test::XPath;
 use Test::MockTime;
@@ -110,21 +110,23 @@ $tx->is('count(/a:feed/fs:sources)', 1, 'Should have 1 sources element');
 $tx->ok('/a:feed/fs:sources', 'Should have sources', sub {
     $_->is('count(./fs:source)', 2, 'Should have two sources');
     $_->ok('./fs:source[1]', 'First source', sub {
-        $_->is('count(./*)', 6, 'Should have five source subelements');
+        $_->is('count(./*)', 7, 'Should have 7 source subelements');
         $_->is('./fs:id', 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6', 'ID should be correct');
         $_->is('./fs:link/@rel', 'self', 'Should have self link');
         $_->is('./fs:link/@href', "$uri/simple.atom", 'Link URL should be correct');
         $_->is('./fs:title', 'Simple Atom Feed', 'Title should be correct');
         $_->is('./fs:subtitle', 'Witty and clever', 'Subtitle should be correct');
+        $_->is('./fs:updated', '2009-12-13T18:30:02', 'Updated should be correct');
         $_->is('./fs:rights', '© 2010 Big Fat Example', 'Rights should be correct');
         $_->is('./fs:icon', "$icon_url=example.com", 'Icon should be correct');
     });
     $_->ok('./fs:source[2]', 'Second source', sub {
-        $_->is('count(./*)', 6, 'Should have five source subelements');
+        $_->is('count(./*)', 5, 'Should have five source subelements');
         $_->is('./fs:id', 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af7', 'ID should be correct');
         $_->is('./fs:link/@rel', 'self', 'Should have self link');
         $_->is('./fs:link/@href', "$uri/enclosures.atom", 'Link URL should be correct');
         $_->is('./fs:title', 'Enclosures Atom Feed', 'Title should be correct');
+        $_->is('./fs:updated', '2009-12-13T18:30:02', 'Updated should be correct');
         $_->is('./fs:subtitle', '', 'Subtitle should be correct');
         $_->is('./fs:rights', '', 'Rights should be correct');
         $_->is('./fs:icon', "$icon_url=example.com", 'Icon should be correct');
@@ -241,7 +243,7 @@ sub test_root_metadata {
 sub test_entries {
     my ($tx, $strict) =@_;
     $tx->is('count(/a:feed/a:entry)', 13, 'Should have 13 entries' );
-    my $scount = $strict ? 6 : 1;
+    my $scount = $strict ? 7 : 1;
 
 
     # Check the first entry.
@@ -267,6 +269,7 @@ sub test_entries {
                 $_->is('./a:title', 'Simple Atom Feed', '......Title');
                 $_->is('./a:subtitle', 'Witty and clever', '......Subtitle');
                 $_->is('./a:rights', '© 2010 Big Fat Example', '......Rights');
+                $_->is('./a:updated', '2009-12-13T18:30:02', '......Updated');
                 $_->is('./a:icon', "$icon_url=example.com", '......Icon');
             }
         });
@@ -298,6 +301,7 @@ sub test_entries {
                 $_->is('./a:title', 'Enclosures Atom Feed', '......Title');
                 $_->is('./a:subtitle', '', '......Subtitle');
                 $_->is('./a:rights', '', '.....Rights');
+                $_->is('./a:updated', '2009-12-13T18:30:02', '......Updated');
                 $_->is('./a:icon', "$icon_url=example.com", '......Icon');
             }
         });
