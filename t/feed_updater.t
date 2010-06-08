@@ -11,11 +11,16 @@ use HTTP::Status qw(HTTP_NOT_MODIFIED HTTP_INTERNAL_SERVER_ERROR);
 use LWP::Protocol::file; # Turn on local fetches.
 use Test::Exception;
 use File::Path;
+use Test::MockTime;
 
 BEGIN {
     use_ok 'App::FeedScene::DBA' or die;
     use_ok 'App::FeedScene::FeedUpdater' or die;
 }
+
+# Set an absolute time.
+my $time = '2010-06-05T17:29:41Z';
+Test::MockTime::set_fixed_time($time);
 
 my $uri = 'file://localhost' . File::Spec->rel2abs('t/data');
 
@@ -90,7 +95,6 @@ test_initial_feeds();
 ok $lup->run, 'Run the update a third time';
 test_counts(9, 'Should still have 9 feeds');
 
-
 # Check some feeds.
 test_initial_feeds();
 
@@ -107,6 +111,7 @@ test_counts(7, 'Should now have 7 feeds');
             subtitle => 'Witty and clever',
             site_url => 'http://example.com/',
             icon_url => 'http://www.google.com/s2/favicons?domain=example.com',
+            updated_at => '2009-12-13T18:30:02',
             rights   => '© 2010 Big Fat Example',
             category => '',
             id       => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6',
@@ -117,6 +122,7 @@ test_counts(7, 'Should now have 7 feeds');
             subtitle => '',
             site_url => 'http://example.net',
             icon_url => 'http://www.google.com/s2/favicons?domain=example.net',
+            updated_at => '2010-05-17T00:00:00',
             rights   => '',
             category => '',
             id       => "$uri/simple.rss",
@@ -133,7 +139,7 @@ sub test_counts {
 sub test_feeds {
     my ($portal, $feeds) = @_;
     is_deeply +App::FeedScene->new->conn->run(sub { shift->selectall_arrayref(q{
-        SELECT id, url, title, subtitle, site_url, icon_url, rights, category
+        SELECT id, url, title, subtitle, site_url, icon_url, updated_at, rights, category
           FROM feeds
          WHERE portal = ?
          ORDER BY url
@@ -148,6 +154,7 @@ sub test_initial_feeds {
             subtitle => 'Witty and clever',
             site_url => 'http://example.com/',
             icon_url => 'http://www.google.com/s2/favicons?domain=example.com',
+            updated_at => '2009-12-13T18:30:02',
             rights   => '© 2010 Big Fat Example',
             category => '',
             id       => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6',
@@ -158,6 +165,7 @@ sub test_initial_feeds {
             subtitle => '',
             site_url => 'http://example.net',
             icon_url => 'http://www.google.com/s2/favicons?domain=example.net',
+            updated_at => '2010-05-17T00:00:00',
             rights   => '',
             category => '',
             id       => "$uri/simple.rss",
@@ -172,16 +180,18 @@ sub test_initial_feeds {
             subtitle => '',
             site_url => 'http://foo.org/',
             icon_url => 'http://www.google.com/s2/favicons?domain=foo.org',
+            updated_at => '2009-12-13T18:30:02',
             rights   => 'Copyright (c) 2010',
             category => 'Typography',
             id       => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af8',
         },
         {
             url      => "$uri/summaries.rss",
-            title    => 'Simple RSS Feed',
+            title    => 'Summaries RSS Feed',
             subtitle => '',
             site_url => 'http://foo.org',
             icon_url => 'http://www.google.com/s2/favicons?domain=foo.org',
+            updated_at => '2010-06-05T17:29:41',
             rights   => '',
             category => 'Lögos & Branding',
             id       => "$uri/summaries.rss",
@@ -196,6 +206,7 @@ sub test_initial_feeds {
             subtitle => '',
             site_url => 'http://example.com/',
             icon_url => 'http://www.google.com/s2/favicons?domain=example.com',
+            updated_at => '2009-12-13T18:30:02',
             rights   => '',
             category => 'Lögos & Branding',
             id       => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af7',
@@ -206,6 +217,7 @@ sub test_initial_feeds {
             subtitle => '',
             site_url => 'http://example.org/',
             icon_url => 'http://www.google.com/s2/favicons?domain=example.org',
+            updated_at => '2010-05-17T06:58:50',
             rights   => '',
             category => 'Typography',
             id       => "$uri/enclosures.rss",

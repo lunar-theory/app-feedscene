@@ -66,13 +66,14 @@ sub process {
         $dbh->do(
             q{
                 UPDATE feeds
-                   SET id       = ?,
-                       title    = ?,
-                       subtitle = ?,
-                       site_url = ?,
-                       icon_url = ?,
-                       rights   = ?
-                 WHERE url      = ?
+                   SET id         = ?,
+                       title      = ?,
+                       subtitle   = ?,
+                       site_url   = ?,
+                       icon_url   = ?,
+                       updated_at = ?,
+                       rights     = ?
+                 WHERE url        = ?
             },
             undef,
             $feed_id,
@@ -80,6 +81,7 @@ sub process {
             $feed->description || '',
             $site_url,
             'http://www.google.com/s2/favicons?domain=' . $base_url->host,
+            $feed->modified || DateTime->now->set_time_zone('UTC'),
             $feed->copyright || '',
             $feed_url
         );

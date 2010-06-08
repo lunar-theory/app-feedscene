@@ -48,8 +48,8 @@ sub process {
 
         my $ins = $dbh->prepare(q{
             INSERT INTO feeds (url, title, subtitle, site_url, icon_url,
-                               rights, portal, category, id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                               updated_at, rights, portal, category, id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         });
 
         my @ids;
@@ -86,6 +86,7 @@ sub process {
                 $feed->description || '',
                 $site_url,
                 "http://www.google.com/s2/favicons?domain=$host",
+                $feed->modified || DateTime->now->set_time_zone('UTC'),
                 $feed->copyright || '',
                 $portal,
                 $category || '',

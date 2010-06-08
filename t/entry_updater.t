@@ -3,10 +3,11 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 102;
+use Test::More tests => 103;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
+use Test::MockTime;
 use Test::MockObject::Extends;
 use HTTP::Status qw(HTTP_NOT_MODIFIED HTTP_INTERNAL_SERVER_ERROR);
 use LWP::Protocol::file; # Turn on local fetches.
@@ -19,6 +20,10 @@ BEGIN {
 }
 
 END { File::Path::remove_tree 'cache/foo' };
+
+# Set an absolute time.
+my $time = '2010-06-05T17:29:41Z';
+Test::MockTime::set_fixed_time($time);
 
 my $uri = 'file://localhost' . File::Spec->rel2abs('t/data');
 
@@ -33,19 +38,19 @@ my $conn = App::FeedScene->new->conn;
 
 # Load some feed data.
 $conn->txn(sub {
-    my $sth = shift->prepare('INSERT INTO feeds (portal, id, url) VALUES(?, ?, ?)');
+    my $sth = shift->prepare('INSERT INTO feeds (portal, id, url, updated_at) VALUES(?, ?, ?, ?)');
     for my $spec (
-        [ 0, 'simple.atom' ],
-        [ 0, 'simple.rss' ],
-        [ 0, 'summaries.rss' ],
-        [ 0, 'latin-1.atom' ],
-        [ 0, 'latin-1.rss' ],
-        [ 0, 'dates.rss' ],
-        [ 0, 'conflict.rss' ],
+        [ 0, 'simple.atom'     ],
+        [ 0, 'simple.rss'      ],
+        [ 0, 'summaries.rss'   ],
+        [ 0, 'latin-1.atom'    ],
+        [ 0, 'latin-1.rss'     ],
+        [ 0, 'dates.rss'       ],
+        [ 0, 'conflict.rss'    ],
         [ 1, 'enclosures.atom' ],
-        [ 1, 'enclosures.rss' ],
+        [ 1, 'enclosures.rss'  ],
     ) {
-        $sth->execute(@{ $spec }, "$uri/$spec->[1]" );
+        $sth->execute(@{ $spec }, "$uri/$spec->[1]", '2010-06-08T14:13:38' );
     }
 });
 
@@ -109,13 +114,15 @@ test_counts(2, 'Should now have two entries');
 
 # Check the feed data.
 is_deeply $conn->run(sub{ shift->selectrow_arrayref(
-    'SELECT title, subtitle, site_url, icon_url, rights FROM feeds WHERE url = ?',
+    'SELECT title, subtitle, site_url, icon_url, updated_at, rights
+       FROM feeds WHERE url = ?',
     undef, "$uri/simple.atom",
 )}), [
     'Simple Atom Feed',
     'Witty and clever',
     'http://example.com/',
     'http://www.google.com/s2/favicons?domain=example.com',
+    '2009-12-13T18:30:02',
     '© 2010 Big Fat Example',
 ], 'Atom feed should be updated';
 
@@ -214,6 +221,20 @@ is $summary, '<p>Latin-1: æåø</p>', 'Latin-1 Summary should be UTF-8';
 # Test a variety of RSS summary formats.
 ok $eup->process("$uri/summaries.rss"), 'Process RSS feed with various summaries';
 test_counts(26, 'Should now have 26 entries');
+
+# Check the feed data.
+is_deeply $conn->run(sub{ shift->selectrow_arrayref(
+    'SELECT title, subtitle, site_url, icon_url, updated_at, rights
+       FROM feeds WHERE url = ?',
+    undef, "$uri/summaries.rss",
+)}), [
+    'Summaries RSS Feed',
+    '',
+    'http://foo.org',
+    'http://www.google.com/s2/favicons?domain=foo.org',
+    '2010-06-05T17:29:41',
+    '',
+], 'Summaries feed should be updated including current updated time';
 
 my $dbh = $conn->dbh;
 for my $spec (

@@ -21,6 +21,7 @@ BEGIN {
 # Set an absolute time.
 my $time = '2010-06-05T17:29:41Z';
 Test::MockTime::set_fixed_time($time);
+
 my $domain   = 'kineticode.com';
 my $company  = 'Lunar Theory';
 my $icon_url = 'http://www.google.com/s2/favicons?domain';
@@ -40,14 +41,14 @@ my $uri = 'file://localhost' . File::Spec->rel2abs('t/data');
 my $conn = App::FeedScene->new->conn;
 $conn->txn(sub {
     my $sth = shift->prepare(q{
-        INSERT INTO feeds (url, id, portal)
-        VALUES(?, ?, ?)
+        INSERT INTO feeds (url, id, portal, updated_at)
+        VALUES(?, ?, ?, ?)
     });
     for my $spec (
         [ 'simple.atom',     0 ],
         [ 'enclosures.atom', 1 ],
     ) {
-        $sth->execute("$uri/$spec->[0]", @{$spec});
+        $sth->execute("$uri/$spec->[0]", @{$spec}, , '2010-06-08T14:13:38');
     }
 });
 
