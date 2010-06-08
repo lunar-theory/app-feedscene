@@ -2,7 +2,7 @@
 
 use 5.12.0;
 use utf8;
-use Test::More tests => 159;
+use Test::More tests => 164;
 #use Test::More 'no_plan';
 use Test::XPath;
 use Test::MockTime;
@@ -149,6 +149,29 @@ test_entries($tx, 1);
 
 # Should have no fs:sources.
 $tx->is('count(/a:feed/fs:sources)', 0, 'Should have no sources element');
+
+# Test entry with missing title and summary.
+$conn->txn(sub {
+    $_->do(
+        q{UPDATE entries SET title = '', summary = '' WHERE id = ?},
+        undef, 'urn:uuid:e287d28b-5a4b-575c-b9da-d3dc894b9aa2'
+    );
+});
+
+ok $gen->go, 'Go with missing data';
+$tx = Test::XPath->new(
+    file  => $gen->filepath,
+    xmlns => {
+        'a'  => 'http://www.w3.org/2005/Atom',
+        'fs' => "http://$domain/2010/FeedScene",
+    },
+);
+
+$tx->ok('/a:feed/a:entry[1]', 'First entry', sub {
+    $_->is('count(./a:title)', 1, '...Title exists');
+    $_->is('./a:title', 'http://example.com/story.html', '....Title is URL');
+    $_->is('count(./a:summary)', 0, '...No summary');
+});
 
 sub test_root_metadata {
     my $tx = shift;

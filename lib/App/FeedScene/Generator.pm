@@ -79,14 +79,14 @@ sub go {
             push @entries, $a->entry(
                 $a->id($row->{id}),
                 $a->link({rel => 'alternate', href => $row->{url} }),
-                $a->title($row->{title}),
+                $a->title($row->{title} || $row->{url}),
                 $a->published($row->{published_at}),
                 $a->updated($row->{updated_at}),
                 $a->category({
                     scheme => "http://$domain/ns/portal",
                     term => $row->{portal},
                 }),
-                $a->summary({ type => 'html' }, $row->{summary} ),
+                ($row->{summary} ? ($a->summary({ type => 'html' }, $row->{summary} )) : ()),
                 ($row->{author} ? ($a->author( $a->name($row->{author}) )) : ()),
                 $a->source(
                     $a->id($row->{feed_id}),
@@ -121,7 +121,7 @@ sub go {
             }),
             $a->rights('© ', $now->year, " $company and others"),
             $a->generator({
-                uri => "http://$domain/feedscene/",
+                uri     => "http://$domain/feedscene/",
                 version => App::FeedScene->VERSION,
             }, 'FeedScene' ),
             $a->author(
