@@ -217,7 +217,7 @@ sub test_initial_feeds {
             subtitle => '',
             site_url => 'http://example.org/',
             icon_url => 'http://www.google.com/s2/favicons?domain=example.org',
-            updated_at => '2010-05-17T06:58:50',
+            updated_at => '2010-05-17T14:58:50',
             rights   => '',
             category => 'Typography',
             id       => "$uri/enclosures.rss",
