@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 27;
+use Test::More tests => 30;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
@@ -28,6 +28,8 @@ isa_ok $lup, 'App::FeedScene::FeedUpdater', 'It';
 
 is $lup->app, 'foo', 'The app attribute should be set';
 is $lup->url, "$uri/feeds.csv", 'The URL attribute should be set';
+is $lup->ua, undef, 'The ua attribute should be undefined';
+is $lup->verbose, undef, 'The verbose attribute should be false';
 
 # Build a database for us to use.
 ok my $dba = App::FeedScene::DBA->new( app => 'foo' ),
@@ -46,6 +48,7 @@ $mock->mock( is_success => 0 );
 $mock->mock( code => HTTP_INTERNAL_SERVER_ERROR );
 $mock->mock( message => 'OMGWTF' );
 throws_ok { $lup->run } qr/000 Unknown code/, 'Should get exception request failure';
+isa_ok $lup->ua, 'App::FeedScene::UA', 'The ua attribute should now be set';
 
 # Test HTTP_NOT_MODIFIED.
 $mock->mock( code => HTTP_NOT_MODIFIED );
