@@ -87,7 +87,7 @@ sub go {
                     term => $row->{portal},
                 }),
                 $a->summary({ type => 'html' }, $row->{summary} ),
-                $a->author( $a->name($row->{author}) ),
+                ($row->{author} ? ($a->author( $a->name($row->{author}) )) : ()),
                 $a->source(
                     $a->id($row->{feed_id}),
                     $self->strict ? (

@@ -2,7 +2,7 @@
 
 use 5.12.0;
 use utf8;
-use Test::More tests => 157;
+use Test::More tests => 159;
 #use Test::More 'no_plan';
 use Test::XPath;
 use Test::MockTime;
@@ -250,7 +250,7 @@ sub test_entries {
 
     # Look at the third entry, from portal 2, with an enclosure.
     $tx->ok('/a:feed/a:entry[3]', 'Check third entry', sub {
-        $_->is('count(./*)', 10, 'Should have 10 subelements');
+        $_->is('count(./*)', 9, 'Should have 9 subelements');
         $_->is('./a:id', 'urn:uuid:afac4e17-4775-55c0-9e61-30d7630ea909', '...Entry ID');
         $_->is('./a:link[@rel="alternate"]/@href', 'http://flickr.com/someimage', '...Link');
         $_->is('./a:title', 'This is the title', '...Title');
@@ -258,6 +258,7 @@ sub test_entries {
         $_->is('./a:updated', '2009-12-13T08:29:29Z', '...Updated');
         $_->is("./a:category[\@scheme='http://$domain/ns/portal']/\@term", 1, '...Portal');
         $_->is('./a:summary[@type="html"]', '<p>Caption for the encosed image.</p>', '...Summary');
+        $_->is('count(./a:author)', 0, '...Author');
         $_->is('./a:link[@rel="enclosure"]/@type', 'image/jpeg', '...Enclosure type');
         $_->is(
             './a:link[@rel="enclosure"]/@href',
