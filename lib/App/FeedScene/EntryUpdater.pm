@@ -81,7 +81,7 @@ sub process {
             $feed->description || '',
             $site_url,
             'http://www.google.com/s2/favicons?domain=' . $base_url->host,
-            ($feed->modified || DateTime->now)->set_time_zone('UTC'),
+            ($feed->modified || DateTime->now)->set_time_zone('UTC')->iso8601 . 'Z',
             $feed->copyright || '',
             $feed_url
         );

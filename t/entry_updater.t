@@ -122,7 +122,7 @@ is_deeply $conn->run(sub{ shift->selectrow_arrayref(
     'Witty and clever',
     'http://example.com/',
     'http://www.google.com/s2/favicons?domain=example.com',
-    '2009-12-13T18:30:02',
+    '2009-12-13T18:30:02Z',
     '© 2010 Big Fat Example',
 ], 'Atom feed should be updated';
 
@@ -232,7 +232,7 @@ is_deeply $conn->run(sub{ shift->selectrow_arrayref(
     '',
     'http://foo.org',
     'http://www.google.com/s2/favicons?domain=foo.org',
-    '2010-06-05T17:29:41',
+    '2010-06-05T17:29:41Z',
     '',
 ], 'Summaries feed should be updated including current updated time';
 
