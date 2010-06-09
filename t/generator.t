@@ -116,7 +116,7 @@ $tx->ok('/a:feed/fs:sources', 'Should have sources', sub {
         $_->is('./fs:link/@href', "$uri/simple.atom", 'Link URL should be correct');
         $_->is('./fs:title', 'Simple Atom Feed', 'Title should be correct');
         $_->is('./fs:subtitle', 'Witty and clever', 'Subtitle should be correct');
-        $_->is('./fs:updated', '2009-12-13T18:30:02', 'Updated should be correct');
+        $_->is('./fs:updated', '2009-12-13T18:30:02Z', 'Updated should be correct');
         $_->is('./fs:rights', '© 2010 Big Fat Example', 'Rights should be correct');
         $_->is('./fs:icon', "$icon_url=example.com", 'Icon should be correct');
     });
@@ -126,7 +126,7 @@ $tx->ok('/a:feed/fs:sources', 'Should have sources', sub {
         $_->is('./fs:link/@rel', 'self', 'Should have self link');
         $_->is('./fs:link/@href', "$uri/enclosures.atom", 'Link URL should be correct');
         $_->is('./fs:title', 'Enclosures Atom Feed', 'Title should be correct');
-        $_->is('./fs:updated', '2009-12-13T18:30:02', 'Updated should be correct');
+        $_->is('./fs:updated', '2009-12-13T18:30:02Z', 'Updated should be correct');
         $_->is('./fs:subtitle', '', 'Subtitle should be correct');
         $_->is('./fs:rights', '', 'Rights should be correct');
         $_->is('./fs:icon', "$icon_url=example.com", 'Icon should be correct');
@@ -269,7 +269,7 @@ sub test_entries {
                 $_->is('./a:title', 'Simple Atom Feed', '......Title');
                 $_->is('./a:subtitle', 'Witty and clever', '......Subtitle');
                 $_->is('./a:rights', '© 2010 Big Fat Example', '......Rights');
-                $_->is('./a:updated', '2009-12-13T18:30:02', '......Updated');
+                $_->is('./a:updated', '2009-12-13T18:30:02Z', '......Updated');
                 $_->is('./a:icon', "$icon_url=example.com", '......Icon');
             }
         });
@@ -301,7 +301,7 @@ sub test_entries {
                 $_->is('./a:title', 'Enclosures Atom Feed', '......Title');
                 $_->is('./a:subtitle', '', '......Subtitle');
                 $_->is('./a:rights', '', '.....Rights');
-                $_->is('./a:updated', '2009-12-13T18:30:02', '......Updated');
+                $_->is('./a:updated', '2009-12-13T18:30:02Z', '......Updated');
                 $_->is('./a:icon', "$icon_url=example.com", '......Icon');
             }
         });
