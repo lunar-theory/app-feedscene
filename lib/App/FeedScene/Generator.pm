@@ -93,10 +93,10 @@ sub go {
                     $a->id($row->{feed_id}),
                     $self->strict ? (
                         $a->link({ rel => 'self', href => $row->{feed_url} }),
-                        $a->title($row->{feed_title}),
-                        $a->subtitle($row->{feed_subtitle}),
+                        $a->title($row->{feed_title} || $row->{feed_url}),
+                        ($row->{feed_subtitle} ? ($a->subtitle($row->{feed_subtitle})) : ()),
                         $a->updated($row->{feed_updated_at}),
-                        $a->rights($row->{rights}),
+                        ($row->{rights} ? ($a->rights($row->{rights})) : ()),
                         $a->icon($row->{icon_url}),
                     ) : (),
                 ),

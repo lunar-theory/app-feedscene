@@ -245,8 +245,6 @@ sub test_root_metadata {
 sub test_entries {
     my ($tx, $strict) =@_;
     $tx->is('count(/a:feed/a:entry)', 13, 'Should have 13 entries' );
-    my $scount = $strict ? 7 : 1;
-
 
     # Check the first entry.
     $tx->ok('/a:feed/a:entry[1]', 'Check first entry', sub {
@@ -263,6 +261,7 @@ sub test_entries {
             $_->is('./a:name', 'Ira Glass', '......Name');
         });
         $_->ok('./a:source', '...Source', sub {
+            my $scount = $strict ? 7 : 1;
             $_->is('count(./*)', $scount, "......Should have $scount subelements");
             $_->is('./a:id', 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6', '......ID');
             if ($strict) {
@@ -295,14 +294,15 @@ sub test_entries {
             '...Enclosure link'
         );
         $_->ok('./a:source', '...Source', sub {
+            my $scount = $strict ? 5 : 1;
             $_->is('count(./*)', $scount, "......Should have $scount subelements");
             $_->is('./a:id', 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af7', '......ID');
             if ($strict) {
                 # Confirm all other elments.
                 $_->is('./a:link[@rel="self"]/@href', "$uri/enclosures.atom", '......Link');
                 $_->is('./a:title', 'Enclosures Atom Feed', '......Title');
-                $_->is('./a:subtitle', '', '......Subtitle');
-                $_->is('./a:rights', '', '.....Rights');
+                $_->is('count(./a:subtitle)', 0, '......Subtitle');
+                $_->is('count(./a:rights)', 0, '......Rights');
                 $_->is('./a:updated', '2009-12-13T18:30:02Z', '......Updated');
                 $_->is('./a:icon', "$icon_url=example.com", '......Icon');
             }
