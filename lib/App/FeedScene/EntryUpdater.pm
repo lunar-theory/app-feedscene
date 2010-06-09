@@ -281,13 +281,12 @@ sub _clean_html {
 
 sub _find_summary {
     my $entry = shift;
-    use Carp;
     if (my $sum = $entry->summary) {
         if (my $body = $sum->body) {
             # We got something here. Clean it up and return it.
             # XXX Add `URI => $base_url` parser option?
-            return join '', map { $_->toString } map {
-                $_->hasChildNodes || $_->hasAttributes ? $_ : ' '
+            return join '', map {
+                $_->hasChildNodes || $_->hasAttributes ? $_->toString : ' '
             } _clean_html(
                 App::FeedScene::Parser->parse_html_string($body)->firstChild
             )->childNodes;
@@ -301,26 +300,18 @@ sub _find_summary {
 
     # Fetch a reasonable amount of the content to use as a summary.
     my $ret = '';
-    my @nodes = $doc->findnodes('/html/body')->get_node(1)->childNodes;
+    my @nodes = map {
+        # If it's an unwanted node but we want its children, keep them.
+        $keep_children{$_->nodeName} ? $_->childNodes : $_
+    } $doc->findnodes('/html/body')->get_node(1)->childNodes;
+
     while (@nodes) {
         my $elem = shift @nodes;
-        next if $elem->nodeType != XML_ELEMENT_NODE;
-        unless ($allowed{$elem->nodeName}) {
-            # We don't want this element.
-            if ($keep_children{$elem->nodeName}) {
-                # But we want its children.
-                unshift @nodes, map {
-                    if ($_->nodeType == XML_TEXT_NODE) {
-                        my $n = XML::LibXML::Element->new('p');
-                        $n->addChild($_);
-                        $n;
-                    } else {
-                        $_;
-                    }
-                } $elem->childNodes;
-            }
+        if ($elem->nodeType == XML_TEXT_NODE) {
+            $ret .= $elem->toString if $elem->toString =~ /\S/;
             next;
         }
+        next if $elem->nodeType != XML_ELEMENT_NODE or !$allowed{$elem->nodeName};
 
         # Clean the HTML.
         $elem = _clean_html($elem);

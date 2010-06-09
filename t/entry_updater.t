@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 107;
+use Test::More tests => 108;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
@@ -258,7 +258,7 @@ for my $spec (
     [ 16 => '<p>Summary with leading img.</p>' ],
     [ 17 => '<p>Summary with trailing img.</p>' ],
     [ 18 => '<p>Centered Summary paragraph</p>' ],
-    [ 19 => '<p>Centered Summary</p>' ],
+    [ 19 => 'Centered Summary' ],
     [ 20 => '<p>Summary with no tag but a link.</p>' ],
 ) {
     is +($dbh->selectrow_array(
@@ -473,7 +473,7 @@ for my $spec (
 
 $ENV{FOO} = 1;
 ok $eup->process("$uri/more_summaries.atom"), 'Process Summary regressions';
-test_counts(59, 'Should now have 59 entries');
+test_counts(60, 'Should now have 60 entries');
 
 for my $spec (
     [ 'onclick' => [
@@ -486,11 +486,16 @@ for my $spec (
         'image/jpeg',
         'http://foo.com/hey.jpg',
     ], 'broken html' ],
+    [ 'hrm' => [
+        q{Jeff Koons has just unveiled the newest model in BMW's Art Car series. His vibrant design is one of the best in the series, which began in 1975, because he takes full advantage of the shape of the vehicle, rather than just painting on its surface. His art flows with the lines of the car to create an impression of speed and power. I mean, don't you totally want to grab this car and drive ridiculously fast on one of those mythical German roads with no speed limit? Of course you do! (thanks Peter)},
+        'image/jpeg',
+        'http://ideas.veer.com/images/assets/posts/0012/0871/Koons_Car.jpg',
+    ], 'no summary hrm' ],
 ) {
     is_deeply $dbh->selectrow_arrayref(
         'SELECT summary, enclosure_type, enclosure_url FROM entries WHERE id = ?',
         undef, _uuid('http://more.example.com/', "http://more.example.com/$spec->[0].html")
-    ), $spec->[1], "Should have proper enclosure & summary for $spec->[2]";
+    ) || [], $spec->[1], "Should have proper enclosure & summary for $spec->[2]";
 }
 ##############################################################################
 sub test_counts {
