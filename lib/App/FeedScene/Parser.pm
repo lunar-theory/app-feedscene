@@ -6,6 +6,7 @@ use Data::Feed;
 use Data::Feed::Parser::Atom;
 use Data::Feed::Parser::RSS;
 use XML::LibXML;
+use Encode::ZapCP1252 ();
 #use HTML::Tidy;
 
 $XML::Atom::ForceUnicode = 1;
@@ -61,7 +62,21 @@ my $parser = XML::LibXML->new($libxml_options);
 # });
 
 sub libxml { $parser }
-sub parse { shift; Data::Feed->parse(@_); }
+
+PARSEFEED: {
+    # Override CP1252 escapes that need to be encoded.
+    local $Encode::ZapCP1252::ascii_for{"\x93"} = '&quot;';
+    local $Encode::ZapCP1252::ascii_for{"\x94"} = '&quot;';
+    local $Encode::ZapCP1252::ascii_for{"\x8b"} = '&lt;';
+    local $Encode::ZapCP1252::ascii_for{"\x9b"} = '&gt;';
+
+    sub parse_feed {
+        shift;
+        Encode::ZapCP1252::zap_cp1252 $_[0];
+        return Data::Feed->parse(\$_[0]);
+    }
+
+}
 
 sub parse_html_string {
     my $self = shift;

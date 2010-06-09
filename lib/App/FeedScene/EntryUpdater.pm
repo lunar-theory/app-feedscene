@@ -9,7 +9,6 @@ use HTTP::Status qw(HTTP_NOT_MODIFIED);
 use XML::LibXML qw(XML_ELEMENT_NODE XML_TEXT_NODE);
 use OSSP::uuid;
 use MIME::Types;
-use Encode::ZapCP1252 'zap_cp1252';
 use URI;
 
 use Moose;
@@ -50,15 +49,7 @@ sub process {
         unless $res->is_success or $res->code == HTTP_NOT_MODIFIED;
     return $self if $res->code == HTTP_NOT_MODIFIED;
 
-    # Override CP1252 escapes that need to be encoded.
-    local $Encode::ZapCP1252::ascii_for{"\x93"} = '&quot;';
-    local $Encode::ZapCP1252::ascii_for{"\x94"} = '&quot;';
-    local $Encode::ZapCP1252::ascii_for{"\x8b"} = '&lt;';
-    local $Encode::ZapCP1252::ascii_for{"\x9b"} = '&gt;';
-
-    my $content  = $res->decoded_content;
-    zap_cp1252 $content;
-    my $feed     = App::FeedScene::Parser->parse(\$content);
+    my $feed     = App::FeedScene::Parser->parse_feed($res->decoded_content);
     my $base_url = URI->new($feed->base || $feed->link);
     my $site_url = URI->new_abs($feed->link, $base_url);
     my $feed_id  = $feed->can('id') ? $feed->id || $feed_url : $feed_url;

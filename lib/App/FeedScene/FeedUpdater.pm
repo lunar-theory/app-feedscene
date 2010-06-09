@@ -8,7 +8,6 @@ use App::FeedScene::Parser;
 use Text::CSV_XS;
 use HTTP::Status qw(HTTP_NOT_MODIFIED);
 use Moose;
-use Encode::ZapCP1252 'zap_cp1252';
 
 has app     => (is => 'rw', isa => 'Str');
 has url     => (is => 'rw', isa => 'Str');
@@ -54,12 +53,6 @@ sub process {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         });
 
-        # Override CP1252 escapes that need to be encoded.
-        local $Encode::ZapCP1252::ascii_for{"\x93"} = '&quot;';
-        local $Encode::ZapCP1252::ascii_for{"\x94"} = '&quot;';
-        local $Encode::ZapCP1252::ascii_for{"\x8b"} = '&lt;';
-        local $Encode::ZapCP1252::ascii_for{"\x9b"} = '&gt;';
-
         my @ids;
         for my $line (@csv) {
             $csv->parse($line);
@@ -79,9 +72,7 @@ sub process {
             require Carp && Carp::croak("Error retrieving $feed_url: " . $res->status_line)
                 unless $res->is_success;
 
-            my $content  = $res->decoded_content;
-            zap_cp1252 $content;
-            my $feed     = App::FeedScene::Parser->parse(\$content);
+            my $feed     = App::FeedScene::Parser->parse_feed($res->decoded_content);
                            # XXX Generate from URL?
             $id          = $feed->can('id') ? $feed->id || $feed_url : $feed_url;
             my $site_url = $feed->link;
