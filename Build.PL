@@ -25,6 +25,7 @@ Module::Build->new(
         'DBD::SQLite'               => '1.29',
         'DBI'                       => '1.608',
         'DBIx::Connector'           => '0.34',
+        'Encode::ZapCP1252'         => '0.12',
         'Exception::Class::DBI'     => '1.00',
         'File::Spec'                => '3.31',
         'File::Path'                => '2.08',

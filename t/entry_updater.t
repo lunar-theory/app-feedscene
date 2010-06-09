@@ -215,7 +215,7 @@ test_counts(6, 'Should now have six entries');
 );
 
 is $title, 'Title: æåø', 'Latin-1 Title should be UTF-8';
-is $summary, '<p>Latin-1: æåø</p>', 'Latin-1 Summary should be UTF-8';
+is $summary, '<p>Latin-1: æåø ("CP1252")</p>', 'Latin-1 Summary should be UTF-8';
 
 ##############################################################################
 # Test a variety of RSS summary formats.

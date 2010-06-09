@@ -8,6 +8,7 @@ use App::FeedScene::Parser;
 use Text::CSV_XS;
 use HTTP::Status qw(HTTP_NOT_MODIFIED);
 use Moose;
+use Encode::ZapCP1252 'zap_cp1252';
 
 has app     => (is => 'rw', isa => 'Str');
 has url     => (is => 'rw', isa => 'Str');
@@ -36,6 +37,7 @@ sub process {
 
     my $conn = App::FeedScene->new($self->app)->conn;
     my $sth = $conn->run(sub {
+                             use strict;
         my $dbh = shift;
         my $sel = $dbh->prepare(q{SELECT id FROM feeds WHERE url = ?});
 
@@ -51,6 +53,12 @@ sub process {
                                updated_at, rights, portal, category, id)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         });
+
+        # Override CP1252 escapes that need to be encoded.
+        local $Encode::ZapCP1252::ascii_for{"\x93"} = '&quot;';
+        local $Encode::ZapCP1252::ascii_for{"\x94"} = '&quot;';
+        local $Encode::ZapCP1252::ascii_for{"\x8b"} = '&lt;';
+        local $Encode::ZapCP1252::ascii_for{"\x9b"} = '&gt;';
 
         my @ids;
         for my $line (@csv) {
@@ -70,7 +78,9 @@ sub process {
                 next;
             }
 
-            my $feed     = App::FeedScene::Parser->parse(\$res->content);
+            my $content  = $res->decoded_content;
+            zap_cp1252 $content;
+            my $feed     = App::FeedScene::Parser->parse(\$content);
                            # XXX Generate from URL?
             $id          = $feed->can('id') ? $feed->id || $feed_url : $feed_url;
             my $site_url = $feed->link;

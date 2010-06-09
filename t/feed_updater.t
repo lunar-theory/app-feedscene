@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 30;
+use Test::More tests => 32;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
@@ -195,6 +195,32 @@ sub test_initial_feeds {
             rights   => '',
             category => 'Lögos & Branding',
             id       => "$uri/summaries.rss",
+        },
+    ]);
+
+    # Check bogus encoding.
+    test_feeds(2, [
+        {
+            url      => "$uri/dates.rss",
+            title    => 'Simple RSS Dates',
+            subtitle => '',
+            site_url => 'http://baz.org',
+            icon_url => 'http://www.google.com/s2/favicons?domain=baz.org',
+            updated_at => '2010-05-17T00:00:00Z',
+            rights   => '',
+            category => 'Infographics',
+            id       => "$uri/dates.rss",
+        },
+        {
+            url      => "$uri/latin-1.rss",
+            title    => '"Latin-1 RSS Feed"', # Quotation marks are CP1252 in the XML.
+            subtitle => '',
+            site_url => 'http://foo.net/',
+            icon_url => 'http://www.google.com/s2/favicons?domain=foo.net',
+            updated_at => '2009-12-13T18:30:02Z',
+            rights   => 'Copyright (c) 2010',
+            category => 'Lögos & Branding',
+            id      => "$uri/latin-1.rss",
         },
     ]);
 
