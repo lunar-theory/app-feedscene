@@ -18,6 +18,8 @@ BEGIN {
     use_ok 'App::FeedScene::FeedUpdater' or die;
 }
 
+File::Path::make_path 'db';
+
 # Set an absolute time.
 my $time = '2010-06-05T17:29:41Z';
 Test::MockTime::set_fixed_time($time);

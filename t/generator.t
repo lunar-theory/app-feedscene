@@ -18,6 +18,8 @@ BEGIN {
     use_ok $CLASS                         or die;
 }
 
+File::Path::make_path 'db';
+
 # Set an absolute time.
 my $time = '2010-06-05T17:29:41Z';
 Test::MockTime::set_fixed_time($time);
@@ -92,7 +94,7 @@ is $gen->link, "http://$domain/feeds/" . $gen->filename,
 
 ##############################################################################
 # Test non-strict output.
-END { File::Path::remove_tree($gen->dir) if -d $gen->dir; }
+END { unlink $gen->filename; }
 ok $gen->go, 'Go!';
 my $tx = Test::XPath->new(
     file  => $gen->filepath,

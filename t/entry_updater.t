@@ -19,6 +19,7 @@ BEGIN {
     use_ok 'App::FeedScene::EntryUpdater' or die;
 }
 
+File::Path::make_path 'db';
 END { File::Path::remove_tree 'cache/foo' };
 
 # Set an absolute time.

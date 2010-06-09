@@ -7,8 +7,10 @@ use Test::More tests => 23;
 #use Test::More 'no_plan';
 use Test::Exception;
 use Test::NoWarnings;
+use File::Path;
 
 BEGIN { use_ok 'App::FeedScene' or die; }
+File::Path::make_path 'db';
 
 isa_ok my $fs = App::FeedScene->new('myapp'), 'App::FeedScene';
 END { $fs->conn->disconnect; unlink 'db/myapp.db' }
