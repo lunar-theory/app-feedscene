@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 106;
+use Test::More tests => 107;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
@@ -468,20 +468,24 @@ for my $spec (
 # Summary regressions.
 @types = qw(
     image/png
+    image/jpeg
 );
 
 $ENV{FOO} = 1;
 ok $eup->process("$uri/more_summaries.atom"), 'Process Summary regressions';
-test_counts(58, 'Should now have 58 entries');
+test_counts(59, 'Should now have 59 entries');
 
 for my $spec (
     [ 'onclick' => [
-        '<div>Index Sans was conceived as a text face, so a large x-height was combined with elliptical curves to open the counterforms and improve legibility at smaller sizes. Stroke endings utilize a subtle radius at each corner; a reference to striking a steel punch into a soft metal surface.
-
-Index Sans Typeface on the Behance Network</div>',
+        '<div>Index Sans was conceived as a text face, so a  large x-height was combined with elliptical curves to open the counterforms and improve legibility at smaller sizes. Stroke endings  utilize a subtle radius at each corner; a reference to striking a steel  punch into a soft metal surface.<div/><div/>Index Sans Typeface on the Behance Network</div>',
         'image/png',
         'http://feedads.g.doubleclick.net/~a/E24Doeaqq8Jhhlk26PCTvfgYeRw/0/di',
     ], 'onclick summary' ],
+    [ 'broken' => [
+        '<p>first graph</p><p>second <em><strong>graph</strong></em> man</p>',
+        'image/jpeg',
+        'http://foo.com/hey.jpg',
+    ], 'broken html' ],
 ) {
     is_deeply $dbh->selectrow_arrayref(
         'SELECT summary, enclosure_type, enclosure_url FROM entries WHERE id = ?',

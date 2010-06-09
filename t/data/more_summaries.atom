@@ -27,5 +27,15 @@
 &lt;a href="http://feeds.feedburner.com/~ff/blogspot/Vhqv?a=6GmGW1EoMpo:DtBfmbdRBoE:yIl2AUoC8zA"&gt;&lt;img src="http://feeds.feedburner.com/~ff/blogspot/Vhqv?d=yIl2AUoC8zA" border="0"&gt;&lt;/img&gt;&lt;/a&gt; &lt;a href="http://feeds.feedburner.com/~ff/blogspot/Vhqv?a=6GmGW1EoMpo:DtBfmbdRBoE:F7zBnMyn0Lo"&gt;&lt;img src="http://feeds.feedburner.com/~ff/blogspot/Vhqv?i=6GmGW1EoMpo:DtBfmbdRBoE:F7zBnMyn0Lo" border="0"&gt;&lt;/img&gt;&lt;/a&gt; &lt;a href="http://feeds.feedburner.com/~ff/blogspot/Vhqv?a=6GmGW1EoMpo:DtBfmbdRBoE:V_sGLiPBpWU"&gt;&lt;img src="http://feeds.feedburner.com/~ff/blogspot/Vhqv?i=6GmGW1EoMpo:DtBfmbdRBoE:V_sGLiPBpWU" border="0"&gt;&lt;/img&gt;&lt;/a&gt; &lt;a href="http://feeds.feedburner.com/~ff/blogspot/Vhqv?a=6GmGW1EoMpo:DtBfmbdRBoE:qj6IDK7rITs"&gt;&lt;img src="http://feeds.feedburner.com/~ff/blogspot/Vhqv?d=qj6IDK7rITs" border="0"&gt;&lt;/img&gt;&lt;/a&gt; &lt;a href="http://feeds.feedburner.com/~ff/blogspot/Vhqv?a=6GmGW1EoMpo:DtBfmbdRBoE:gIN9vFwOqvQ"&gt;&lt;img src="http://feeds.feedburner.com/~ff/blogspot/Vhqv?i=6GmGW1EoMpo:DtBfmbdRBoE:gIN9vFwOqvQ" border="0"&gt;&lt;/img&gt;&lt;/a&gt;
 &lt;/div&gt;</content>
   </entry>
-</feed>
 
+  <entry>
+    <title>Broken HTML</title>
+    <link rel="alternate" href="http://more.example.com/broken.html" />
+    <link rel="related" href="http://more.example.com/" />
+    <link rel="enclosure" type="image/jpeg" href="http://foo.com/hey.jpg" />
+    <id>urn:uuid:1225c695-cfb8-4ebb-aaaa-80da554efa6b</id>
+    <updated>2010-05-13T17:30:02Z</updated>
+    <published>2010-05-12T08:29:29-04:00</published>
+    <content type="html"><![CDATA[first graph<p>second <em><strong>graph</em> man</strong>]]></content>
+  </entry>
+</feed>

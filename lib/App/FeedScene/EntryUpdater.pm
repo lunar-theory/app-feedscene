@@ -237,7 +237,7 @@ sub _clean_html {
                 next;
             }
 
-            if ((my $attrs = $allowed{$name}) && ($elem->hasChildNodes || $elem->hasAttributes)) {
+            if (my $attrs = $allowed{$name}) {
                 # Keep only allowed attributes.
                 $elem->removeAttribute($_) for grep { !$attrs->{$_} }
                     map { $_->nodeName } $elem->attributes;
@@ -295,8 +295,8 @@ sub _find_summary {
         if (my $body = $sum->body) {
             # We got something here. Clean it up and return it.
             # XXX Add `URI => $base_url` parser option?
-            return join '', map { $_->toString } grep {
-                $_->hasChildNodes || $_->hasAttributes
+            return join '', map { $_->toString } map {
+                $_->hasChildNodes || $_->hasAttributes ? $_ : ' '
             } _clean_html(
                 App::FeedScene::Parser->parse_html_string($body)->firstChild
             )->childNodes;
