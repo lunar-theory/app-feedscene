@@ -37,7 +37,7 @@ sub process {
 
     my $conn = App::FeedScene->new($self->app)->conn;
     my $sth = $conn->run(sub {
-                             use strict;
+        use strict;
         my $dbh = shift;
         my $sel = $dbh->prepare(q{SELECT id FROM feeds WHERE url = ?});
 
@@ -66,9 +66,6 @@ sub process {
             my ($portal, $feed_url, $category) = $csv->fields;
             $portal = 0 if $portal eq 'text';
             say STDERR "$portal: $feed_url" if $self->verbose;
-            my $res = $ua->get($feed_url);
-            require Carp && Carp::croak("Error retrieving $feed_url: " . $res->status_line)
-                unless $res->is_success;
 
             # Skip to the next entry if we've already got this URL.
             my ($id) = $dbh->selectrow_array($sel, undef, $feed_url);
@@ -77,6 +74,10 @@ sub process {
                 $upd->execute($portal, $category || '', $id);
                 next;
             }
+
+            my $res = $ua->get($feed_url);
+            require Carp && Carp::croak("Error retrieving $feed_url: " . $res->status_line)
+                unless $res->is_success;
 
             my $content  = $res->decoded_content;
             zap_cp1252 $content;
