@@ -29,6 +29,7 @@ Module::Build->new(
         'Exception::Class::DBI'     => '1.00',
         'File::Spec'                => '3.31',
         'File::Path'                => '2.08',
+        'HTML::Tidy'                => '1.52',
         'LWP'                       => '5.835',
         'LWP::UserAgent::WithCache' => '0.11',
         'MIME::Types'               => '1.29',

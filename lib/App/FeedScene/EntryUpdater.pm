@@ -21,11 +21,6 @@ has verbose => (is => 'rw', isa => 'Int');
 
 no Moose;
 
-my $parse_options = {
-    suppress_errors   => 1,
-    suppress_warnings => 1,
-};
-
 sub run {
     my $self = shift;
     say "Updating ", $self->app, ' portal ', $self->portal
@@ -69,6 +64,7 @@ sub process {
     my $feed_id  = $feed->can('id') ? $feed->id || $feed_url : $feed_url;
 
     App::FeedScene->new($self->app)->conn->txn(sub {
+        use strict;
         my $dbh = shift;
 
         # Update the feed.
@@ -161,7 +157,6 @@ my %allowed = do {
         b
         bdo
         big
-        br
         caption
         cite
         code
@@ -242,7 +237,7 @@ sub _clean_html {
                 next;
             }
 
-            if (my $attrs = $allowed{$name}) {
+            if ((my $attrs = $allowed{$name}) && ($elem->hasChildNodes || $elem->hasAttributes)) {
                 # Keep only allowed attributes.
                 $elem->removeAttribute($_) for grep { !$attrs->{$_} }
                     map { $_->nodeName } $elem->attributes;
@@ -261,9 +256,19 @@ sub _clean_html {
                 }
 
                 # Take it out jump to the next sibling.
-                my $sibling = $elem->nextSibling;
+                my $next = $elem;
+                NEXT: {
+                    if (my $sib = $next->nextSibling) {
+                        $next = $sib;
+                        last;
+                    }
+
+                    # No sibling, try parent's sibling
+                    $next = $next->parentNode;
+                    redo if $next && $next ne $top;
+                }
                 $parent->removeChild($elem);
-                $elem = $sibling;
+                $elem = $next;
                 next;
             }
         }
@@ -289,10 +294,11 @@ sub _find_summary {
     if (my $sum = $entry->summary) {
         if (my $body = $sum->body) {
             # We got something here. Clean it up and return it.
-            return join '', map { $_->toString } _clean_html(
-                App::FeedScene::Parser->libxml->parse_html_string(
-                    $body, $parse_options
-                )->firstChild
+            # XXX Add `URI => $base_url` parser option?
+            return join '', map { $_->toString } grep {
+                $_->hasChildNodes || $_->hasAttributes
+            } _clean_html(
+                App::FeedScene::Parser->parse_html_string($body)->firstChild
             )->childNodes;
         }
     }
@@ -300,7 +306,7 @@ sub _find_summary {
     # Try the content of the entry.
     my $content = $entry->content or return '';
     my $body    = $content->body  or return '';
-    my $doc     = App::FeedScene::Parser->libxml->parse_html_string($body, $parse_options);
+    my $doc     = App::FeedScene::Parser->parse_html_string($body);
 
     # Fetch a reasonable amount of the content to use as a summary.
     my $ret = '';
@@ -326,7 +332,8 @@ sub _find_summary {
         }
 
         # Clean the HTML.
-        $ret .= _clean_html($elem)->toString;
+        $elem = _clean_html($elem);
+        $ret .= $elem->toString if $elem->hasChildNodes || $elem->hasAttributes;
         return $ret if length $ret > 140;
     }
     return $ret;
@@ -345,9 +352,7 @@ sub _find_enclosure {
     for my $content ($entry->content, $entry->summary) {
         next unless $content;
         my $body = $content->body or next;
-        my $doc = App::FeedScene::Parser->libxml->parse_html_string(
-            $body, $parse_options
-        ) or next;
+        my $doc = App::FeedScene::Parser->parse_html_string($body) or next;
         for my $node ($doc->findnodes('//img/@src|//audio/@src|//video/@src')) {
             my $url = $node->nodeValue or next;
             (my($type), $url) = $self->_get_type($url) or next;

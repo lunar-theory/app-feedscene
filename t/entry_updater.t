@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 103;
+use Test::More tests => 106;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
@@ -41,15 +41,16 @@ my $conn = App::FeedScene->new->conn;
 $conn->txn(sub {
     my $sth = shift->prepare('INSERT INTO feeds (portal, id, url, updated_at) VALUES(?, ?, ?, ?)');
     for my $spec (
-        [ 0, 'simple.atom'     ],
-        [ 0, 'simple.rss'      ],
-        [ 0, 'summaries.rss'   ],
-        [ 0, 'latin-1.atom'    ],
-        [ 0, 'latin-1.rss'     ],
-        [ 0, 'dates.rss'       ],
-        [ 0, 'conflict.rss'    ],
-        [ 1, 'enclosures.atom' ],
-        [ 1, 'enclosures.rss'  ],
+        [ 0, 'simple.atom'       ],
+        [ 0, 'simple.rss'        ],
+        [ 0, 'summaries.rss'     ],
+        [ 0, 'latin-1.atom'      ],
+        [ 0, 'latin-1.rss'       ],
+        [ 0, 'dates.rss'         ],
+        [ 0, 'conflict.rss'      ],
+        [ 1, 'enclosures.atom'   ],
+        [ 1, 'enclosures.rss'    ],
+        [ 1, 'more_summaries.atom' ],
     ) {
         $sth->execute(@{ $spec }, "$uri/$spec->[1]", '2010-06-08T14:13:38' );
     }
@@ -57,7 +58,7 @@ $conn->txn(sub {
 
 is $conn->run(sub {
     (shift->selectrow_array('SELECT COUNT(*) FROM feeds'))[0]
-}), 9, 'Should have nine feeds in the database';
+}), 10, 'Should have 10 feeds in the database';
 test_counts(0, 'Should have no entries');
 
 # Construct a entry updater.
@@ -424,22 +425,22 @@ for my $spec (
         '<p>Caption for the embedded audio.</p>',
         'audio/mpeg',
         'http://flickr.com/anotheraudio.mp3'
-    ], 'audio enclosure' ],
+    ], 'embedded audio' ],
     [ 'embedvideo' => [
         '<p>Caption for the embedded video.</p>',
         'video/quicktime',
         'http://flickr.com/anothervideo.mov'
-    ], 'video enclosure' ],
+    ], 'embedded video' ],
     [ 'skipunwanted' => [
         '<p>Caption for the enclosed audio.</p>',
         'audio/mpeg',
         'http://flickr.com/audio.mp3'
-    ], 'audio enclosure' ],
+    ], 'unwanted enclosure + audio enclosure' ],
     [ 'skipembed' => [
         '<p>Caption for the embedded audio.</p>',
         'audio/mpeg',
         'http://flickr.com/audio.mp3'
-    ], 'audio enclosure' ],
+    ], 'unwanted embed + embedded audio' ],
     [ 'audio.mp3' => [
         '<p>Caption for the audio link.</p>',
         'audio/mpeg',
@@ -454,15 +455,39 @@ for my $spec (
     is_deeply $dbh->selectrow_arrayref(
         'SELECT summary, enclosure_type, enclosure_url FROM entries WHERE id = ?',
         undef, _uuid('http://example.com/', "http://flickr.com/$spec->[0]")
-    ), $spec->[1], "Should have proper Atom enclosure for $spec->[0]";
+    ), $spec->[1], "Should have proper Atom enclosure for $spec->[2]";
 
     $spec->[1][2] =~ s{[.]com}{.org};
     is_deeply $dbh->selectrow_arrayref(
         'SELECT summary, enclosure_type, enclosure_url FROM entries WHERE id = ?',
         undef, _uuid('http://example.org/', "http://flickr.org/$spec->[0]")
-    ), $spec->[1], "Should have proper RSS enclosure for $spec->[0]";
+    ), $spec->[1], "Should have proper RSS enclosure for $spec->[2]";
 }
 
+##############################################################################
+# Summary regressions.
+@types = qw(
+    image/png
+);
+
+$ENV{FOO} = 1;
+ok $eup->process("$uri/more_summaries.atom"), 'Process Summary regressions';
+test_counts(58, 'Should now have 58 entries');
+
+for my $spec (
+    [ 'onclick' => [
+        '<div>Index Sans was conceived as a text face, so a large x-height was combined with elliptical curves to open the counterforms and improve legibility at smaller sizes. Stroke endings utilize a subtle radius at each corner; a reference to striking a steel punch into a soft metal surface.
+
+Index Sans Typeface on the Behance Network</div>',
+        'image/png',
+        'http://feedads.g.doubleclick.net/~a/E24Doeaqq8Jhhlk26PCTvfgYeRw/0/di',
+    ], 'onclick summary' ],
+) {
+    is_deeply $dbh->selectrow_arrayref(
+        'SELECT summary, enclosure_type, enclosure_url FROM entries WHERE id = ?',
+        undef, _uuid('http://more.example.com/', "http://more.example.com/$spec->[0].html")
+    ), $spec->[1], "Should have proper enclosure & summary for $spec->[2]";
+}
 ##############################################################################
 sub test_counts {
     my ($count, $descr) = @_;
