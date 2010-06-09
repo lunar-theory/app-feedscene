@@ -94,7 +94,7 @@ is $gen->link, "http://$domain/feeds/" . $gen->filename,
 
 ##############################################################################
 # Test non-strict output.
-END { unlink $gen->filename; }
+END { unlink $gen->filepath; }
 ok $gen->go, 'Go!';
 my $tx = Test::XPath->new(
     file  => $gen->filepath,
