@@ -59,7 +59,6 @@ sub process {
     my $host     = $site_url ? $site_url->host : URI->new($feed_url)->host;
     $base_url  ||= $site_url;
 
-    # XXX Modify to update entries only if the update time has changed?
     App::FeedScene->new($self->app)->conn->txn(sub {
         my $dbh = shift;
 
@@ -88,13 +87,34 @@ sub process {
         );
 
         # Get ready to update the entries.
-        my $sth = $dbh->prepare(q{
-            INSERT OR REPLACE INTO entries (
-                id, feed_id, url, title, published_at, updated_at,
-                summary, author, enclosure_type, enclosure_url
+        my $sel = $dbh->prepare(q{
+            SELECT updated_at >= ?
+              FROM entries
+             WHERE id = ?
+        });
+
+        my $ins = $dbh->prepare(q{
+            INSERT INTO entries (
+                feed_id, url, title, published_at, updated_at, summary,
+                author, enclosure_type, enclosure_url, id
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         });
 
+        my $upd = $dbh->prepare(q{
+            UPDATE entries
+               SET feed_id        = ?,
+                   url            = ?,
+                   title          = ?,
+                   published_at   = ?,
+                   updated_at     = ?,
+                   summary        = ?,
+                   author         = ?,
+                   enclosure_type = ?,
+                   enclosure_url  = ?
+             WHERE id = ?
+        });
+
+        # XXX Modify to update entries only if the update time has changed?
         my @ids;
         my $be_verbose = ($self->verbose || 0) > 1;
         for my $entry ($feed->entries) {
@@ -111,24 +131,45 @@ sub process {
             }
 
             my $pub_date = $entry->issued;
-            my $upd_date = $entry->modified || $pub_date or next;
-            $pub_date ||= $upd_date;
-            my $uuid = _uuid($site_url, $entry_link);
+            my $upd_date = $entry->modified;
+            next unless $pub_date || $upd_date;
+            $pub_date    = ($pub_date || $upd_date)->set_time_zone('UTC')->iso8601 . 'Z';
+            my $uuid     = _uuid($site_url, $entry_link);
+            push @ids, $uuid;
 
-            $sth->execute(
-                $uuid,
+            my $up_to_date;
+            if ($upd_date) {
+                # See if we've been updated.
+                ($up_to_date) = $dbh->selectrow_array(
+                    $sel, undef,
+                    $upd_date->set_time_zone('UTC')->iso8601 . 'Z',
+                    $uuid
+                );
+                # Nothing to do if it's up-to-date.
+                next if $up_to_date;
+            }
+
+            # Gather params.
+            my @params = (
                 $feed_id,
                 $entry_link,
                 $entry->title,
-                $pub_date->set_time_zone('UTC')->iso8601 . 'Z',
-                $upd_date->set_time_zone('UTC')->iso8601 . 'Z',
+                $pub_date,
+                $upd_date ? $upd_date->set_time_zone('UTC')->iso8601 . 'Z' : $pub_date,
                 _find_summary($entry),
-                $entry->author,
+                $entry->author || '',
                 $enc_type,
                 $enc_url,
+                $uuid,
             );
 
-            push @ids, $uuid;
+            if (defined $up_to_date) {
+                # Exists but is out-of date. So update it.
+                $upd->execute(@params);
+            } else {
+                # New entry. Insert it.
+                $ins->execute(@params);
+            }
         }
 
         $dbh->do(q{
