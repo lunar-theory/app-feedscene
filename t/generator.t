@@ -244,7 +244,7 @@ sub test_root_metadata {
 
 sub test_entries {
     my ($tx, $strict) =@_;
-    $tx->is('count(/a:feed/a:entry)', 13, 'Should have 13 entries' );
+    $tx->is('count(/a:feed/a:entry)', 14, 'Should have 14 entries' );
 
     # Check the first entry.
     $tx->ok('/a:feed/a:entry[1]', 'Check first entry', sub {
@@ -276,8 +276,8 @@ sub test_entries {
         });
     });
 
-    # Look at the third entry, from portal 2, with an enclosure.
-    $tx->ok('/a:feed/a:entry[3]', 'Check third entry', sub {
+    # Look at the fourth entry, from portal 2, with an enclosure.
+    $tx->ok('/a:feed/a:entry[4]', 'Check third entry', sub {
         $_->is('count(./*)', 9, 'Should have 9 subelements');
         $_->is('./a:id', 'urn:uuid:afac4e17-4775-55c0-9e61-30d7630ea909', '...Entry ID');
         $_->is('./a:link[@rel="alternate"]/@href', 'http://flickr.com/someimage', '...Link');

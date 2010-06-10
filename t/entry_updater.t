@@ -3,8 +3,8 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 108;
-#use Test::More 'no_plan';
+#use Test::More tests => 108;
+use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
 use Test::MockTime;
@@ -112,7 +112,7 @@ $mock->unmock('is_success');
 ##############################################################################
 # Okay, now let's test the processing.
 ok $eup->process("$uri/simple.atom"), 'Process simple Atom feed';
-test_counts(2, 'Should now have two entries');
+test_counts(3, 'Should now have three entries');
 
 # Check the feed data.
 is_deeply $conn->run(sub{ shift->selectrow_arrayref(
@@ -147,7 +147,7 @@ is_deeply test_data('urn:uuid:4386a769-775f-5b78-a6f0-02e3ac8a457d'), {
     feed_id        => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6',
     url            => 'http://example.com/another-story.html',
     title          => 'This is another title',
-    published_at   => '2009-12-13T12:29:29Z',
+    published_at   => '2009-12-12T12:29:29Z',
     updated_at     => '2009-12-13T18:30:03Z',
     summary        => '<p>Summary of the second story</p>',
     author         => '',
@@ -155,10 +155,67 @@ is_deeply test_data('urn:uuid:4386a769-775f-5b78-a6f0-02e3ac8a457d'), {
     enclosure_type => '',
 }, 'Data for second entry should be correct';
 
+is_deeply test_data('urn:uuid:0df1d4a7-6b9f-532c-9a94-52cafade78a2'), {
+    id             => 'urn:uuid:0df1d4a7-6b9f-532c-9a94-52cafade78a2',
+    feed_id        => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6',
+    url            => 'http://example.com/story-three.html',
+    title          => 'Title Three',
+    published_at   => '2009-12-11T12:29:29Z',
+    updated_at     => '2009-12-13T18:30:03Z',
+    summary        => '<p>Summary of the third story</p>',
+    author         => '',
+    enclosure_url  => '',
+    enclosure_type => '',
+}, 'Data for second entry should be correct';
+
+##############################################################################
+# Run it again, with updates.
+ok $eup->process("$uri/simple-updated.atom"), 'Process updated simple Atom feed';
+test_counts(3, 'Should still have three entries');
+
+is_deeply test_data('urn:uuid:e287d28b-5a4b-575c-b9da-d3dc894b9aa2'), {
+    id             => 'urn:uuid:e287d28b-5a4b-575c-b9da-d3dc894b9aa2',
+    feed_id        => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6',
+    url            => 'http://example.com/story.html',
+    title          => 'This is the new title',
+    published_at   => '2009-12-13T12:29:29Z',
+    updated_at     => '2009-12-14T18:30:02Z',
+    summary        => '<p>Summary of the story</p>',
+    author         => 'Ira Glass',
+    enclosure_url  => '',
+    enclosure_type => '',
+}, 'First entry should be updated';
+
+is_deeply test_data('urn:uuid:4386a769-775f-5b78-a6f0-02e3ac8a457d'), {
+    id             => 'urn:uuid:4386a769-775f-5b78-a6f0-02e3ac8a457d',
+    feed_id        => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6',
+    url            => 'http://example.com/another-story.html',
+    title          => 'Updated without updated element',
+    published_at   => '2009-12-12T12:29:29Z',
+    updated_at     => '2009-12-12T12:29:29Z',
+    summary        => '<p>Summary of the second story</p>',
+    author         => '',
+    enclosure_url  => '',
+    enclosure_type => '',
+}, 'Second entry, with no updated element, should be updated';
+
+is_deeply test_data('urn:uuid:0df1d4a7-6b9f-532c-9a94-52cafade78a2'), {
+    id             => 'urn:uuid:0df1d4a7-6b9f-532c-9a94-52cafade78a2',
+    feed_id        => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6',
+    url            => 'http://example.com/story-three.html',
+    title          => 'Title Three',
+    published_at   => '2009-12-11T12:29:29Z',
+    updated_at     => '2009-12-13T18:30:03Z',
+    summary        => '<p>Summary of the third story</p>',
+    author         => '',
+    enclosure_url  => '',
+    enclosure_type => '',
+}, 'Third entry should not be updated, because updated element not updated';
+
 ##############################################################################
 # Let's try a simple RSS feed.
 ok $eup->process("$uri/simple.rss"), 'Process simple RSS feed';
-test_counts(4, 'Should now have four entries');
+test_counts(5, 'Should now have five entries');
 
 # Check the feed data.
 is_deeply $conn->run(sub{ shift->selectrow_arrayref(
@@ -184,19 +241,19 @@ is_deeply test_data('urn:uuid:f7d5ce8a-d0d5-56bc-99c3-05592f4dc22c'), {
     id             => 'urn:uuid:f7d5ce8a-d0d5-56bc-99c3-05592f4dc22c',
     feed_id        => "$uri/simple.rss",
     url            => 'http://example.net/2010/05/16/little-sister/',
-    title          => 'The Little Sister',
+    title          => '',
     published_at   => '2010-05-16T14:58:50Z',
     updated_at     => '2010-05-16T14:58:50Z',
     summary        => '<p>Hollywood babes.</p><p>A killer with an ice pick.</p><p>What could be better?</p>',
     author         => 'Raymond Chandler',
     enclosure_url  => '',
     enclosure_type => '',
-}, 'Data for second RSS entry, including summary extracted from content';
+}, 'Data for second RSS entry with no title and summary extracted from content';
 
 ##############################################################################
 # Test a non-utf8 Atom feed.
 ok $eup->process("$uri/latin-1.atom"), 'Process Latin-2 Atom feed';
-test_counts(5, 'Should now have five entries');
+test_counts(6, 'Should now have six entries');
 
 my ($title, $summary) = $conn->dbh->selectrow_array(
     'SELECT title, summary FROM entries WHERE id = ?',
@@ -209,7 +266,7 @@ is $summary, '<p>Latin-1: æåø</p>', 'Latin-1 Summary should be UTF-8';
 ##############################################################################
 # Test a non-utf8 RSS feed.
 ok $eup->process("$uri/latin-1.rss"), 'Process Latin-1 RSS feed';
-test_counts(6, 'Should now have six entries');
+test_counts(7, 'Should now have seven entries');
 
 ($title, $summary) = $conn->dbh->selectrow_array(
     'SELECT title, summary FROM entries WHERE id = ?',
@@ -222,7 +279,7 @@ is $summary, '<p>Latin-1: æåø ("CP1252")</p>', 'Latin-1 Summary should be UTF
 ##############################################################################
 # Test a variety of RSS summary formats.
 ok $eup->process("$uri/summaries.rss"), 'Process RSS feed with various summaries';
-test_counts(26, 'Should now have 26 entries');
+test_counts(27, 'Should now have 27 entries');
 
 # Check the feed data.
 is_deeply $conn->run(sub{ shift->selectrow_arrayref(
@@ -270,7 +327,7 @@ for my $spec (
 ##############################################################################
 # Try a bunch of different date combinations.
 ok $eup->process("$uri/dates.rss"), 'Process RSS feed with various dates';
-test_counts(32, 'Should now have 32 entries');
+test_counts(33, 'Should now have 33 entries');
 
 for my $spec (
     [ 1 => ['2010-05-17T06:58:50Z', '2010-05-17T07:45:09Z'], 'both dates' ],
@@ -290,7 +347,7 @@ for my $spec (
 ##############################################################################
 # Try a feed with a duplicate URI and no GUID.
 ok $eup->process("$uri/conflict.rss"), 'Process RSS feed with a duplicate link';
-test_counts(33, 'Should now have 33 entries');
+test_counts(34, 'Should now have 34 entries');
 
 # So now we should have two records with the same URL but different IDs.
 is_deeply $dbh->selectall_arrayref(
@@ -328,7 +385,7 @@ $ua_mock->mock(head => sub {
 
 $eup->portal(1);
 ok $eup->process("$uri/enclosures.atom"), 'Process Atom feed with enclosures';
-test_counts(45, 'Should now have 45 entries');
+test_counts(46, 'Should now have 46 entries');
 
 # Check the feed data.
 is_deeply $conn->run(sub{ shift->selectrow_arrayref(
@@ -343,7 +400,7 @@ is_deeply $conn->run(sub{ shift->selectrow_arrayref(
 ], 'Feed record should be updated';
 
 ok $eup->process("$uri/enclosures.rss"), 'Process RSS feed with enclosures';
-test_counts(57, 'Should now have 57 entries');
+test_counts(58, 'Should now have 58 entries');
 
 # First one is easy, has only one enclosure.
 is_deeply test_data('urn:uuid:afac4e17-4775-55c0-9e61-30d7630ea909'), {
@@ -471,9 +528,8 @@ for my $spec (
     image/jpeg
 );
 
-$ENV{FOO} = 1;
 ok $eup->process("$uri/more_summaries.atom"), 'Process Summary regressions';
-test_counts(60, 'Should now have 60 entries');
+test_counts(61, 'Should now have 61 entries');
 
 for my $spec (
     [ 'onclick' => [

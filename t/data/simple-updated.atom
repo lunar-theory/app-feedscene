@@ -15,11 +15,11 @@
   </author>
 
   <entry>
-    <title>This is the title</title>
+    <title>This is the new title</title>
     <link rel="alternate" href="http://example.com/story.html" />
     <link rel="related" href="http://example.com/" />
     <id>urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a</id>
-    <updated>2009-12-13T18:30:02Z</updated>
+    <updated>2009-12-14T18:30:02Z</updated>
     <published>2009-12-13T08:29:29-04:00</published>
     <summary type="html">&lt;p&gt;Summary of the story&lt;/p&gt;</summary>
     <content type="html">&lt;p&gt;Content of the story&lt;/p&gt;</content>
@@ -31,11 +31,10 @@
 
   <entry>
     <category term="text" />
-    <title>This is another title</title>
+    <title>Updated without updated element</title>
     <link rel="alternate" href="/another-story.html" />
     <link rel="related" href="http://example.com/" />
     <id>urn:uuid:1225c695-cfb8-4ebb-bbbb-80da344efa6b</id>
-    <updated>2009-12-13T18:30:03Z</updated>
     <published>2009-12-12T08:29:29-04:00</published>
     <summary type="html">&lt;p&gt;Summary of the second story&lt;/p&gt;</summary>
     <content type="html">&lt;p&gt;Content of the second story&lt;/p&gt;</content>
@@ -43,12 +42,12 @@
 
   <entry>
     <category term="text" />
-    <title>Title Three</title>
+    <title>Title Three Updated but updated element not updated</title>
     <link rel="alternate" href="/story-three.html" />
     <link rel="related" href="http://example.com/" />
     <id>urn:uuid:1225c695-cfb8-4ebb-bbbb-80da344efa6c</id>
-    <updated>2009-12-13T18:30:03Z</updated>
-    <published>2009-12-11T08:29:29-04:00</published>
+    <updated>2009-12-11T18:30:03Z</updated>
+    <published>2009-12-13T08:29:29-04:00</published>
     <summary type="html">&lt;p&gt;Summary of the third story&lt;/p&gt;</summary>
     <content type="html">&lt;p&gt;Content of the third story&lt;/p&gt;</content>
   </entry>

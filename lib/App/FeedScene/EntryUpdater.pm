@@ -114,7 +114,6 @@ sub process {
              WHERE id = ?
         });
 
-        # XXX Modify to update entries only if the update time has changed?
         my @ids;
         my $be_verbose = ($self->verbose || 0) > 1;
         for my $entry ($feed->entries) {
@@ -133,18 +132,15 @@ sub process {
             my $pub_date = $entry->issued;
             my $upd_date = $entry->modified;
             next unless $pub_date || $upd_date;
-            $pub_date    = ($pub_date || $upd_date)->set_time_zone('UTC')->iso8601 . 'Z';
+            $upd_date    = $upd_date->set_time_zone('UTC')->iso8601 . 'Z' if $upd_date;
+            $pub_date    = $pub_date ? $pub_date->set_time_zone('UTC')->iso8601 . 'Z' : $upd_date;
             my $uuid     = _uuid($site_url, $entry_link);
             push @ids, $uuid;
 
             my $up_to_date;
             if ($upd_date) {
                 # See if we've been updated.
-                ($up_to_date) = $dbh->selectrow_array(
-                    $sel, undef,
-                    $upd_date->set_time_zone('UTC')->iso8601 . 'Z',
-                    $uuid
-                );
+                ($up_to_date) = $dbh->selectrow_array( $sel, undef, $upd_date, $uuid);
                 # Nothing to do if it's up-to-date.
                 next if $up_to_date;
             }
@@ -153,9 +149,9 @@ sub process {
             my @params = (
                 $feed_id,
                 $entry_link,
-                $entry->title,
+                $entry->title || '',
                 $pub_date,
-                $upd_date ? $upd_date->set_time_zone('UTC')->iso8601 . 'Z' : $pub_date,
+                $upd_date || $pub_date,
                 _find_summary($entry),
                 $entry->author || '',
                 $enc_type,
@@ -163,12 +159,16 @@ sub process {
                 $uuid,
             );
 
+            my $res = 0;
             if (defined $up_to_date) {
                 # Exists but is out-of date. So update it.
                 $upd->execute(@params);
-            } else {
+            } elsif ($upd_date) {
                 # New entry. Insert it.
                 $ins->execute(@params);
+            } else {
+                # No update date. Update or insert as appropriate.
+                $ins->execute(@params) if $upd->execute(@params) == 0;
             }
         }
 
@@ -385,8 +385,8 @@ sub _find_enclosure {
         my $doc = App::FeedScene::Parser->parse_html_string($body) or next;
         for my $node ($doc->findnodes('//img/@src|//audio/@src|//video/@src')) {
             my $url = $node->nodeValue or next;
-            (my($type), $url) = $self->_get_type($url) or next;
-            return $type, $url if $type =~ m{^(?:image|audio|video)/};
+            (my($type), $url) = $self->_get_type($url);
+            return $type, $url if $type && $type =~ m{^(?:image|audio|video)/};
         }
     }
 
