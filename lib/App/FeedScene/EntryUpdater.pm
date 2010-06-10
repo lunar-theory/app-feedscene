@@ -50,9 +50,15 @@ sub process {
     return $self if $res->code == HTTP_NOT_MODIFIED;
 
     my $feed     = App::FeedScene::Parser->parse_feed($res->decoded_content);
-    my $base_url = URI->new($feed->base || $feed->link);
-    my $site_url = URI->new_abs($feed->link, $base_url);
     my $feed_id  = $feed->can('id') ? $feed->id || $feed_url : $feed_url;
+    my $base_url = $feed->base;
+    my $site_url = $feed->link;
+    $site_url    = $site_url->[0] if ref $site_url;
+    $site_url    = $base_url
+                 ? URI->new_abs($site_url, $feed->base)
+                 : URI->new($site_url);
+    my $host     = $site_url ? $site_url->host : URI->new($feed_url)->host;
+    $base_url  ||= $site_url;
 
     App::FeedScene->new($self->app)->conn->txn(sub {
         use strict;
@@ -76,7 +82,7 @@ sub process {
             $feed->title,
             $feed->description || '',
             $site_url,
-            'http://www.google.com/s2/favicons?domain=' . $base_url->host,
+            "http://www.google.com/s2/favicons?domain=$host",
             ($feed->modified || DateTime->now)->set_time_zone('UTC')->iso8601 . 'Z',
             $feed->copyright || '',
             $feed_url
