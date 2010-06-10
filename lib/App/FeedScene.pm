@@ -2,6 +2,7 @@ package App::FeedScene 0.01;
 
 use 5.12.0;
 use utf8;
+use namespace::autoclean;
 use DBD::SQLite 1.29;
 use DBIx::Connector 0.34;
 use Exception::Class::DBI 1.0;
@@ -12,8 +13,6 @@ our $SELF;
 
 has app  => (is => 'rw', isa => 'Str');
 has conn => (is => 'rw', isa => 'DBIx::Connector');
-
-no Moose;
 
 sub new {
     my ($class, $app) = @_;

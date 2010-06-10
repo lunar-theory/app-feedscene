@@ -2,6 +2,7 @@ package App::FeedScene::FeedUpdater 0.01;
 
 use 5.12.0;
 use utf8;
+use namespace::autoclean;
 use App::FeedScene;
 use App::FeedScene::UA;
 use App::FeedScene::Parser;
@@ -13,9 +14,6 @@ has app     => (is => 'rw', isa => 'Str');
 has url     => (is => 'rw', isa => 'Str');
 has ua      => (is => 'rw', isa => 'App::FeedScene::UA');
 has verbose => (is => 'rw', isa => 'Bool');
-
-no Moose; # Rudely removes strict.
-use 5.12.0;
 
 sub run {
     my $self = shift;

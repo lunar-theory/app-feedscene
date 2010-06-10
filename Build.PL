@@ -33,6 +33,7 @@ Module::Build->new(
         'LWP::UserAgent::WithCache' => '0.11',
         'MIME::Types'               => '1.29',
         'Moose'                     => '1.06',
+        'namespace::autoclean'      => '0.11',
         'OSSP::uuid'                => '1.0602',
         'perl'                      => 5.012,
         'Pod::Usage'                => '1.36',

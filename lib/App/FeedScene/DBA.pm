@@ -2,6 +2,7 @@ package App::FeedScene::DBA;
 
 use 5.12.0;
 use utf8;
+use namespace::autoclean;
 use App::FeedScene;
 use Moose;
 
@@ -9,9 +10,6 @@ use Moose;
 has app     => (is => 'rw', isa => 'Str');
 has client  => (is => 'rw', isa => 'Str', default => 'sqlite3');
 has sql_dir => (is => 'rw', isa => 'Str', default => $def_dir );
-
-no Moose; # Rudely removes strict.
-use 5.12.0;
 
 sub init {
     my $self = shift;

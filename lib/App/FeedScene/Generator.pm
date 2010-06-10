@@ -2,6 +2,7 @@ package App::FeedScene::Generator 0.01;
 
 use 5.12.0;
 use utf8;
+use namespace::autoclean;
 use XML::Builder;
 use App::FeedScene;
 use DateTime;
@@ -16,9 +17,6 @@ my $company = 'Lunar Theory';
 has app => (is => 'rw', isa => 'Str',  required => 1 );
 has dir => (is => 'rw', isa => 'Str',  default => $def_dir );
 has strict => (is => 'rw', isa => 'Bool', default => 0 );
-
-no Moose; # Rudely removes strict.
-use 5.12.0;
 
 sub go {
     my $self = shift;
