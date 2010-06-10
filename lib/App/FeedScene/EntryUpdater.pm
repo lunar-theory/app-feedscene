@@ -10,6 +10,7 @@ use HTTP::Status qw(HTTP_NOT_MODIFIED);
 use XML::LibXML qw(XML_ELEMENT_NODE XML_TEXT_NODE);
 use OSSP::uuid;
 use MIME::Types;
+use Text::Trim;
 use URI;
 
 use Moose;
@@ -63,7 +64,7 @@ sub process {
         my $dbh = shift;
 
         # Update the feed.
-        $dbh->do(
+        $dbh->do(trim(
             q{
                 UPDATE feeds
                    SET id         = ?,
@@ -84,7 +85,7 @@ sub process {
             ($feed->modified || DateTime->now)->set_time_zone('UTC')->iso8601 . 'Z',
             $feed->copyright || '',
             $feed_url
-        );
+        ));
 
         # Get ready to update the entries.
         my $sel = $dbh->prepare(q{
@@ -146,7 +147,7 @@ sub process {
             }
 
             # Gather params.
-            my @params = (
+            my @params = trim(
                 $feed_id,
                 $entry_link,
                 $entry->title || '',

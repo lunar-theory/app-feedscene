@@ -38,6 +38,7 @@ Module::Build->new(
         'perl'                      => 5.012,
         'Pod::Usage'                => '1.36',
         'Text::CSV_XS'              => '0.73',
+        'Text::Trim'                => '1.02',
         'URI'                       => '1.54',
         'XML::Builder'              => '0.902',
         'XML::LibXML'               => '1.70',

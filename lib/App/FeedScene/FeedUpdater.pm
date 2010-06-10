@@ -7,6 +7,7 @@ use App::FeedScene;
 use App::FeedScene::UA;
 use App::FeedScene::Parser;
 use Text::CSV_XS;
+use Text::Trim;
 use HTTP::Status qw(HTTP_NOT_MODIFIED);
 use Moose;
 
@@ -63,7 +64,7 @@ sub process {
             my ($id) = $dbh->selectrow_array($sel, undef, $feed_url);
             if ($id) {
                 push @ids, $id;
-                $upd->execute($portal, $category || '', $id);
+                $upd->execute(trim $portal, $category || '', $id);
                 next;
             }
 
@@ -81,7 +82,7 @@ sub process {
                          : URI->new($site_url);
             my $host     = $site_url ? $site_url->host : URI->new($feed_url)->host;
 
-            $ins->execute(
+            $ins->execute(trim(
                 $feed_url,
                 $feed->title,
                 $feed->description || '',
@@ -92,7 +93,7 @@ sub process {
                 $portal,
                 $category || '',
                 $id,
-            );
+            ));
 
             push @ids, $id;
         }

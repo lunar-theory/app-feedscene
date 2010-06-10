@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
   <title>Simple Atom Feed</title>
-  <subtitle>Witty and clever</subtitle>
-  <link rel="alternate" href="http://example.com/"/>
+  <subtitle>Witty and clever </subtitle>
+  <link rel="alternate" href=" http://example.com/"/>
   <link rel="self" href="http://example.com/example.com.xml"/>
   <icon>http://example.com/favicon.png</icon>
   <rights>© 2010 Big Fat Example</rights>
@@ -15,8 +15,8 @@
   </author>
 
   <entry>
-    <title>This is the title</title>
-    <link rel="alternate" href="http://example.com/story.html" />
+    <title>  This is the title</title>
+    <link rel="alternate" href="http://example.com/story.html  " />
     <link rel="related" href="http://example.com/" />
     <id>urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a</id>
     <updated>2009-12-13T18:30:02Z</updated>
