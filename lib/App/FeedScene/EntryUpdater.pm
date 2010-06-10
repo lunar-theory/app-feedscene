@@ -55,11 +55,12 @@ sub process {
     my $site_url = $feed->link;
     $site_url    = $site_url->[0] if ref $site_url;
     $site_url    = $base_url
-                 ? URI->new_abs($site_url, $feed->base)
+                 ? URI->new_abs($site_url, $base_url)
                  : URI->new($site_url);
     my $host     = $site_url ? $site_url->host : URI->new($feed_url)->host;
     $base_url  ||= $site_url;
 
+    # XXX Modify to update entries only if the update time has changed?
     App::FeedScene->new($self->app)->conn->txn(sub {
         use strict;
         my $dbh = shift;
@@ -100,7 +101,9 @@ sub process {
         my $be_verbose = ($self->verbose || 0) > 1;
         for my $entry ($feed->entries) {
             say '    ', $entry->link if $be_verbose;
-            my $entry_link = URI->new_abs($entry->link, $base_url);
+            my $entry_link = $base_url
+                ? URI->new_abs($entry->link, $base_url)
+                : URI->new($entry->link);
             my ($enc_type, $enc_url) = ('', '');
 
             if ($portal) {
