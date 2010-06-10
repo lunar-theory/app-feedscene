@@ -17,7 +17,8 @@ has app => (is => 'rw', isa => 'Str',  required => 1 );
 has dir => (is => 'rw', isa => 'Str',  default => $def_dir );
 has strict => (is => 'rw', isa => 'Bool', default => 0 );
 
-no Moose;
+no Moose; # Rudely removes strict.
+use 5.12.0;
 
 sub go {
     my $self = shift;

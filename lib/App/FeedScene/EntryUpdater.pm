@@ -18,7 +18,8 @@ has portal  => (is => 'rw', isa => 'Int');
 has ua      => (is => 'rw', isa => 'App::FeedScene::UA');
 has verbose => (is => 'rw', isa => 'Int');
 
-no Moose;
+no Moose; # Rudely removes strict.
+use 5.12.0;
 
 sub run {
     my $self = shift;
@@ -62,7 +63,6 @@ sub process {
 
     # XXX Modify to update entries only if the update time has changed?
     App::FeedScene->new($self->app)->conn->txn(sub {
-        use strict;
         my $dbh = shift;
 
         # Update the feed.

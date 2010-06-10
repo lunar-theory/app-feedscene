@@ -14,7 +14,8 @@ has url     => (is => 'rw', isa => 'Str');
 has ua      => (is => 'rw', isa => 'App::FeedScene::UA');
 has verbose => (is => 'rw', isa => 'Bool');
 
-no Moose;
+no Moose; # Rudely removes strict.
+use 5.12.0;
 
 sub run {
     my $self = shift;
