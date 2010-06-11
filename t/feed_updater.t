@@ -110,7 +110,7 @@ test_counts(7, 'Should now have 7 feeds');
         {
             url      => "$uri/simple.atom",
             title    => 'Simple Atom Feed',
-            subtitle => 'Witty and clever',
+            subtitle => 'Witty & clever',
             site_url => 'http://example.com/',
             icon_url => 'http://www.google.com/s2/favicons?domain=example.com',
             updated_at => '2009-12-13T18:30:02Z',
@@ -153,7 +153,7 @@ sub test_initial_feeds {
         {
             url      => "$uri/simple.atom",
             title    => 'Simple Atom Feed',
-            subtitle => 'Witty and clever',
+            subtitle => 'Witty & clever',
             site_url => 'http://example.com/',
             icon_url => 'http://www.google.com/s2/favicons?domain=example.com',
             updated_at => '2009-12-13T18:30:02Z',

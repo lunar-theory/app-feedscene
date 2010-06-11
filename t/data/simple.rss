@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:wfw="http://wellformedweb.org/CommentAPI/" xmlns:dc="http://purl.org/dc/elements/1.1/">
   <channel>
-    <title>Simple RSS Feed</title>
+    <title>Simple &lt;em&gt;RSS&lt;/em&gt; Feed</title>
     <link>http://example.net</link>
     <pubDate>17 May 2010</pubDate>
 
     <item>
-      <title>The Long Goodbye</title>
+      <title>The &lt;em&gt;Long&lt;/em&gt; Goodbye</title>
       <link>http://example.net/2010/05/17/long-goodbye/</link>
       <dc:date>2010-05-17T06:58:50-08:00</dc:date>
-      <dc:creator>Raymond Chandler</dc:creator>
+      <dc:creator>Raymond Chandler &amp; Friends</dc:creator>
       <guid isPermaLink="false">http://example.net/2010/05/17/long-goodbye/</guid>
       <description>Wherein Marlowe finds himeslf in trouble again.</description>
       <content:encoded><![CDATA[
@@ -21,7 +21,7 @@
     <item>
       <link>/2010/05/16/little-sister/</link>
       <dc:date>2010-05-16T06:58:50-08:00</dc:date>
-      <dc:creator>Raymond Chandler</dc:creator>
+      <dc:creator>Raymond Chandler &amp;amp; Friends</dc:creator>
       <guid isPermaLink="false">http://example.net/2010/05/16/little-sister/</guid>
       <content:encoded><![CDATA[
         <p>Hollywood babes.</p>

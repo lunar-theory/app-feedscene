@@ -84,12 +84,12 @@ sub process {
 
             $ins->execute(trim(
                 $feed_url,
-                $feed->title,
-                $feed->description || '',
+                App::FeedScene::Parser->strip_html($feed->title),
+                App::FeedScene::Parser->strip_html($feed->description || ''),
                 $site_url,
                 "http://www.google.com/s2/favicons?domain=$host",
                 ($feed->modified || DateTime->now)->set_time_zone('UTC')->iso8601 . 'Z',
-                $feed->copyright || '',
+                App::FeedScene::Parser->strip_html($feed->copyright || ''),
                 $portal,
                 $category || '',
                 $id,

@@ -121,7 +121,7 @@ is_deeply $conn->run(sub{ shift->selectrow_arrayref(
     undef, "$uri/simple.atom",
 )}), [
     'Simple Atom Feed',
-    'Witty and clever',
+    'Witty & clever',
     'http://example.com/',
     'http://www.google.com/s2/favicons?domain=example.com',
     '2009-12-13T18:30:02Z',
@@ -232,7 +232,7 @@ is_deeply test_data('urn:uuid:5a47d6e5-41dd-586b-ad03-c26c67425134'), {
     published_at   => '2010-05-17T14:58:50Z',
     updated_at     => '2010-05-17T14:58:50Z',
     summary        => '<p>Wherein Marlowe finds himeslf in trouble again.</p>',
-    author         => 'Raymond Chandler',
+    author         => 'Raymond Chandler & Friends',
     enclosure_url  => '',
     enclosure_type => '',
 }, 'Data for first RSS entry, including unformatted summary';
@@ -245,7 +245,7 @@ is_deeply test_data('urn:uuid:f7d5ce8a-d0d5-56bc-99c3-05592f4dc22c'), {
     published_at   => '2010-05-16T14:58:50Z',
     updated_at     => '2010-05-16T14:58:50Z',
     summary        => '<p>Hollywood babes.</p><p>A killer with an ice pick.</p><p>What could be better?</p>',
-    author         => 'Raymond Chandler',
+    author         => 'Raymond Chandler & Friends',
     enclosure_url  => '',
     enclosure_type => '',
 }, 'Data for second RSS entry with no title and summary extracted from content';

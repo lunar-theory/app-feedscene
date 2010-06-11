@@ -5,22 +5,26 @@ use utf8;
 use Data::Feed;
 use Data::Feed::Parser::Atom;
 use Data::Feed::Parser::RSS;
-use XML::LibXML;
+use XML::LibXML qw(XML_TEXT_NODE);
 use Encode::ZapCP1252 ();
 #use HTML::Tidy;
 
 $XML::Atom::ForceUnicode = 1;
 $Data::Feed::Parser::RSS::PARSER_CLASS = 'App::FeedScene::Parser::RSS';
 
-my $libxml_options = {
+my $parser = XML::LibXML->new({
     recover    => 2,
     no_network => 1,
     no_blanks  => 1,
     encoding   => 'utf8',
     no_cdata   => 1,
-};
+});
 
-my $parser = XML::LibXML->new($libxml_options);
+RSSPARSER: {
+    package App::FeedScene::Parser::RSS;
+    use parent 'XML::RSS::LibXML';
+    sub create_libxml { $parser }
+}
 
 # my $tidy   = HTML::Tidy->new({
 #     'drop-font-tags'   => 1,
@@ -106,10 +110,21 @@ sub parse_html_string {
 #     return $self->libxml->parse_html_string($tidy->clean($string), $opts)
 # }
 
-RSSPARSER: {
-    package App::FeedScene::Parser::RSS;
-    use parent 'XML::RSS::LibXML';
-    sub create_libxml { $parser }
+sub strip_html {
+    my $self = shift;
+    return shift unless $_[0];
+    my $doc = $self->parse_html_string(@_);
+    _strip($doc->childNodes);
+}
+
+sub _strip {
+    my $ret = '';
+    for my $elem (@_) {
+        $ret .= $elem->nodeType == XML_TEXT_NODE
+            ? $elem->data
+            : _strip($elem->childNodes);
+    }
+    return $ret;
 }
 
 1;
