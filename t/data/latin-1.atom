@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-  <title>Latin-1 Atom Feed</title> 
+  <title>Latin-1 Atom &#x93;Feed&#x94;</title> 
   <link rel="alternate" href="http://foo.org/"/>
   <link rel="self" href="http://foo.org/foo.org.xml"/>
   <updated>2009-12-13T18:30:02Z</updated>
@@ -20,6 +20,15 @@
     <published>2009-12-13T08:29:29-04:00</published>
     <summary type="html">&lt;p&gt;Latin-1: æåø&lt;/p&gt;</summary>
     <content type="html">&lt;p&gt;Content of the story&lt;/p&gt;</content>
+  </entry>
+
+  <entry>
+    <id>urn:uuid:1225c695-cfb8-4ebb-aaaa-80da554efa6d</id>
+    <published>2010-06-07T06:24:52</published>
+    <updated>2010-06-07T12:24:52</updated>
+    <link rel="alternate" type="text/html" href="http://foo.org/encoding.html"/>
+    <title>Blah blah&#x97;blah</title>
+    <summary type="html">&lt;p&gt;This description has nasty&amp;#x97;dashes&amp;#x97;.&lt;/p&gt;</summary>
   </entry>
 
 </feed>

@@ -6,6 +6,7 @@ use namespace::autoclean;
 use App::FeedScene;
 use App::FeedScene::UA;
 use App::FeedScene::Parser;
+use Encode::ZapCP1252;
 use HTTP::Status qw(HTTP_NOT_MODIFIED);
 use XML::LibXML qw(XML_ELEMENT_NODE XML_TEXT_NODE);
 use OSSP::uuid;
@@ -19,6 +20,10 @@ has app     => (is => 'rw', isa => 'Str');
 has portal  => (is => 'rw', isa => 'Int');
 has ua      => (is => 'rw', isa => 'App::FeedScene::UA');
 has verbose => (is => 'rw', isa => 'Int');
+
+sub _clean {
+    trim map { fix_cp1252 $_ if $_; $_ } @_;
+}
 
 sub run {
     my $self = shift;
@@ -64,7 +69,7 @@ sub process {
         my $dbh = shift;
 
         # Update the feed.
-        $dbh->do(trim(
+        $dbh->do(
             q{
                 UPDATE feeds
                    SET id         = ?,
@@ -76,16 +81,18 @@ sub process {
                        rights     = ?
                  WHERE url        = ?
             },
-            undef,
-            $feed_id,
-            App::FeedScene::Parser->strip_html($feed->title || ''),
-            App::FeedScene::Parser->strip_html($feed->description || ''),
-            $site_url,
-            "http://www.google.com/s2/favicons?domain=$host",
-            ($feed->modified || DateTime->now)->set_time_zone('UTC')->iso8601 . 'Z',
-            App::FeedScene::Parser->strip_html($feed->copyright || ''),
-            $feed_url
-        ));
+            _clean(
+                undef,
+                $feed_id,
+                App::FeedScene::Parser->strip_html($feed->title || ''),
+                App::FeedScene::Parser->strip_html($feed->description || ''),
+                $site_url,
+                "http://www.google.com/s2/favicons?domain=$host",
+                ($feed->modified || DateTime->now)->set_time_zone('UTC')->iso8601 . 'Z',
+                App::FeedScene::Parser->strip_html($feed->copyright || ''),
+                $feed_url
+            )
+        );
 
         # Get ready to update the entries.
         my $sel = $dbh->prepare(q{
@@ -147,7 +154,7 @@ sub process {
             }
 
             # Gather params.
-            my @params = trim(
+            my @params = _clean(
                 $feed_id,
                 $entry_link,
                 App::FeedScene::Parser->strip_html($entry->title || ''),
@@ -333,7 +340,6 @@ sub _find_summary {
     if (my $sum = $entry->summary) {
         if (my $body = $sum->body) {
             # We got something here. Clean it up and return it.
-            # XXX Add `URI => $base_url` parser option?
             return join '', map {
                 $_->hasChildNodes || $_->hasAttributes ? $_->toString : ' '
             } _clean_html(
@@ -369,7 +375,6 @@ sub _find_summary {
     }
     return $ret;
 }
-
 
 sub _find_enclosure {
     my ($self, $entry, $entry_link) = @_;

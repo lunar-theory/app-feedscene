@@ -127,6 +127,15 @@ sub _strip {
     return $ret;
 }
 
+sub parse_encoding {
+    my $self = shift;
+    my ($decl) = shift =~ /^(<[?]xml[^>]+>)/ms;
+    my $doc = eval {
+        $self->libxml->parse_string("$decl\n<foo />")
+    } or return;
+    return $doc->encoding;
+}
+
 1;
 
 =head1 Name

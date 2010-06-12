@@ -11,9 +11,8 @@
     <title>“Latin-1 RSS Feed”</title>
     <link>http://foo.net/</link>
     <description></description>
-    <copyright>Copyright (c) 2010</copyright>
+    <copyright>David &#x93;Theory&#x94; Wheeler</copyright>
     <pubDate>Sun, 13 Dec 2009 18:30:02 -0000</pubDate>
-    <webMaster>Some Site</webMaster>
 
     <item>
       <title>Title: æåø</title>
@@ -24,6 +23,16 @@
       <content:encoded>&#x3C;p&#x3E;Content of the story&#x3C;/p&#x3E;</content:encoded>
       <dcterms:modified>2009-12-13T18:30:02Z</dcterms:modified>
     </item>
+
+    <item>
+      <title>Blah blah&#x97;blah</title>
+      <link>http://foo.net/decoded.html</link>
+      <description>&lt;p&gt;This description has nasty&amp;#x97;dashes&amp;#x97;.&lt;/p&gt;</description>
+      <guid isPermaLink="true">http://foo.net/decoded.html</guid>
+      <pubDate>Sun, 12 Dec 2009 12:29:29 -0000</pubDate>
+      <dcterms:modified>2009-12-13T18:30:02Z</dcterms:modified>
+    </item>
+
   </channel>
 
 </rss>

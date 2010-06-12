@@ -3,8 +3,8 @@
 use strict;
 use 5.12.0;
 use utf8;
-#use Test::More tests => 108;
-use Test::More 'no_plan';
+use Test::More tests => 120;
+#use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::MockModule;
 use Test::MockTime;
@@ -253,7 +253,13 @@ is_deeply test_data('urn:uuid:f7d5ce8a-d0d5-56bc-99c3-05592f4dc22c'), {
 ##############################################################################
 # Test a non-utf8 Atom feed.
 ok $eup->process("$uri/latin-1.atom"), 'Process Latin-2 Atom feed';
-test_counts(6, 'Should now have six entries');
+test_counts(7, 'Should now have seven entries');
+
+# Check that the title was converted to UTF-8.
+is $conn->run(sub{ shift->selectrow_array(
+    'SELECT title FROM feeds WHERE url = ?',
+    undef, "$uri/latin-1.atom",
+)}), 'Latin-1 Atom “Feed”', 'Atom Feed title CP1252 Entities should be UTF-8';
 
 my ($title, $summary) = $conn->dbh->selectrow_array(
     'SELECT title, summary FROM entries WHERE id = ?',
@@ -263,10 +269,26 @@ my ($title, $summary) = $conn->dbh->selectrow_array(
 is $title, 'Title: æåø', 'Latin-1 Title should be UTF-8';
 is $summary, '<p>Latin-1: æåø</p>', 'Latin-1 Summary should be UTF-8';
 
+($title, $summary) = $conn->dbh->selectrow_array(
+    'SELECT title, summary FROM entries WHERE id = ?',
+    undef, 'urn:uuid:3da0bf84-a718-5180-9b89-f244c079080a',
+);
+
+is $title, 'Blah blah—blah',
+    'Latin-1 Title with CP1252 entity should be UTF-8';
+is $summary, '<p>This description has nasty—dashes—.</p>',
+    'Latin-1 Summary with ampersand entitis escaping CP1252 entities should be UTF-8';
+
 ##############################################################################
 # Test a non-utf8 RSS feed.
 ok $eup->process("$uri/latin-1.rss"), 'Process Latin-1 RSS feed';
-test_counts(7, 'Should now have seven entries');
+test_counts(9, 'Should now have nine entries');
+
+# Check that the rights were converted to UTF-8.
+is $conn->run(sub{ shift->selectrow_array(
+    'SELECT rights FROM feeds WHERE url = ?',
+    undef, "$uri/latin-1.rss",
+)}), 'David “Theory” Wheeler', 'RSS Feed rights CP1252 Entities should be UTF-8';
 
 ($title, $summary) = $conn->dbh->selectrow_array(
     'SELECT title, summary FROM entries WHERE id = ?',
@@ -276,10 +298,20 @@ test_counts(7, 'Should now have seven entries');
 is $title, 'Title: æåø', 'Latin-1 Title should be UTF-8';
 is $summary, '<p>Latin-1: æåø ("CP1252")</p>', 'Latin-1 Summary should be UTF-8';
 
+($title, $summary) = $conn->dbh->selectrow_array(
+    'SELECT title, summary FROM entries WHERE id = ?',
+    undef, 'urn:uuid:ef7ffbde-078b-5bbd-85eb-c697786180ed',
+);
+
+is $title, 'Blah blah—blah',
+    'Latin-1 Title with CP1252 entity should be UTF-8';
+is $summary, '<p>This description has nasty—dashes—.</p>',
+    'Latin-1 Summary with ampersand entitis escaping CP1252 entities should be UTF-8';
+
 ##############################################################################
 # Test a variety of RSS summary formats.
 ok $eup->process("$uri/summaries.rss"), 'Process RSS feed with various summaries';
-test_counts(27, 'Should now have 27 entries');
+test_counts(29, 'Should now have 29 entries');
 
 # Check the feed data.
 is_deeply $conn->run(sub{ shift->selectrow_arrayref(
@@ -327,7 +359,7 @@ for my $spec (
 ##############################################################################
 # Try a bunch of different date combinations.
 ok $eup->process("$uri/dates.rss"), 'Process RSS feed with various dates';
-test_counts(33, 'Should now have 33 entries');
+test_counts(35, 'Should now have 35 entries');
 
 for my $spec (
     [ 1 => ['2010-05-17T06:58:50Z', '2010-05-17T07:45:09Z'], 'both dates' ],
@@ -347,7 +379,7 @@ for my $spec (
 ##############################################################################
 # Try a feed with a duplicate URI and no GUID.
 ok $eup->process("$uri/conflict.rss"), 'Process RSS feed with a duplicate link';
-test_counts(34, 'Should now have 34 entries');
+test_counts(36, 'Should now have 36 entries');
 
 # So now we should have two records with the same URL but different IDs.
 is_deeply $dbh->selectall_arrayref(
@@ -385,7 +417,7 @@ $ua_mock->mock(head => sub {
 
 $eup->portal(1);
 ok $eup->process("$uri/enclosures.atom"), 'Process Atom feed with enclosures';
-test_counts(46, 'Should now have 46 entries');
+test_counts(48, 'Should now have 48 entries');
 
 # Check the feed data.
 is_deeply $conn->run(sub{ shift->selectrow_arrayref(
@@ -400,7 +432,7 @@ is_deeply $conn->run(sub{ shift->selectrow_arrayref(
 ], 'Feed record should be updated';
 
 ok $eup->process("$uri/enclosures.rss"), 'Process RSS feed with enclosures';
-test_counts(58, 'Should now have 58 entries');
+test_counts(60, 'Should now have 60 entries');
 
 # First one is easy, has only one enclosure.
 is_deeply test_data('urn:uuid:afac4e17-4775-55c0-9e61-30d7630ea909'), {
@@ -529,7 +561,7 @@ for my $spec (
 );
 
 ok $eup->process("$uri/more_summaries.atom"), 'Process Summary regressions';
-test_counts(61, 'Should now have 61 entries');
+test_counts(63, 'Should now have 63 entries');
 
 for my $spec (
     [ 'onclick' => [

@@ -6,6 +6,7 @@ use namespace::autoclean;
 use App::FeedScene;
 use App::FeedScene::UA;
 use App::FeedScene::Parser;
+use Encode::ZapCP1252;
 use Text::CSV_XS;
 use Text::Trim;
 use HTTP::Status qw(HTTP_NOT_MODIFIED);
@@ -15,6 +16,10 @@ has app     => (is => 'rw', isa => 'Str');
 has url     => (is => 'rw', isa => 'Str');
 has ua      => (is => 'rw', isa => 'App::FeedScene::UA');
 has verbose => (is => 'rw', isa => 'Bool');
+
+sub _clean {
+    trim map { fix_cp1252 $_ if $_; $_ } @_;
+}
 
 sub run {
     my $self = shift;
@@ -64,7 +69,7 @@ sub process {
             my ($id) = $dbh->selectrow_array($sel, undef, $feed_url);
             if ($id) {
                 push @ids, $id;
-                $upd->execute(trim $portal, $category || '', $id);
+                $upd->execute(_clean $portal, $category || '', $id);
                 next;
             }
 
@@ -80,14 +85,15 @@ sub process {
             $site_url    = $feed->base
                          ? URI->new_abs($site_url, $feed->base)
                          : URI->new($site_url);
-            my $host     = $site_url ? $site_url->host : URI->new($feed_url)->host;
+            my $icon_url = 'http://www.google.com/s2/favicons?domain='
+                         . ($site_url ? $site_url->host : URI->new($feed_url)->host);
 
-            $ins->execute(trim(
+            $ins->execute(_clean(
                 $feed_url,
                 App::FeedScene::Parser->strip_html($feed->title),
                 App::FeedScene::Parser->strip_html($feed->description || ''),
                 $site_url,
-                "http://www.google.com/s2/favicons?domain=$host",
+                $icon_url,
                 ($feed->modified || DateTime->now)->set_time_zone('UTC')->iso8601 . 'Z',
                 App::FeedScene::Parser->strip_html($feed->copyright || ''),
                 $portal,

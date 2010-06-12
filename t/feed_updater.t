@@ -178,7 +178,7 @@ sub test_initial_feeds {
     test_feeds(1, [
         {
             url      => "$uri/latin-1.atom",
-            title    => 'Latin-1 Atom Feed',
+            title    => 'Latin-1 Atom “Feed”',
             subtitle => '',
             site_url => 'http://foo.org/',
             icon_url => 'http://www.google.com/s2/favicons?domain=foo.org',
@@ -220,7 +220,7 @@ sub test_initial_feeds {
             site_url => 'http://foo.net/',
             icon_url => 'http://www.google.com/s2/favicons?domain=foo.net',
             updated_at => '2009-12-13T18:30:02Z',
-            rights   => 'Copyright (c) 2010',
+            rights   => 'David “Theory” Wheeler',
             category => 'Lögos & Branding',
             id      => "$uri/latin-1.rss",
         },
