@@ -26,7 +26,7 @@ sub run {
     my $ua = $self->ua(App::FeedScene::UA->new($self->app));
     $ua->cache->clear;
     my $res = $ua->get($self->url);
-    require Carp && Carp::croak($res->status_line)
+    say STDERR 'Error retrieving ', $self->url, ': ', $res->status_line
         unless $res->is_success or $res->code == HTTP_NOT_MODIFIED;
     $self->process($res->decoded_content)
         unless $res->code == HTTP_NOT_MODIFIED;
@@ -74,8 +74,11 @@ sub process {
             }
 
             my $res = $ua->get($feed_url);
-            require Carp && Carp::croak("Error retrieving $feed_url: " . $res->status_line)
-                unless $res->is_success;
+            unless ($res->is_success) {
+                say STDERR "Error retrieving $feed_url: " . $res->status_line
+                    if $res->code != HTTP_NOT_MODIFIED;
+                next;
+            }
 
             my $feed     = App::FeedScene::Parser->parse_feed($res->decoded_content);
                            # XXX Generate from URL?

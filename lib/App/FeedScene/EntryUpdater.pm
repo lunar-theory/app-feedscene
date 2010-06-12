@@ -27,7 +27,7 @@ sub _clean {
 
 sub run {
     my $self = shift;
-    say "Updating ", $self->app, ' portal ', $self->portal
+    say STDERR "Updating ", $self->app, ' portal ', $self->portal
         if $self->verbose;
 
     $self->ua(App::FeedScene::UA->new($self->app));
@@ -47,12 +47,14 @@ sub run {
 sub process {
     my ($self, $feed_url) = @_;
     my $portal = $self->portal;
-    say "  Processing $feed_url" if $self->verbose;
+    say STDERR "  Processing $feed_url" if $self->verbose;
 
     my $res = $self->ua->get($feed_url);
-    require Carp && Carp::croak("Error retrieving $feed_url: " . $res->status_line)
-        unless $res->is_success or $res->code == HTTP_NOT_MODIFIED;
-    return $self if $res->code == HTTP_NOT_MODIFIED;
+    unless ($res->is_success) {
+        say STDERR "Error retrieving $feed_url: " . $res->status_line
+            if $res->code != HTTP_NOT_MODIFIED;
+        return;
+    }
 
     my $feed     = App::FeedScene::Parser->parse_feed($res->decoded_content);
     my $feed_id  = $feed->can('id') ? $feed->id || $feed_url : $feed_url;
@@ -125,7 +127,7 @@ sub process {
         my @ids;
         my $be_verbose = ($self->verbose || 0) > 1;
         for my $entry ($feed->entries) {
-            say '    ', $entry->link if $be_verbose;
+            say STDERR '    ', $entry->link if $be_verbose;
             my $entry_link = $base_url
                 ? URI->new_abs($entry->link, $base_url)
                 : URI->new($entry->link);
