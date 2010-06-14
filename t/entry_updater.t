@@ -11,7 +11,7 @@ use Test::MockTime;
 use Test::MockObject::Extends;
 use HTTP::Status qw(HTTP_NOT_MODIFIED HTTP_INTERNAL_SERVER_ERROR);
 use LWP::Protocol::file; # Turn on local fetches.
-use Test::Exception;
+use Test::Output;
 use File::Path;
 
 BEGIN {
@@ -96,7 +96,7 @@ my $mock = Test::MockModule->new('HTTP::Response');
 $mock->mock( is_success => 0 );
 $mock->mock( code => HTTP_INTERNAL_SERVER_ERROR );
 $mock->mock( message => 'OMGWTF' );
-throws_ok { $eup->process("$uri/simple.atom") }
+stderr_like { $eup->process("$uri/simple.atom") }
     qr/000 Unknown code/, 'Should get exception request failure';
 test_counts(0, 'Should still have no entries');
 

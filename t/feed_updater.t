@@ -9,7 +9,7 @@ use Test::NoWarnings;
 use Test::MockModule;
 use HTTP::Status qw(HTTP_NOT_MODIFIED HTTP_INTERNAL_SERVER_ERROR);
 use LWP::Protocol::file; # Turn on local fetches.
-use Test::Exception;
+use Test::Output;
 use File::Path;
 use Test::MockTime;
 
@@ -54,7 +54,7 @@ my $mock = Test::MockModule->new('HTTP::Response');
 $mock->mock( is_success => 0 );
 $mock->mock( code => HTTP_INTERNAL_SERVER_ERROR );
 $mock->mock( message => 'OMGWTF' );
-throws_ok { $lup->run } qr/000 Unknown code/, 'Should get exception request failure';
+stderr_like { $lup->run } qr/000 Unknown code/, 'Should get exception request failure';
 isa_ok $lup->ua, 'App::FeedScene::UA', 'The ua attribute should now be set';
 
 # Test HTTP_NOT_MODIFIED.

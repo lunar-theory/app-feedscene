@@ -53,7 +53,7 @@ sub process {
     unless ($res->is_success) {
         say STDERR "Error retrieving $feed_url: " . $res->status_line
             if $res->code != HTTP_NOT_MODIFIED;
-        return;
+        return $self;
     }
 
     my $feed     = App::FeedScene::Parser->parse_feed($res->decoded_content);

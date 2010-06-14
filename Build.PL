@@ -17,6 +17,7 @@ Module::Build->new(
         'Test::MockModule' => '0.05',
         'Test::MockTime'   => '0.12',
         'Test::NoWarnings' => '1.01',
+        'Test::Output'     => '0.16',
         'Test::XPath'      => '0.13',
     },
     requires           => {
