@@ -4,6 +4,7 @@ use 5.12.0;
 use utf8;
 use Test::More tests => 168;
 #use Test::More 'no_plan';
+use Test::More::UTF8;
 use Test::XPath;
 use Test::MockTime;
 use Test::NoWarnings;

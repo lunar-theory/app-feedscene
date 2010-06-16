@@ -5,6 +5,7 @@ use 5.12.0;
 use utf8;
 use Test::More tests => 32;
 #use Test::More 'no_plan';
+use Test::More::UTF8;
 use Test::NoWarnings;
 use Test::MockModule;
 use HTTP::Status qw(HTTP_NOT_MODIFIED HTTP_INTERNAL_SERVER_ERROR);

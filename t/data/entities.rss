@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <atom:link href="http://www.foobar.com/rss.aspx" rel="self" type="application/rss+xml" />
+    <title>Whatever Blog</title>
+    <description><![CDATA[Whatevs]]></description>
+    <link>http://www.foobar.com/rss.aspx</link>
+    <language>en-us</language>
+    <pubDate>Thu, 10 Jun 2010 21:56:11 GMT</pubDate>
+    <lastBuildDate>Thu, 10 Jun 2010 21:56:11 GMT</lastBuildDate>
+    <item>
+      <title>Blah blah blah</title>
+      <link>http://www.foobar.com/article/4034</link>
+      <description><![CDATA[A space:&nbsp;Nice, eh?]]></description>
+      <pubDate>Thu, 24 Jan 2008 00:00:00 GMT</pubDate>
+      <guid>http://www.foobar.com/article/4034</guid>
+    </item>
+    <item>
+      <title>Yadda yadda yadda</title>
+      <link>http://www.foobar.com/article/8536</link>
+      <description><![CDATA[We don&rsquo;t ever stop.]]></description>
+      <pubDate>Tue, 30 Mar 2010 00:00:00 GMT</pubDate>
+      <guid>http://www.foobar.com/article/8536</guid>
+    </item>
+    <item>
+      <title>Yak yak yak</title>
+      <link>http://www.foobar.com/article/4179</link>
+      <description><![CDATA[Jakob Trollb&auml;ck explains why.]]></description>
+      <pubDate>Wed, 23 Jan 2008 00:00:00 GMT</pubDate>
+      <guid>http://www.foobar.com/article/4179</guid>
+    </item>
+    <item>
+      <title>Smarter Stock Imagery</title>
+      <link>http://www.foobar.com/article/3851</link>
+      <description><![CDATA[Start thinking &quot;out of the lightbox&quot;&mdash;and win!]]></description>
+      <pubDate>Wed, 23 Jan 2008 00:00:00 GMT</pubDate>
+      <guid>http://www.foobar.com/article/3851</guid>
+    </item>
+  </channel>
+</rss>

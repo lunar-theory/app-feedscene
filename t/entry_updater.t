@@ -3,8 +3,9 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 120;
+use Test::More tests => 127;
 #use Test::More 'no_plan';
+use Test::More::UTF8;
 use Test::NoWarnings;
 use Test::MockModule;
 use Test::MockTime;
@@ -48,6 +49,7 @@ $conn->txn(sub {
         [ 0, 'latin-1.rss'       ],
         [ 0, 'dates.rss'         ],
         [ 0, 'conflict.rss'      ],
+        [ 0, 'entities.rss'      ],
         [ 1, 'enclosures.atom'   ],
         [ 1, 'enclosures.rss'    ],
         [ 1, 'more_summaries.atom' ],
@@ -58,7 +60,7 @@ $conn->txn(sub {
 
 is $conn->run(sub {
     (shift->selectrow_array('SELECT COUNT(*) FROM feeds'))[0]
-}), 10, 'Should have 10 feeds in the database';
+}), 11, 'Should have 11 feeds in the database';
 test_counts(0, 'Should have no entries');
 
 # Construct a entry updater.
@@ -80,6 +82,7 @@ my @urls = (
     "$uri/latin-1.rss",
     "$uri/dates.rss",
     "$uri/conflict.rss",
+    "$uri/entities.rss",
 );
 
 $eup->mock(process => sub {
@@ -585,6 +588,25 @@ for my $spec (
         undef, _uuid('http://more.example.com/', "http://more.example.com/$spec->[0].html")
     ) || [], $spec->[1], "Should have proper enclosure & summary for $spec->[2]";
 }
+
+##############################################################################
+$eup->portal(0);
+ok $eup->process("$uri/entities.rss"), 'Process CP1252 RSS feed with entities';
+test_counts(67, 'Should now have 67 entries');
+
+for my $spec (
+    [ 4034, '<p>A space: Nice, eh?</p>', 'nbsp' ],
+    [ 8536, '<p>We don’t ever stop.</p>', 'rsquo' ],
+    [ 4179, '<p>Jakob Trollbäck explains why.</p>', 'auml' ],
+    [ 3851, '<p>Start thinking "out of the lightbox"—and win!</p>', 'quot and mdash' ],
+) {
+    is $dbh->selectrow_arrayref(
+        'SELECT summary FROM entries WHERE id = ?',
+        undef,
+        _uuid('http://www.foobar.com/rss.aspx', "http://www.foobar.com/article/$spec->[0]")
+    )->[0], $spec->[1], "CP1252 summary should be correct with $spec->[2]";
+}
+
 ##############################################################################
 sub test_counts {
     my ($count, $descr) = @_;
