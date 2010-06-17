@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<rss version="2.0" xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:media="http://search.yahoo.com/mrss/" xmlns:yt="http://gdata.youtube.com/schemas/2007">
+   <channel>
+      <title>Yahoo Pipe that Breaks Flickr Encoding</title>
+      <link>http://pipes.yahoo.com/pipes22</link>
+      <pubDate>Fri, 11 Jun 2010 19:55:51 -0700</pubDate>
+      <generator>http://pipes.yahoo.com/pipes/</generator>
+      <item>
+         <title>Dance Time</title>
+         <link>http://flickr.com@N22</link>
+         <description>&lt;p&gt;&lt;a rel=&quot;nofollow&quot; target=&quot;_blank&quot; href=&quot;http://flickr.com/people/37687931@N07/&quot;&gt;Tomas LaurinaviÄius&lt;/a&gt; has added a photo to the pool:&lt;/p&gt;&lt;p&gt;&lt;a rel=&quot;nofollow&quot;&gt;&lt;img src=&quot;http://farm5.static.flickr.com/4014/4659498199_4a64610b63.jpg&quot; title=&quot;Dance Time&quot;/&gt;&lt;/a&gt;&lt;/p&gt;</description>
+         <author>nobody@flickr.com (Tomas LaurinaviÄius)</author>
+         <guid isPermaLink="false">tag:flickr.com,2004:/photo/4659498199</guid>
+         <pubDate>Tue, 01 Jun 2010 07:09:21 -0700</pubDate>
+         <enclosure length="0" url="http://farm5.static.flickr.com/4014/4659498199_4a64610b63.jpg" type="image/jpeg"/>
+      </item>
+   </channel>
+</rss>

@@ -56,7 +56,7 @@ sub process {
         return $self;
     }
 
-    my $feed     = App::FeedScene::Parser->parse_feed($res->decoded_content);
+    my $feed     = App::FeedScene::Parser->parse_feed($res);
     my $feed_id  = $feed->can('id') ? $feed->id || $feed_url : $feed_url;
     my $base_url = $feed->base;
     my $site_url = $feed->link;

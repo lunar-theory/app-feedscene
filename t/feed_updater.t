@@ -216,7 +216,7 @@ sub test_initial_feeds {
         },
         {
             url      => "$uri/latin-1.rss",
-            title    => '"Latin-1 RSS Feed"', # Quotation marks are CP1252 in the XML.
+            title    => '“Latin-1 RSS Feed”', # Quotation marks are CP1252 in the XML.
             subtitle => '',
             site_url => 'http://foo.net/',
             icon_url => 'http://www.google.com/s2/favicons?domain=foo.net',

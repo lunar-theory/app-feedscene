@@ -80,7 +80,7 @@ sub process {
                 next;
             }
 
-            my $feed     = App::FeedScene::Parser->parse_feed($res->decoded_content);
+            my $feed     = App::FeedScene::Parser->parse_feed($res);
                            # XXX Generate from URL?
             $id          = $feed->can('id') ? $feed->id || $feed_url : $feed_url;
             my $site_url = $feed->link;

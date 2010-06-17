@@ -3,8 +3,8 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 127;
-#use Test::More 'no_plan';
+#use Test::More tests => 127;
+use Test::More 'no_plan';
 use Test::More::UTF8;
 use Test::NoWarnings;
 use Test::MockModule;
@@ -53,6 +53,7 @@ $conn->txn(sub {
         [ 1, 'enclosures.atom'   ],
         [ 1, 'enclosures.rss'    ],
         [ 1, 'more_summaries.atom' ],
+        [ 1, 'nerbles.rss'         ],
     ) {
         $sth->execute(@{ $spec }, "$uri/$spec->[1]", '2010-06-08T14:13:38' );
     }
@@ -60,7 +61,7 @@ $conn->txn(sub {
 
 is $conn->run(sub {
     (shift->selectrow_array('SELECT COUNT(*) FROM feeds'))[0]
-}), 11, 'Should have 11 feeds in the database';
+}), 12, 'Should have 12 feeds in the database';
 test_counts(0, 'Should have no entries');
 
 # Construct a entry updater.
@@ -299,7 +300,7 @@ is $conn->run(sub{ shift->selectrow_array(
 );
 
 is $title, 'Title: æåø', 'Latin-1 Title should be UTF-8';
-is $summary, '<p>Latin-1: æåø ("CP1252")</p>', 'Latin-1 Summary should be UTF-8';
+is $summary, '<p>Latin-1: æåø (“CP1252”)</p>', 'Latin-1 Summary should be UTF-8';
 
 ($title, $summary) = $conn->dbh->selectrow_array(
     'SELECT title, summary FROM entries WHERE id = ?',
@@ -606,6 +607,21 @@ for my $spec (
         _uuid('http://www.foobar.com/rss.aspx', "http://www.foobar.com/article/$spec->[0]")
     )->[0], $spec->[1], "CP1252 summary should be correct with $spec->[2]";
 }
+
+##############################################################################
+# Test Yahoo! Pips feed with nerbles in it.
+@types = qw(image/jpeg);
+$ENV{FOO}= 1;
+$eup->portal(1);
+ok $eup->process("$uri/nerbles.rss"), 'Process Yahoo! Pipes nerbles feed';
+test_counts(68, 'Should now have 68 entries');
+
+is $dbh->selectrow_arrayref(
+    'SELECT summary FROM entries WHERE id = ?',
+    undef,
+    _uuid('http://pipes.yahoo.com/pipes22', 'http://flickr.com@N22')
+)->[0], "<p>Tomas Laurinavi\x{c4}\x{8d}ius has added a photo to the pool:</p>",
+    'Nerbles should be removed from summary';
 
 ##############################################################################
 sub test_counts {

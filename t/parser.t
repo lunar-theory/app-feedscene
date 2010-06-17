@@ -3,24 +3,22 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 20;
+use Test::More tests => 21;
 #use Test::More 'no_plan';
+use LWP::Protocol::file; # Turn on local fetches.
 
 my $CLASS;
 BEGIN {
     $CLASS = 'App::FeedScene::Parser';
     use_ok $CLASS or die;
+    use_ok 'App::FeedScene::UA';
 }
 
-# Test Data::Feed stuff.
-my $file = File::Spec->catfile(qw(t data simple.atom));
-my $feed = do {
-    open my $fh, '<', $file or die "Cannot open $file: $!\n";
-    local $/;
-    <$fh>;
-};
+my $uri = 'file://localhost' . File::Spec->rel2abs('t/data');
 
-isa_ok $CLASS->parse_feed($feed), 'Data::Feed::Atom';
+# Test Data::Feed stuff.
+my $ua = App::FeedScene::UA->new('foo');
+isa_ok $CLASS->parse_feed($ua->get("$uri/simple.atom")), 'Data::Feed::Atom';
 
 # Test XML::LibXML stuff.
 isa_ok $CLASS->libxml, 'XML::LibXML';

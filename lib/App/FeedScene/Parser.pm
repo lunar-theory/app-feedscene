@@ -6,7 +6,7 @@ use Data::Feed;
 use Data::Feed::Parser::Atom;
 use Data::Feed::Parser::RSS;
 use XML::LibXML qw(XML_TEXT_NODE);
-use Encode::ZapCP1252 ();
+use namespace::autoclean;
 #use HTML::Tidy;
 
 $XML::Atom::ForceUnicode = 1;
@@ -16,9 +16,10 @@ my $parser = XML::LibXML->new({
     recover    => 2,
     no_network => 1,
     no_blanks  => 1,
-    encoding   => 'utf8',
     no_cdata   => 1,
 });
+# Inconsistency in the params means that some params are ignored. Grrr.
+$parser->recover(2);
 
 RSSPARSER: {
     package App::FeedScene::Parser::RSS;
@@ -67,19 +68,13 @@ RSSPARSER: {
 
 sub libxml { $parser }
 
-PARSEFEED: {
-    # Override CP1252 escapes that need to be encoded.
-    local $Encode::ZapCP1252::ascii_for{"\x93"} = '&quot;';
-    local $Encode::ZapCP1252::ascii_for{"\x94"} = '&quot;';
-    local $Encode::ZapCP1252::ascii_for{"\x8b"} = '&lt;';
-    local $Encode::ZapCP1252::ascii_for{"\x9b"} = '&gt;';
+sub parse_feed {
+    my ($self, $res) = @_;
 
-    sub parse_feed {
-        shift;
-        Encode::ZapCP1252::zap_cp1252 $_[0];
-        return Data::Feed->parse(\$_[0]);
-    }
-
+    # XML is always binary, so don't use decoded_content.
+    # http://juerd.nl/site.plp/perluniadvice
+    my $body = $res->content;
+    return Data::Feed->parse(\$body);
 }
 
 sub parse_html_string {
