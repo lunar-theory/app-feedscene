@@ -6,6 +6,8 @@ use Data::Feed;
 use Data::Feed::Parser::Atom;
 use Data::Feed::Parser::RSS;
 use XML::LibXML qw(XML_TEXT_NODE);
+use XML::LibXML::ErrNo;
+use Encode;
 use namespace::autoclean;
 
 $XML::Atom::ForceUnicode = 1;
@@ -33,8 +35,16 @@ sub parse_feed {
 
     # XML is always binary, so don't use decoded_content.
     # http://juerd.nl/site.plp/perluniadvice
-    my $body = $res->content;
-    return Data::Feed->parse(\$body);
+    $parser->recover(0);
+    my $feed = eval { Data::Feed->parse(\$res->content) };
+    if (my $err = $@) {
+        die unless $err->code == XML::LibXML::ErrNo::ERR_INVALID_CHAR;
+        # See if we can clean up the mess.
+        my $charset = $res->content_charset;
+        $feed = Data::Feed->parse(\encode($charset, decode($charset, $res->content)));
+    }
+    $parser->recover(2);
+    return $feed;
 }
 
 sub parse_html_string {

@@ -3,8 +3,8 @@
 use strict;
 use 5.12.0;
 use utf8;
-#use Test::More tests => 127;
-use Test::More 'no_plan';
+use Test::More tests => 135;
+#use Test::More 'no_plan';
 use Test::More::UTF8;
 use Test::NoWarnings;
 use Test::MockModule;
@@ -50,6 +50,7 @@ $conn->txn(sub {
         [ 0, 'dates.rss'         ],
         [ 0, 'conflict.rss'      ],
         [ 0, 'entities.rss'      ],
+        [ 0, 'bogus.rss'         ],
         [ 1, 'enclosures.atom'   ],
         [ 1, 'enclosures.rss'    ],
         [ 1, 'more_summaries.atom' ],
@@ -61,7 +62,7 @@ $conn->txn(sub {
 
 is $conn->run(sub {
     (shift->selectrow_array('SELECT COUNT(*) FROM feeds'))[0]
-}), 12, 'Should have 12 feeds in the database';
+}), 13, 'Should have 13 feeds in the database';
 test_counts(0, 'Should have no entries');
 
 # Construct a entry updater.
@@ -84,6 +85,7 @@ my @urls = (
     "$uri/dates.rss",
     "$uri/conflict.rss",
     "$uri/entities.rss",
+    "$uri/bogus.rss",
 );
 
 $eup->mock(process => sub {
@@ -609,9 +611,8 @@ for my $spec (
 }
 
 ##############################################################################
-# Test Yahoo! Pips feed with nerbles in it.
+# Test Yahoo! Pipes feed with nerbles in it.
 @types = qw(image/jpeg);
-$ENV{FOO}= 1;
 $eup->portal(1);
 ok $eup->process("$uri/nerbles.rss"), 'Process Yahoo! Pipes nerbles feed';
 test_counts(68, 'Should now have 68 entries');
@@ -621,7 +622,27 @@ is $dbh->selectrow_arrayref(
     undef,
     _uuid('http://pipes.yahoo.com/pipes22', 'http://flickr.com@N22')
 )->[0], "<p>Tomas Laurinavi\x{c4}\x{8d}ius has added a photo to the pool:</p>",
-    'Nerbles should be removed from summary';
+    'Nerbles should be valid UTF-8 in summary';
+
+##############################################################################
+# Test Feed with invalid bytes in it.
+$eup->portal(0);
+ok $eup->process("$uri/bogus.rss"), 'Process RSS with bogus bytes';
+test_counts(69, 'Should now have 69 entries');
+
+is $dbh->selectrow_arrayref(
+    'SELECT title FROM entries WHERE id = ?',
+    undef,
+    _uuid('http://welie.example.com/', 'http://welie.example.com/broken')
+)->[0], "'\x{c3}\x{160}?\x{e2}\x{2c6}\x{2020}\x{c3}\x{bb}\x{e2}\x{2030}\x{a4}FWt+\x{c3}\x{ae}\$\x{c4}\x{b1}\x{c3}\x{17d}\x{c3}\x{bc}j\x{c3}\x{20ac}\x{ef}\x{ac},\x{c3}\x{160}9.v\x{c2}\x{ae}\x{c3}\x{8f}G\x{c2}\x{a8}\x{e2}\x{2030}\x{a0}\x{e2}\x{20ac}\x{153}\x{c2}\x{a9}",
+    'Bogus characters should be removed from title';
+
+is $dbh->selectrow_arrayref(
+    'SELECT summary FROM entries WHERE id = ?',
+    undef,
+    _uuid('http://welie.example.com/', 'http://welie.example.com/broken')
+)->[0], "<p>\x{c3}\x{ad}Z\x{e2}\x{2030}\x{a4}F1\x{e2}\x{20ac}\x{201c}\x{c3}\x{2122}?Z\x{e2}\x{2c6},</p>",
+    'Bogus characters should be removed from summary';
 
 ##############################################################################
 sub test_counts {

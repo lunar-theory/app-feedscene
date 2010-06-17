@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<rss version="2.0" xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:media="http://search.yahoo.com/mrss/" xmlns:yt="http://gdata.youtube.com/schemas/2007">
+   <channel>
+      <title>Broken Encoding</title>
+      <link>http://welie.example.com/</link>
+      <pubDate>Fri, 11 Jun 2010 19:55:51 -0700</pubDate>
+      <item>
+         <title>'Ê?∆û≤FWt+î$ıÎüjÀﬂÊ9.v®ÏG¨≠“©</title>
+         <link>http://welie.example.com/broken</link>
+         <description>&lt;p&gt;íZ≤F1–Ù?Z∂&lt;/p&gt;</description>
+         <pubDate>Tue, 01 Jun 2010 07:09:21 -0700</pubDate>
+      </item>
+   </channel>
+</rss>
