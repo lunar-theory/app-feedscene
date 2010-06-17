@@ -7,7 +7,6 @@ use Data::Feed::Parser::Atom;
 use Data::Feed::Parser::RSS;
 use XML::LibXML qw(XML_TEXT_NODE);
 use namespace::autoclean;
-#use HTML::Tidy;
 
 $XML::Atom::ForceUnicode = 1;
 $Data::Feed::Parser::RSS::PARSER_CLASS = 'App::FeedScene::Parser::RSS';
@@ -26,45 +25,6 @@ RSSPARSER: {
     use parent 'XML::RSS::LibXML';
     sub create_libxml { $parser }
 }
-
-# my $tidy   = HTML::Tidy->new({
-#     'drop-font-tags'   => 1,
-#     'drop-empty-paras' => 1,
-#     'show-body-only'   => 1,
-#     'output-xhtml'     => 1,
-#      # Add the HTML five tags.
-#     'new-inline-tags'  => join ', ', qw(
-#         audio
-#         mark
-#         meter
-#         time
-#         progress
-#         rp
-#         rt
-#         ruby
-#         source
-#         video
-#     ),
-#     'new-blocklevel-tags'  => join ', ', qw(
-#         article
-#         aside
-#         canvas
-#         command
-#         datalist
-#         details
-#         embed
-#         figcaption
-#         figure
-#         footer
-#         header
-#         hgroup
-#         keygen
-#         nav
-#         output
-#         section
-#         summary
-#     ),
-# });
 
 sub libxml { $parser }
 
@@ -86,24 +46,6 @@ sub parse_html_string {
         @_
     });
 }
-
-# sub parse_html_string {
-#     my ($self, $string) = (shift, shift);
-#     my $opts = {
-#         suppress_warnings => 1,
-#         suppress_errors   => 0,
-#         recover           => 0,
-#         @_
-#     };
-
-#     my $ret = eval { $self->libxml->parse_html_string($string, $opts) };
-#     return $ret unless $@;
-
-#     # Try tidying things up.
-#     $opts->{suppress_errors} = 1;
-#     $opts->{recover} = 2;
-#     return $self->libxml->parse_html_string($tidy->clean($string), $opts)
-# }
 
 sub strip_html {
     my $self = shift;
