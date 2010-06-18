@@ -44,6 +44,7 @@ sub parse_feed {
     my $body = $res->content;
     $parser->recover(0);
     local $@;
+
     TRY: {
         my $feed = eval { Data::Feed->parse(\$body) };
         if (my $err = $@) {
