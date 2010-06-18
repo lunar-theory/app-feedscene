@@ -227,11 +227,11 @@ test_counts(5, 'Should now have five entries');
 is_deeply $conn->run(sub{ shift->selectrow_arrayref(
     'SELECT title, site_url FROM feeds WHERE url = ?',
     undef, "$uri/simple.rss",
-)}), ['Simple RSS Feed', 'http://example.net'], 'RSS feed should be updated';
+)}), ['Simple RSS Feed', 'http://example.net/f%C3%B8%C3%B8'], 'RSS feed should be updated';
 
 # Check the entry data.
-is_deeply test_data('urn:uuid:5a47d6e5-41dd-586b-ad03-c26c67425134'), {
-    id             => 'urn:uuid:5a47d6e5-41dd-586b-ad03-c26c67425134',
+is_deeply test_data('urn:uuid:3577008b-ee22-5b79-9ca9-ac87e42ee601'), {
+    id             => 'urn:uuid:3577008b-ee22-5b79-9ca9-ac87e42ee601',
     feed_id        => "$uri/simple.rss",
     url            => 'http://example.net/2010/05/17/long-goodbye/',
     title          => 'The Long Goodbye',
@@ -243,8 +243,8 @@ is_deeply test_data('urn:uuid:5a47d6e5-41dd-586b-ad03-c26c67425134'), {
     enclosure_type => '',
 }, 'Data for first RSS entry, including unformatted summary';
 
-is_deeply test_data('urn:uuid:f7d5ce8a-d0d5-56bc-99c3-05592f4dc22c'), {
-    id             => 'urn:uuid:f7d5ce8a-d0d5-56bc-99c3-05592f4dc22c',
+is_deeply test_data('urn:uuid:5e125dfa-0b69-504c-96a0-83f552645c6b'), {
+    id             => 'urn:uuid:5e125dfa-0b69-504c-96a0-83f552645c6b',
     feed_id        => "$uri/simple.rss",
     url            => 'http://example.net/2010/05/16/little-sister/',
     title          => '',
@@ -393,7 +393,7 @@ is_deeply $dbh->selectall_arrayref(
     undef, 'http://example.net/2010/05/17/long-goodbye/'
 ), [
     [
-        'urn:uuid:5a47d6e5-41dd-586b-ad03-c26c67425134',
+        'urn:uuid:3577008b-ee22-5b79-9ca9-ac87e42ee601',
         'file://localhost/Users/david/dev/github/app-feedscene/t/data/simple.rss'
     ],
     [
@@ -441,17 +441,17 @@ ok $eup->process("$uri/enclosures.rss"), 'Process RSS feed with enclosures';
 test_counts(60, 'Should now have 60 entries');
 
 # First one is easy, has only one enclosure.
-is_deeply test_data('urn:uuid:afac4e17-4775-55c0-9e61-30d7630ea909'), {
+is_deeply test_data('urn:uuid:257c8075-dc7c-5678-8de0-5bb88360dff6'), {
     author         => '',
     enclosure_type => 'image/jpeg',
-    enclosure_url  => 'http://farm2.static.flickr.com/1169/4601733070_92cd987ff5_o.jpg',
+    enclosure_url  => 'http://farm2.static.flickr.com/1169/4601733070_92cd987ff5_%C3%AE.jpg',
     feed_id        => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af7',
-    id             => 'urn:uuid:afac4e17-4775-55c0-9e61-30d7630ea909',
+    id             => 'urn:uuid:257c8075-dc7c-5678-8de0-5bb88360dff6',
     published_at   => '2009-12-13T08:29:29Z',
     summary        => '<p>Caption for the encosed image.</p>',
     title          => 'This is the title',
     updated_at     => '2009-12-13T08:29:29Z',
-    url            => 'http://flickr.com/someimage'
+    url            => 'http://flickr.com/some%C3%AEmage'
 }, 'Data for first entry with enclosure should be correct';
 
 is_deeply test_data('urn:uuid:844df0ef-fed0-54f0-ac7d-2470fa7e9a9c'), {
@@ -468,17 +468,17 @@ is_deeply test_data('urn:uuid:844df0ef-fed0-54f0-ac7d-2470fa7e9a9c'), {
 }, 'Data for entry with two should have just the first enclosure';
 
 # Look at the RSS versions, too.
-is_deeply test_data('urn:uuid:c6598d85-1d0a-51dd-aa77-23deac7cada5'), {
+is_deeply test_data('urn:uuid:db9bd827-0d7f-5067-ad18-2c666ab1a028'), {
     author         => '',
     enclosure_type => 'image/jpeg',
-    enclosure_url  => 'http://farm2.static.flickr.org/1169/4601733070_92cd987ff5_o.jpg',
+    enclosure_url  => 'http://farm2.static.flickr.org/1169/4601733070_92cd987ff5_%C3%AE.jpg',
     feed_id        => "$uri/enclosures.rss",
-    id             => 'urn:uuid:c6598d85-1d0a-51dd-aa77-23deac7cada5',
+    id             => 'urn:uuid:db9bd827-0d7f-5067-ad18-2c666ab1a028',
     published_at   => '2009-12-13T08:29:29Z',
     summary        => '<p>Caption for the encosed image.</p>',
     title          => 'This is the title',
     updated_at     => '2009-12-13T08:29:29Z',
-    url            => 'http://flickr.org/someimage'
+    url            => 'http://flickr.org/some%C3%AEmage'
 }, 'Data for first entry with enclosure should be correct';
 
 is_deeply test_data('urn:uuid:4aef01ff-75c3-5dcb-a53f-878e3042f3cf'), {
@@ -504,7 +504,7 @@ for my $spec (
     [ 'embedtwo' => [
         '<p>Caption for both of the embedded images.</p>',
         'image/jpeg',
-        'http://flickr.com/someimage.jpg'
+        'http://flickr.com/some%C3%AEmage.jpg'
     ], 'two embedded JPEGs' ],
     [ 'audio' => [
         '<p>Caption for the enclosed audio.</p>',

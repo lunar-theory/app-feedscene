@@ -9,8 +9,8 @@
 
   <entry>
     <title>This is the title</title>
-    <link rel="alternate" href="http://flickr.com/someimage" />
-    <link rel="enclosure" type="image/jpeg" href="http://farm2.static.flickr.com/1169/4601733070_92cd987ff5_o.jpg" />
+    <link rel="alternate" href="http://flickr.com/someîmage" />
+    <link rel="enclosure" type="image/jpeg" href="http://farm2.static.flickr.com/1169/4601733070_92cd987ff5_î.jpg" />
     <published>2009-12-13T08:29:29Z</published>
     <summary type="html">&lt;p&gt;Caption for the encosed image.&lt;/p&gt;</summary>
     <content type="html">&lt;p&gt;Content&lt;/p&gt;</content>
@@ -38,7 +38,7 @@
     <title>This is the title</title>
     <link rel="alternate" href="http://flickr.com/embedtwo" />
     <published>2009-12-13T08:18:29Z</published>
-    <summary type="html">&lt;img src=&quot;http://flickr.com/someimage.jpg&quot; width=&quot;240&quot; height=&quot;240&quot; alt=&quot;Batista Cappucino&quot; /&gt;&lt;p&gt;Caption for both of the embedded images.&lt;/p&gt;&lt;img src=&quot;http://flickr.com/anotherimage.jpg&quot; /&gt;</summary>
+    <summary type="html">&lt;img src=&quot;http://flickr.com/someîmage.jpg&quot; width=&quot;240&quot; height=&quot;240&quot; alt=&quot;Batista Cappucino&quot; /&gt;&lt;p&gt;Caption for both of the embedded images.&lt;/p&gt;&lt;img src=&quot;http://flickr.com/anotherimage.jpg&quot; /&gt;</summary>
     <content type="html">&lt;p&gt;Content&lt;/p&gt;</content>
   </entry>
 

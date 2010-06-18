@@ -280,8 +280,8 @@ sub test_entries {
     # Look at the fourth entry, from portal 2, with an enclosure.
     $tx->ok('/a:feed/a:entry[4]', 'Check third entry', sub {
         $_->is('count(./*)', 9, 'Should have 9 subelements');
-        $_->is('./a:id', 'urn:uuid:afac4e17-4775-55c0-9e61-30d7630ea909', '...Entry ID');
-        $_->is('./a:link[@rel="alternate"]/@href', 'http://flickr.com/someimage', '...Link');
+        $_->is('./a:id', 'urn:uuid:257c8075-dc7c-5678-8de0-5bb88360dff6', '...Entry ID');
+        $_->is('./a:link[@rel="alternate"]/@href', 'http://flickr.com/some%C3%AEmage', '...Link');
         $_->is('./a:title', 'This is the title', '...Title');
         $_->is('./a:published', '2009-12-13T08:29:29Z', '...Published');
         $_->is('./a:updated', '2009-12-13T08:29:29Z', '...Updated');
@@ -291,7 +291,7 @@ sub test_entries {
         $_->is('./a:link[@rel="enclosure"]/@type', 'image/jpeg', '...Enclosure type');
         $_->is(
             './a:link[@rel="enclosure"]/@href',
-            'http://farm2.static.flickr.com/1169/4601733070_92cd987ff5_o.jpg',
+            'http://farm2.static.flickr.com/1169/4601733070_92cd987ff5_%C3%AE.jpg',
             '...Enclosure link'
         );
         $_->ok('./a:source', '...Source', sub {

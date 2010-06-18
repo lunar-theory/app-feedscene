@@ -64,6 +64,7 @@ sub process {
             my ($portal, $feed_url, $category) = $csv->fields;
             $portal = 0 if $portal eq 'text';
             say STDERR "$portal: $feed_url" if $self->verbose;
+            $feed_url = URI->new($feed_url);
 
             # Skip to the next entry if we've already got this URL.
             my ($id) = $dbh->selectrow_array($sel, undef, $feed_url);
@@ -88,8 +89,10 @@ sub process {
             $site_url    = $feed->base
                          ? URI->new_abs($site_url, $feed->base)
                          : URI->new($site_url);
-            my $icon_url = 'http://www.google.com/s2/favicons?domain='
-                         . ($site_url ? $site_url->host : URI->new($feed_url)->host);
+            my $icon_url = URI->new(
+                'http://www.google.com/s2/favicons?domain='
+                . ($site_url ? $site_url->host : $feed_url->host)
+            );
 
             $ins->execute(_clean(
                 $feed_url,

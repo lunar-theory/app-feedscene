@@ -48,6 +48,7 @@ sub process {
     my ($self, $feed_url) = @_;
     my $portal = $self->portal;
     say STDERR "  Processing $feed_url" if $self->verbose;
+    $feed_url = URI->new($feed_url);
 
     my $res = $self->ua->get($feed_url);
     unless ($res->is_success) {
@@ -64,7 +65,7 @@ sub process {
     $site_url    = $base_url
                  ? URI->new_abs($site_url, $base_url)
                  : URI->new($site_url);
-    my $host     = $site_url ? $site_url->host : URI->new($feed_url)->host;
+    my $host     = $site_url ? $site_url->host : $feed_url->host;
     $base_url  ||= $site_url;
 
     App::FeedScene->new($self->app)->conn->txn(sub {
@@ -89,7 +90,7 @@ sub process {
                 App::FeedScene::Parser->strip_html($feed->title || ''),
                 App::FeedScene::Parser->strip_html($feed->description || ''),
                 $site_url,
-                "http://www.google.com/s2/favicons?domain=$host",
+                URI->new("http://www.google.com/s2/favicons?domain=$host"),
                 ($feed->modified || DateTime->now)->set_time_zone('UTC')->iso8601 . 'Z',
                 App::FeedScene::Parser->strip_html($feed->copyright || ''),
                 $feed_url
@@ -383,7 +384,7 @@ sub _find_enclosure {
     for my $enc ($entry->enclosures) {
         my $type = $enc->type or next;
         next if $type !~ m{^(?:image|audio|video)/};
-        return $enc->type, $enc->url;
+        return $enc->type, URI->new($enc->url);
     }
 
     # Use XML::LibXML and XPath to find something and link it up.
@@ -421,12 +422,14 @@ my $mt = MIME::Types->new;
 sub _get_type {
     my ($self, $url) = @_;
     if (my $type = $mt->mimeTypeOf($url)) {
-        return $type, $url;
+        return $type, URI->new($url);
     }
 
     # Maybe the thing redirects? Ask it for its content type.
     my $res = $self->ua->head($url);
-    return $res->is_success ? (scalar $res->content_type, $res->request->uri) : undef;
+    return $res->is_success
+        ? (scalar $res->content_type, URI->new($res->request->uri))
+        : undef;
 }
 
 1;

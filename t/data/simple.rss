@@ -2,7 +2,7 @@
 <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:wfw="http://wellformedweb.org/CommentAPI/" xmlns:dc="http://purl.org/dc/elements/1.1/">
   <channel>
     <title>Simple &lt;em&gt;RSS&lt;/em&gt; Feed</title>
-    <link>http://example.net</link>
+    <link>http://example.net/føø</link>
     <pubDate>17 May 2010</pubDate>
 
     <item>
