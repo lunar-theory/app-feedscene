@@ -16,7 +16,7 @@
       <guid>http://www.foobar.com/article/4034</guid>
     </item>
     <item>
-      <title>Yadda yadda yadda</title>
+      <title>Yadda yadda &amp; yadda</title>
       <link>http://www.foobar.com/article/8536</link>
       <description><![CDATA[We don&rsquo;t ever stop.]]></description>
       <pubDate>Tue, 30 Mar 2010 00:00:00 GMT</pubDate>
