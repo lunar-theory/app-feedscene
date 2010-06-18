@@ -9,6 +9,7 @@ use XML::LibXML qw(XML_TEXT_NODE);
 use XML::LibXML::ErrNo;
 use Encode;
 use namespace::autoclean;
+use HTML::Entities;
 
 $XML::Atom::ForceUnicode = 1;
 $Data::Feed::Parser::RSS::PARSER_CLASS = 'App::FeedScene::Parser::RSS';
@@ -35,16 +36,33 @@ sub parse_feed {
 
     # XML is always binary, so don't use decoded_content.
     # http://juerd.nl/site.plp/perluniadvice
+    my $body = $res->content;
     $parser->recover(0);
-    my $feed = eval { Data::Feed->parse(\$res->content) };
-    if (my $err = $@) {
-        die $err unless $err->code == XML::LibXML::ErrNo::ERR_INVALID_CHAR;
-        # See if we can clean up the mess.
-        my $charset = $res->content_charset;
-        $feed = Data::Feed->parse(\encode($charset, decode($charset, $res->content)));
+    local $@;
+    TRY: {
+        my $feed = eval { Data::Feed->parse(\$body) };
+        if (my $err = $@) {
+            given ($err->code) {
+                when (XML::LibXML::ErrNo::ERR_INVALID_CHAR) {
+                    # See if we can clean up the mess.
+                    my $charset = $res->content_charset;
+                    $body = encode($charset, decode($charset, $body));
+                    redo TRY;
+                }
+                when (XML::LibXML::ErrNo::ERR_UNDECLARED_ENTITY) {
+                    # Author included invalid entities. Convert them and try again.
+                    my $charset = $res->content_charset;
+                    $body = encode($charset, decode_entities(decode($charset, $body)));
+                    redo TRY;
+                }
+                default {
+                    die $err;
+                }
+            }
+        }
+        $parser->recover(2);
+        return $feed;
     }
-    $parser->recover(2);
-    return $feed;
 }
 
 sub parse_html_string {
