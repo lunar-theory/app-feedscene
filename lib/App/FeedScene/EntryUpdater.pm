@@ -404,13 +404,13 @@ sub _find_enclosure {
             my $url = $node->nodeValue or next;
             $url = $base_url ? URI->new_abs($url, $base_url) : URI->new($url);
             next if !$url->can('host') || $url->host =~ /\bdoubleclick[.]net$/;
-            (my($type), $url) = $self->_get_type($url);
+            (my($type), $url) = $self->_get_type($url, $base_url);
             return $type, $url if $type && $type =~ m{^(?:image|audio|video)/};
         }
     }
 
     # Look at the direct link.
-    my ($type, $url) = $self->_get_type($entry_link);
+    my ($type, $url) = $self->_get_type($entry_link, $base_url);
     return $type, $url if $type && $type =~ m{^(?:image|audio|video)/};
 
     # Nothing to see.
@@ -430,9 +430,10 @@ sub _uuid {
 
 my $mt = MIME::Types->new;
 sub _get_type {
-    my ($self, $url) = @_;
+    my ($self, $url, $base_url) = @_;
+    $url = $base_url ? URI->new_abs($url, $base_url) : URI->new($url);
     if (my $type = $mt->mimeTypeOf($url)) {
-        return $type, URI->new($url);
+        return $type, $url;
     }
 
     # Maybe the thing redirects? Ask it for its content type.
