@@ -14,9 +14,11 @@ my $domain  = 'kineticode.com';
 my $company = 'Lunar Theory';
 
 (my $def_dir = __FILE__) =~ s{(?:blib/)?lib/App/FeedScene/Generator[.]pm$}{feeds};
-has app => (is => 'rw', isa => 'Str',  required => 1 );
-has dir => (is => 'rw', isa => 'Str',  default => $def_dir );
-has strict => (is => 'rw', isa => 'Bool', default => 0 );
+has app        => (is => 'rw', isa => 'Str',  required => 1 );
+has dir        => (is => 'rw', isa => 'Str',  default => $def_dir );
+has strict     => (is => 'rw', isa => 'Bool', default => 0 );
+has limit      => (is => 'rw', isa => 'Int',  default => 36 );
+has text_limit => (is => 'rw', isa => 'Int',  default => 256 );
 
 sub go {
     my $self = shift;
@@ -72,41 +74,46 @@ sub go {
             SELECT id, url, title, published_at, updated_at, summary, author,
                    enclosure_url, enclosure_type, feed_id, portal$feed_cols
               FROM feed_entries
-             ORDER BY portal, published_at DESC
+             WHERE portal = ?
+             ORDER BY published_at DESC
+             LIMIT ?
         });
-        $sth->execute;
-        while (my $row = $sth->fetchrow_hashref) {
-            push @entries, $a->entry(
-                $a->id($row->{id}),
-                $a->link({rel => 'alternate', href => $row->{url} }),
-                $a->title($row->{title} || $row->{url}),
-                $a->published($row->{published_at}),
-                $a->updated($row->{updated_at}),
-                $a->category({
-                    scheme => "http://$domain/ns/portal",
-                    term => $row->{portal},
-                }),
-                ($row->{summary} ? ($a->summary({ type => 'html' }, $row->{summary} )) : ()),
-                ($row->{author} ? ($a->author( $a->name($row->{author}) )) : ()),
-                $a->source(
-                    $a->id($row->{feed_id}),
-                    $self->strict ? (
-                        $a->link({ rel => 'self', href => $row->{feed_url} }),
-                        $a->title($row->{feed_title} || $row->{feed_url}),
-                        ($row->{feed_subtitle} ? ($a->subtitle($row->{feed_subtitle})) : ()),
-                        $a->updated($row->{feed_updated_at}),
-                        ($row->{rights} ? ($a->rights($row->{rights})) : ()),
-                        $a->icon($row->{icon_url}),
-                    ) : (),
-                ),
-                ($row->{enclosure_url} ? (
-                    $a->link({
-                        rel => 'enclosure',
-                        type => $row->{enclosure_type},
-                        href => $row->{enclosure_url},
-                    })
-                ) : ()),
-            );
+
+        for my $portal (0..6) {
+            $sth->execute($portal, $portal ? $self->limit : $self->text_limit);
+            while (my $row = $sth->fetchrow_hashref) {
+                push @entries, $a->entry(
+                    $a->id($row->{id}),
+                    $a->link({rel => 'alternate', href => $row->{url} }),
+                    $a->title($row->{title} || $row->{url}),
+                    $a->published($row->{published_at}),
+                    $a->updated($row->{updated_at}),
+                    $a->category({
+                        scheme => "http://$domain/ns/portal",
+                        term => $row->{portal},
+                    }),
+                    ($row->{summary} ? ($a->summary({ type => 'html' }, $row->{summary} )) : ()),
+                    ($row->{author} ? ($a->author( $a->name($row->{author}) )) : ()),
+                    $a->source(
+                        $a->id($row->{feed_id}),
+                        $self->strict ? (
+                            $a->link({ rel => 'self', href => $row->{feed_url} }),
+                            $a->title($row->{feed_title} || $row->{feed_url}),
+                            ($row->{feed_subtitle} ? ($a->subtitle($row->{feed_subtitle})) : ()),
+                            $a->updated($row->{feed_updated_at}),
+                            ($row->{rights} ? ($a->rights($row->{rights})) : ()),
+                            $a->icon($row->{icon_url}),
+                        ) : (),
+                    ),
+                    ($row->{enclosure_url} ? (
+                        $a->link({
+                            rel => 'enclosure',
+                            type => $row->{enclosure_type},
+                            href => $row->{enclosure_url},
+                        })
+                    ) : ()),
+                );
+            }
         }
     });
 
