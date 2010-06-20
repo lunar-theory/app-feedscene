@@ -195,5 +195,12 @@
       <content:encoded><![CDATA[<p>Encoded content</p>]]></content:encoded>
     </item>
 
+    <item>
+      <title>Television Associates logo</title>
+      <link>http://foo.org/lg22</link>
+      <pubDate>Mon, 03 May 2010 14:09:07 +0000</pubDate>
+      <description><![CDATA[<blockquote>Stuff inside a blockquote.</blockquote>]]></description>
+    </item>
+
   </channel>
 </rss>

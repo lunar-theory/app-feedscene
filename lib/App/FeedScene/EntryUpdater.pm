@@ -204,9 +204,11 @@ my %allowed = do {
         acronym
         address
         article
+        aside
         b
         bdo
         big
+        blockquote
         caption
         cite
         code
@@ -220,6 +222,7 @@ my %allowed = do {
         em
         figcaption
         figure
+        footer
         header
         hgroup
         i
@@ -266,6 +269,10 @@ $allowed{q}       = { %{ $allowed{q} }, cite => 1 };
 $allowed{section} = $allowed{q};
 $allowed{time}    = { %{ $allowed{time} }, datetime => 1 };
 
+my %convert_to_div = map { $_ => 1 } qw(
+    blockquote
+);
+
 # We delete all other elements except for these, for which we keep text.
 my %keep_children = map { $_ => 1 } qw(
     a
@@ -291,6 +298,9 @@ sub _clean_html {
                 # Keep only allowed attributes.
                 $elem->removeAttribute($_) for grep { !$attrs->{$_} }
                     map { $_->nodeName } $elem->attributes;
+
+                # We don't want the formatting of this element, so change it to a div.
+                $elem->setNodeName('div') if $convert_to_div{$name};
 
                 # Descend into children.
                 if (my $next = $elem->firstChild) {
