@@ -136,7 +136,7 @@ sub process {
 
             if ($portal) {
                 # Need some media for non-text portals.
-                ($enc_type, $enc_url) = $self->_find_enclosure($entry, $entry_link);
+                ($enc_type, $enc_url) = $self->_find_enclosure($entry, $base_url, $entry_link);
                 next unless $enc_type;
             }
 
@@ -388,7 +388,7 @@ sub _find_summary {
 }
 
 sub _find_enclosure {
-    my ($self, $entry, $entry_link) = @_;
+    my ($self, $entry, $base_url, $entry_link) = @_;
     for my $enc ($entry->enclosures) {
         my $type = $enc->type or next;
         next if $type !~ m{^(?:image|audio|video)/};
@@ -402,7 +402,8 @@ sub _find_enclosure {
         my $doc = App::FeedScene::Parser->parse_html_string($body) or next;
         for my $node ($doc->findnodes('//img/@src|//audio/@src|//video/@src')) {
             my $url = $node->nodeValue or next;
-            next if URI->new($url)->host =~ /\bdoubleclick[.]net$/;
+            $url = $base_url ? URI->new_abs($url, $base_url) : URI->new($url);
+            next if !$url->can('host') || $url->host =~ /\bdoubleclick[.]net$/;
             (my($type), $url) = $self->_get_type($url);
             return $type, $url if $type && $type =~ m{^(?:image|audio|video)/};
         }
