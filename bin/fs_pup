@@ -4,7 +4,6 @@ use 5.12.0;
 
 use lib 'lib';
 use App::FeedScene::EntryUpdater;
-use App::FeedScene::Generator;
 use Getopt::Long;
 Getopt::Long::Configure( qw(bundling) );
 
@@ -12,7 +11,6 @@ GetOptions(
     'app|a=s'    => \my $app,
     'portal|p=i' => \my $portal,
     'all'        => \my $all,
-    'strict|s'   => \my $strict,
     'verbose|V+' => \my $verbose,
     'help|h'     => \my $help,
     'man|m'      => \my $man,
@@ -43,11 +41,6 @@ for my $p (defined $portal ? ($portal) : (0..6)) {
     )->run;
 }
 
-App::FeedScene::Generator->new(
-    app    => $app,
-    strict => $strict,
-)->go;
-
 sub _pod2usage {
     require Pod::Usage;
     Pod::Usage::pod2usage(
@@ -71,14 +64,13 @@ fs_pup - FeedScene portal updater
 This program updates a portal (or all portals) in the database by reading
 the list of feeds from the portal, fetching them, parsing their contents,
 and then storing them in the database ready to be generated into an updated
-FeedScene feed.
+FeedScene feed by F<fs_gen>.
 
 =head1 Options
 
   -a --app NAME       Name of the FeedScene app.
   -u --portal PORTAL  Portal number to update.
      --all            Update all portals.
-  -s --strict         Output strictly compliant Atom feed.
   -V --verbose        Incremental verbosity to STDERR.
   -h --help           Print a usage statement and exit.
   -m --man            Print the complete documentation and exit.
