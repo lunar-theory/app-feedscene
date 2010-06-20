@@ -402,6 +402,7 @@ sub _find_enclosure {
         my $doc = App::FeedScene::Parser->parse_html_string($body) or next;
         for my $node ($doc->findnodes('//img/@src|//audio/@src|//video/@src')) {
             my $url = $node->nodeValue or next;
+            next if URI->new($url)->host =~ /\bdoubleclick[.]net$/;
             (my($type), $url) = $self->_get_type($url);
             return $type, $url if $type && $type =~ m{^(?:image|audio|video)/};
         }

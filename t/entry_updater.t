@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 137;
+use Test::More tests => 139;
 #use Test::More 'no_plan';
 use Test::More::UTF8;
 use Test::NoWarnings;
@@ -411,10 +411,8 @@ my @types = qw(
     text/html
     text/html
     image/jpeg
-    text/html
-    text/html
-    image/jpeg
 );
+
 $ua_mock->mock(head => sub {
     my ($self, $url) = @_;
     my $r = HTTP::Response->new(200, 'OK', ['Content-Type' => shift @types]);
@@ -425,7 +423,7 @@ $ua_mock->mock(head => sub {
 
 $eup->portal(1);
 ok $eup->process("$uri/enclosures.atom"), 'Process Atom feed with enclosures';
-test_counts(50, 'Should now have 50 entries');
+test_counts(51, 'Should now have 51 entries');
 
 # Check the feed data.
 is_deeply $conn->run(sub{ shift->selectrow_arrayref(
@@ -439,8 +437,13 @@ is_deeply $conn->run(sub{ shift->selectrow_arrayref(
     '',
 ], 'Feed record should be updated';
 
+@types = qw(
+    text/html
+    text/html
+    image/jpeg
+);
 ok $eup->process("$uri/enclosures.rss"), 'Process RSS feed with enclosures';
-test_counts(62, 'Should now have 62 entries');
+test_counts(64, 'Should now have 64 entries');
 
 # First one is easy, has only one enclosure.
 is_deeply test_data('urn:uuid:257c8075-dc7c-5678-8de0-5bb88360dff6'), {
@@ -462,10 +465,10 @@ is_deeply test_data('urn:uuid:844df0ef-fed0-54f0-ac7d-2470fa7e9a9c'), {
     enclosure_url  => 'http://farm2.static.flickr.com/1169/4601733070_92cd987ff6_o.jpg',
     feed_id        => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af7',
     id             => 'urn:uuid:844df0ef-fed0-54f0-ac7d-2470fa7e9a9c',
-    published_at   => '2009-12-13T08:19:29Z',
+    published_at   => '2009-12-12T08:19:29Z',
     summary        => '<p>Caption for both of the the encosed images.</p>',
     title          => 'This is the title',
-    updated_at     => '2009-12-13T08:19:29Z',
+    updated_at     => '2009-12-12T08:19:29Z',
     url            => 'http://flickr.com/twoimages'
 }, 'Data for entry with two should have just the first enclosure';
 
@@ -489,10 +492,10 @@ is_deeply test_data('urn:uuid:4aef01ff-75c3-5dcb-a53f-878e3042f3cf'), {
     enclosure_url  => 'http://farm2.static.flickr.org/1169/4601733070_92cd987ff6_o.jpg',
     feed_id        => "$uri/enclosures.rss",
     id             => 'urn:uuid:4aef01ff-75c3-5dcb-a53f-878e3042f3cf',
-    published_at   => '2009-12-13T08:19:29Z',
+    published_at   => '2009-12-12T08:19:29Z',
     summary        => '<p>Caption for both of the the encosed images.</p>',
     title          => 'This is the title',
-    updated_at     => '2009-12-13T08:19:29Z',
+    updated_at     => '2009-12-12T08:19:29Z',
     url            => 'http://flickr.org/twoimages'
 }, 'Data for entry with two should have just the first enclosure';
 
@@ -548,6 +551,11 @@ for my $spec (
         'image/jpeg',
         'http://flickr.com/realimage.jpg'
     ], 'redirected link' ],
+    [ 'doubleclick' => [
+        '<p>Caption for the embedded image.</p>',
+        'image/jpeg',
+        'http://flickr.com/someimage.jpg'
+    ], 'unwanted doubleclick image + actual image' ],
 ) {
     is_deeply $dbh->selectrow_arrayref(
         'SELECT summary, enclosure_type, enclosure_url FROM entries WHERE id = ?',
@@ -569,13 +577,13 @@ for my $spec (
 );
 
 ok $eup->process("$uri/more_summaries.atom"), 'Process Summary regressions';
-test_counts(65, 'Should now have 65 entries');
+test_counts(67, 'Should now have 67 entries');
 
 for my $spec (
     [ 'onclick' => [
         '<div>Index Sans was conceived as a text face, so a  large x-height was combined with elliptical curves to open the counterforms and improve legibility at smaller sizes. Stroke endings  utilize a subtle radius at each corner; a reference to striking a steel  punch into a soft metal surface.<div/><div/>Index Sans Typeface on the Behance Network</div>',
-        'image/png',
-        'http://feedads.g.doubleclick.net/~a/E24Doeaqq8Jhhlk26PCTvfgYeRw/0/di',
+        'image/jpeg',
+        'http://behance.vo.llnwd.net/profiles2/146457/projects/441024/1464571267585065.jpg',
     ], 'onclick summary' ],
     [ 'broken' => [
         '<p>first graph</p><p>second <em><strong>graph</strong></em> man</p>',
@@ -597,7 +605,7 @@ for my $spec (
 ##############################################################################
 $eup->portal(0);
 ok $eup->process("$uri/entities.rss"), 'Process CP1252 RSS feed with entities';
-test_counts(69, 'Should now have 69 entries');
+test_counts(71, 'Should now have 71 entries');
 
 for my $spec (
     [ 4034, '<p>A space: Nice, eh?</p>', 'nbsp' ],
@@ -617,7 +625,7 @@ for my $spec (
 @types = qw(image/jpeg);
 $eup->portal(1);
 ok $eup->process("$uri/nerbles.rss"), 'Process Yahoo! Pipes nerbles feed';
-test_counts(70, 'Should now have 70 entries');
+test_counts(72, 'Should now have 72 entries');
 
 is $dbh->selectrow_arrayref(
     'SELECT summary FROM entries WHERE id = ?',
@@ -630,7 +638,7 @@ is $dbh->selectrow_arrayref(
 # Test Feed with invalid bytes in it.
 $eup->portal(0);
 ok $eup->process("$uri/bogus.rss"), 'Process RSS with bogus bytes';
-test_counts(71, 'Should now have 71 entries');
+test_counts(73, 'Should now have 73 entries');
 
 is $dbh->selectrow_arrayref(
     'SELECT title FROM entries WHERE id = ?',

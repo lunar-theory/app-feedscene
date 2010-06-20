@@ -245,7 +245,7 @@ sub test_root_metadata {
 
 sub test_entries {
     my ($tx, $strict) =@_;
-    $tx->is('count(/a:feed/a:entry)', 14, 'Should have 14 entries' );
+    $tx->is('count(/a:feed/a:entry)', 15, 'Should have 15 entries' );
 
     # Check the first entry.
     $tx->ok('/a:feed/a:entry[1]', 'Check first entry', sub {
