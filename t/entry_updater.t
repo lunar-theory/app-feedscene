@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 135;
+use Test::More tests => 136;
 #use Test::More 'no_plan';
 use Test::More::UTF8;
 use Test::NoWarnings;
@@ -317,7 +317,7 @@ is $summary, '<p>This description has nasty—dashes—.</p>',
 ##############################################################################
 # Test a variety of RSS summary formats.
 ok $eup->process("$uri/summaries.rss"), 'Process RSS feed with various summaries';
-test_counts(29, 'Should now have 29 entries');
+test_counts(30, 'Should now have 30 entries');
 
 # Check the feed data.
 is_deeply $conn->run(sub{ shift->selectrow_arrayref(
@@ -355,6 +355,7 @@ for my $spec (
     [ 18 => '<p>Centered Summary paragraph</p>' ],
     [ 19 => 'Centered Summary' ],
     [ 20 => '<p>Summary with no tag but a link.</p>' ],
+    [ 21 => 'Summary in the description when we also have encoded content.' ],
 ) {
     is +($dbh->selectrow_array(
         'SELECT summary FROM entries WHERE id = ?',
@@ -365,7 +366,7 @@ for my $spec (
 ##############################################################################
 # Try a bunch of different date combinations.
 ok $eup->process("$uri/dates.rss"), 'Process RSS feed with various dates';
-test_counts(35, 'Should now have 35 entries');
+test_counts(36, 'Should now have 36 entries');
 
 for my $spec (
     [ 1 => ['2010-05-17T06:58:50Z', '2010-05-17T07:45:09Z'], 'both dates' ],
@@ -385,7 +386,7 @@ for my $spec (
 ##############################################################################
 # Try a feed with a duplicate URI and no GUID.
 ok $eup->process("$uri/conflict.rss"), 'Process RSS feed with a duplicate link';
-test_counts(36, 'Should now have 36 entries');
+test_counts(37, 'Should now have 37 entries');
 
 # So now we should have two records with the same URL but different IDs.
 is_deeply $dbh->selectall_arrayref(
@@ -423,7 +424,7 @@ $ua_mock->mock(head => sub {
 
 $eup->portal(1);
 ok $eup->process("$uri/enclosures.atom"), 'Process Atom feed with enclosures';
-test_counts(48, 'Should now have 48 entries');
+test_counts(49, 'Should now have 49 entries');
 
 # Check the feed data.
 is_deeply $conn->run(sub{ shift->selectrow_arrayref(
@@ -438,7 +439,7 @@ is_deeply $conn->run(sub{ shift->selectrow_arrayref(
 ], 'Feed record should be updated';
 
 ok $eup->process("$uri/enclosures.rss"), 'Process RSS feed with enclosures';
-test_counts(60, 'Should now have 60 entries');
+test_counts(61, 'Should now have 61 entries');
 
 # First one is easy, has only one enclosure.
 is_deeply test_data('urn:uuid:257c8075-dc7c-5678-8de0-5bb88360dff6'), {
@@ -567,7 +568,7 @@ for my $spec (
 );
 
 ok $eup->process("$uri/more_summaries.atom"), 'Process Summary regressions';
-test_counts(63, 'Should now have 63 entries');
+test_counts(64, 'Should now have 64 entries');
 
 for my $spec (
     [ 'onclick' => [
@@ -595,7 +596,7 @@ for my $spec (
 ##############################################################################
 $eup->portal(0);
 ok $eup->process("$uri/entities.rss"), 'Process CP1252 RSS feed with entities';
-test_counts(67, 'Should now have 67 entries');
+test_counts(68, 'Should now have 68 entries');
 
 for my $spec (
     [ 4034, '<p>A space: Nice, eh?</p>', 'nbsp' ],
@@ -615,7 +616,7 @@ for my $spec (
 @types = qw(image/jpeg);
 $eup->portal(1);
 ok $eup->process("$uri/nerbles.rss"), 'Process Yahoo! Pipes nerbles feed';
-test_counts(68, 'Should now have 68 entries');
+test_counts(69, 'Should now have 69 entries');
 
 is $dbh->selectrow_arrayref(
     'SELECT summary FROM entries WHERE id = ?',
@@ -628,7 +629,7 @@ is $dbh->selectrow_arrayref(
 # Test Feed with invalid bytes in it.
 $eup->portal(0);
 ok $eup->process("$uri/bogus.rss"), 'Process RSS with bogus bytes';
-test_counts(69, 'Should now have 69 entries');
+test_counts(70, 'Should now have 70 entries');
 
 is $dbh->selectrow_arrayref(
     'SELECT title FROM entries WHERE id = ?',

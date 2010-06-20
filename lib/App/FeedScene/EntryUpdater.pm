@@ -343,11 +343,9 @@ sub _find_summary {
     if (my $sum = $entry->summary) {
         if (my $body = $sum->body) {
             # We got something here. Clean it up and return it.
-            return join '', map {
-                $_->hasChildNodes || $_->hasAttributes ? $_->toString : ' '
-            } _clean_html(
+            return join '', map { $_->toString } _clean_html(
                 App::FeedScene::Parser->parse_html_string($body)->firstChild
-            )->childNodes;
+            )->nonBlankChildNodes;
         }
     }
 
