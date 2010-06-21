@@ -2,7 +2,7 @@
 
 use 5.12.0;
 use utf8;
-use Test::More tests => 168;
+use Test::More tests => 194;
 #use Test::More 'no_plan';
 use Test::More::UTF8;
 use Test::XPath;
@@ -178,6 +178,36 @@ $tx->ok('/a:feed/a:entry[1]', 'First entry', sub {
     $_->is('./a:title', 'http://example.com/story.html', '....Title is URL');
     $_->is('count(./a:summary)', 0, '...No summary');
 });
+
+##############################################################################
+# Test limits output.
+ok $gen = $CLASS->new(app => 'foo', limit => 2, text_limit => 3),
+    'Create limited generator';
+is $gen->limit, 2, 'Should have limit = 2';
+is $gen->text_limit, 3, 'Should have text_limit 3';
+ok $gen->go, 'Go limited!';
+
+$tx = Test::XPath->new(
+    file  => $gen->filepath,
+    xmlns => {
+        'a'  => 'http://www.w3.org/2005/Atom',
+        'fs' => "http://$domain/2010/FeedScene",
+    },
+);
+
+test_root_metadata($tx);
+$tx->is('count(//a:feed/a:entry)', 5, 'Should have only 5 entries');
+$tx->is(
+    'count(/a:feed/a:entry/a:category[@term=0])',
+    3,
+    'Should have 3 text entries'
+);
+
+$tx->is(
+    'count(/a:feed/a:entry/a:category[@term=1])',
+    2,
+    'Should have 2 entries in portal 1'
+);
 
 sub test_root_metadata {
     my $tx = shift;
