@@ -11,3 +11,4 @@ all_pod_files_spelling_ok(qw(lib bin));
 __DATA__
 FeedScene
 CSV
+SQLite

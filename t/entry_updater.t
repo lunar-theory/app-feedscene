@@ -396,11 +396,11 @@ is_deeply $dbh->selectall_arrayref(
 ), [
     [
         'urn:uuid:3577008b-ee22-5b79-9ca9-ac87e42ee601',
-        'file://localhost/Users/david/dev/github/app-feedscene/t/data/simple.rss'
+        "$uri/simple.rss",
     ],
     [
         'urn:uuid:bd1ce00c-ab8c-50bc-81c9-60ece4baa685',
-        'file://localhost/Users/david/dev/github/app-feedscene/t/data/conflict.rss'
+        "$uri/conflict.rss",
     ]
 ], 'Should have two rows with the same link but different IDs and feed URLs';
 
