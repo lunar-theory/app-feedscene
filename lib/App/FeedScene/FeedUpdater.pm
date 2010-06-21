@@ -67,7 +67,7 @@ sub process {
             $feed_url = URI->new($feed_url);
 
             # Skip to the next entry if we've already got this URL.
-            my ($id) = $dbh->selectrow_array($sel, undef, $feed_url);
+            my ($id) = $dbh->selectrow_array($sel, undef, $feed_url->as_string);
             if ($id) {
                 push @ids, $id;
                 $upd->execute(_clean $portal, $category || '', $id);
@@ -82,7 +82,6 @@ sub process {
             }
 
             my $feed     = App::FeedScene::Parser->parse_feed($res);
-                           # XXX Generate from URL?
             $id          = $feed->can('id') ? $feed->id || $feed_url : $feed_url;
             my $site_url = $feed->link;
             $site_url    = $site_url->[0] if ref $site_url;
