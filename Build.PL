@@ -24,8 +24,6 @@ Module::Build->new(
     requires           => {
         'Data::Feed'                 => '0.00013',
         'DateTime'                   => '0.55',
-        'DateTime::Format::Strptime' => '1.2000',
-        'DateTime::Locale'           => '0.45', # To avoid warnings.
         'DBD::SQLite'                => '1.29',
         'DBI'                        => '1.608',
         'DBIx::Connector'            => '0.34',
@@ -44,6 +42,7 @@ Module::Build->new(
         'Pod::Usage'                 => '1.36',
         'Text::CSV_XS'               => '0.73',
         'Text::Trim'                 => '1.02',
+        'UNIVERSAL::can'             => '1.16',
         'URI'                        => '1.54',
         'XML::Builder'               => '0.902',
         'XML::LibXML'                => '1.70',
