@@ -22,7 +22,7 @@ Module::Build->new(
         'Test::XPath'      => '0.13',
     },
     requires           => {
-        'Data::Feed'                 => '0.00013',
+        'Data::Feed'                 => '0.00014',
         'DateTime'                   => '0.55',
         'DBD::SQLite'                => '1.29',
         'DBI'                        => '1.608',
@@ -46,7 +46,7 @@ Module::Build->new(
         'URI'                        => '1.54',
         'XML::Builder'               => '0.902',
         'XML::LibXML'                => '1.70',
-        'XML::RSS::LibXML'           => '0.3006',
+        'XML::RSS::LibXML'           => '0.3100',
     },
     recommends         => {
         'Test::Pod'           => '1.41',
