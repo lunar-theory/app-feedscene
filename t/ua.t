@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 10;
+use Test::More tests => 11;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
 
@@ -18,6 +18,7 @@ isa_ok $ua, 'LWP::UserAgent';
 is $ua->agent, 'feedscene/' . App::FeedScene->VERSION,
     'Agent should be set';
 is $ua->from, 'bot@designsceneapp.com', 'From should be set';
+is $ua->timeout, 10, 'Timeout should be 10 seconds';
 
 is $ua->{cache}->get_namespace, 'foo', 'Namespace should be app name';
 is $ua->{cache}->get_cache_root, File::Spec->rel2abs('cache'),

@@ -14,6 +14,7 @@ sub new {
         cache_root => $cache_dir,
         agent      => 'feedscene/' . App::FeedScene->VERSION,
         from       => 'bot@designsceneapp.com',
+        timeout    => 10,
         @_
     );
 }
