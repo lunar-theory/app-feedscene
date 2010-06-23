@@ -48,7 +48,7 @@ sub parse_feed {
     TRY: {
         my $feed = eval { Data::Feed->parse(\$body) };
         if (my $err = $@) {
-            given ($err->code) {
+            given (eval { $err->code }) {
                 when (XML::LibXML::ErrNo::ERR_INVALID_CHAR) {
                     # See if we can clean up the mess.
                     my $charset = $res->content_charset;
