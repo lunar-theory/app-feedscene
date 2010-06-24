@@ -14,3 +14,4 @@ CREATE TABLE entries (
 );
 
 CREATE INDEX idx_entries_published_at ON entries(published_at);
+CREATE INDEX idx_entry_feed_id ON entries(feed_id);

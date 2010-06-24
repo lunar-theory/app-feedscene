@@ -46,7 +46,8 @@ sub go {
         $conn->run(sub {
             # Get together sources.
             my $sth = shift->prepare(q{
-                SELECT id, url, title, subtitle, rights, updated_at, icon_url
+                SELECT id, url, title, subtitle, rights, updated_at, site_url,
+                       icon_url, portal
                   FROM feeds
                  ORDER BY portal, url
             });
@@ -55,12 +56,17 @@ sub go {
             while (my $row = $sth->fetchrow_hashref) {
                 push @sources, $fs->source(
                     $fs->id($row->{id}),
-                    $fs->link({rel => 'self', href => $row->{url} }),
+                    $fs->link({rel => 'self',      href => $row->{url} }),
+                    ($row->{site_url} ? ($fs->link({rel => 'alternate', href => $row->{site_url} })) : ()),
                     $fs->title($row->{title} || $row->{url}),
                     ($row->{subtitle} ? ($fs->subtitle($row->{subtitle})) : ()),
                     $fs->updated($row->{updated_at}),
                     ($row->{rights} ? ($fs->rights($row->{rights})) : ()),
                     $fs->icon($row->{icon_url}),
+                    $fs->category({
+                        scheme => "http://$domain/ns/portal",
+                        term => $row->{portal},
+                    }),
                 );
             }
             $sources = $fsxb->root($fs->sources(@sources));
@@ -88,21 +94,22 @@ sub go {
                     $a->title($row->{title} || $row->{url}),
                     $a->published($row->{published_at}),
                     $a->updated($row->{updated_at}),
-                    $a->category({
-                        scheme => "http://$domain/ns/portal",
-                        term => $row->{portal},
-                    }),
                     ($row->{summary} ? ($a->summary({ type => 'html' }, $row->{summary} )) : ()),
                     ($row->{author} ? ($a->author( $a->name($row->{author}) )) : ()),
                     $a->source(
                         $a->id($row->{feed_id}),
                         $self->strict ? (
                             $a->link({ rel => 'self', href => $row->{feed_url} }),
+                            ($row->{site_url} ? ($a->link({rel => 'alternate', href => $row->{site_url} })) : ()),
                             $a->title($row->{feed_title} || $row->{feed_url}),
                             ($row->{feed_subtitle} ? ($a->subtitle($row->{feed_subtitle})) : ()),
                             $a->updated($row->{feed_updated_at}),
                             ($row->{rights} ? ($a->rights($row->{rights})) : ()),
                             $a->icon($row->{icon_url}),
+                            $a->category({
+                                scheme => "http://$domain/ns/portal",
+                                term => $row->{portal},
+                            }),
                         ) : (),
                     ),
                     ($row->{enclosure_url} ? (

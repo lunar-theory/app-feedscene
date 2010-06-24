@@ -113,26 +113,28 @@ $tx->is('count(/a:feed/fs:sources)', 1, 'Should have 1 sources element');
 $tx->ok('/a:feed/fs:sources', 'Should have sources', sub {
     $_->is('count(./fs:source)', 2, 'Should have two sources');
     $_->ok('./fs:source[1]', 'First source', sub {
-        $_->is('count(./*)', 7, 'Should have 7 source subelements');
+        $_->is('count(./*)', 9, 'Should have 9 source subelements');
         $_->is('./fs:id', 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6', 'ID should be correct');
-        $_->is('./fs:link/@rel', 'self', 'Should have self link');
-        $_->is('./fs:link/@href', "$uri/simple.atom", 'Link URL should be correct');
+        $_->is('./fs:link[@rel="self"]/@href', "$uri/simple.atom", 'Should have self link');
+        $_->is('./fs:link[@rel="alternate"]/@href', 'http://example.com/', 'Should have alternate link');
         $_->is('./fs:title', 'Simple Atom Feed', 'Title should be correct');
         $_->is('./fs:subtitle', 'Witty & clever', 'Subtitle should be correct');
         $_->is('./fs:updated', '2009-12-13T18:30:02Z', 'Updated should be correct');
         $_->is('./fs:rights', '© 2010 Big Fat Example', 'Rights should be correct');
         $_->is('./fs:icon', "$icon_url=example.com", 'Icon should be correct');
+        $_->is("./fs:category[\@scheme='http://$domain/ns/portal']/\@term", 0, 'Portal should be correct');
     });
     $_->ok('./fs:source[2]', 'Second source', sub {
-        $_->is('count(./*)', 5, 'Should have five source subelements');
+        $_->is('count(./*)', 7, 'Should have 7 source subelements');
         $_->is('./fs:id', 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af7', 'ID should be correct');
-        $_->is('./fs:link/@rel', 'self', 'Should have self link');
-        $_->is('./fs:link/@href', "$uri/enclosures.atom", 'Link URL should be correct');
+        $_->is('./fs:link[@rel="self"]/@href', "$uri/enclosures.atom", 'Should have self link');
+        $_->is('./fs:link[@rel="alternate"]/@href', 'http://example.com/', 'Should have alternate link');
         $_->is('./fs:title', 'Enclosures Atom Feed', 'Title should be correct');
         $_->is('./fs:updated', '2009-12-13T18:30:02Z', 'Updated should be correct');
         $_->is('./fs:subtitle', '', 'Subtitle should be correct');
         $_->is('./fs:rights', '', 'Rights should be correct');
         $_->is('./fs:icon', "$icon_url=example.com", 'Icon should be correct');
+        $_->is("./fs:category[\@scheme='http://$domain/ns/portal']/\@term", 1, 'Portal should be correct');
     });
 });
 
@@ -181,7 +183,7 @@ $tx->ok('/a:feed/a:entry[1]', 'First entry', sub {
 
 ##############################################################################
 # Test limits output.
-ok $gen = $CLASS->new(app => 'foo', limit => 2, text_limit => 3),
+ok $gen = $CLASS->new(app => 'foo', limit => 2, text_limit => 3, strict => 1),
     'Create limited generator';
 is $gen->limit, 2, 'Should have limit = 2';
 is $gen->text_limit, 3, 'Should have text_limit 3';
@@ -198,13 +200,13 @@ $tx = Test::XPath->new(
 test_root_metadata($tx);
 $tx->is('count(//a:feed/a:entry)', 5, 'Should have only 5 entries');
 $tx->is(
-    'count(/a:feed/a:entry/a:category[@term=0])',
+    'count(/a:feed/a:entry/a:source/a:category[@term=0])',
     3,
     'Should have 3 text entries'
 );
 
 $tx->is(
-    'count(/a:feed/a:entry/a:category[@term=1])',
+    'count(/a:feed/a:entry/a:source/a:category[@term=1])',
     2,
     'Should have 2 entries in portal 1'
 );
@@ -279,20 +281,19 @@ sub test_entries {
 
     # Check the first entry.
     $tx->ok('/a:feed/a:entry[1]', 'Check first entry', sub {
-        $_->is('count(./*)', 9, 'Should have 9 subelements');
+        $_->is('count(./*)', 8, 'Should have 8 subelements');
         $_->is('./a:id', 'urn:uuid:e287d28b-5a4b-575c-b9da-d3dc894b9aa2', '...Entry ID');
         $_->is('./a:link[@rel="alternate"]/@href', 'http://example.com/story.html', '...Link');
         $_->is('./a:title', 'This is the title', '...Title');
         $_->is('./a:published', '2009-12-13T12:29:29Z', '...Published');
         $_->is('./a:updated', '2009-12-13T18:30:02Z', '...Updated');
-        $_->is("./a:category[\@scheme='http://$domain/ns/portal']/\@term", 0, '...Portal');
         $_->is('./a:summary[@type="html"]', '<p>Summary of the story</p>', '...Summary');
         $_->ok('./a:author', '...Author', sub {
             $_->is('count(./*)', 1, '......Should have 1 author subelement');
             $_->is('./a:name', 'Ira Glass', '......Name');
         });
         $_->ok('./a:source', '...Source', sub {
-            my $scount = $strict ? 7 : 1;
+            my $scount = $strict ? 9 : 1;
             $_->is('count(./*)', $scount, "......Should have $scount subelements");
             $_->is('./a:id', 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6', '......ID');
             if ($strict) {
@@ -303,19 +304,19 @@ sub test_entries {
                 $_->is('./a:rights', '© 2010 Big Fat Example', '......Rights');
                 $_->is('./a:updated', '2009-12-13T18:30:02Z', '......Updated');
                 $_->is('./a:icon', "$icon_url=example.com", '......Icon');
+                $_->is("./a:category[\@scheme='http://$domain/ns/portal']/\@term", 0, '...Portal');
             }
         });
     });
 
     # Look at the fourth entry, from portal 2, with an enclosure.
     $tx->ok('/a:feed/a:entry[4]', 'Check third entry', sub {
-        $_->is('count(./*)', 9, 'Should have 9 subelements');
+        $_->is('count(./*)', 8, 'Should have 8 subelements');
         $_->is('./a:id', 'urn:uuid:257c8075-dc7c-5678-8de0-5bb88360dff6', '...Entry ID');
         $_->is('./a:link[@rel="alternate"]/@href', 'http://flickr.com/some%C3%AEmage', '...Link');
         $_->is('./a:title', 'This is the title', '...Title');
         $_->is('./a:published', '2009-12-13T08:29:29Z', '...Published');
         $_->is('./a:updated', '2009-12-13T08:29:29Z', '...Updated');
-        $_->is("./a:category[\@scheme='http://$domain/ns/portal']/\@term", 1, '...Portal');
         $_->is('./a:summary[@type="html"]', '<p>Caption for the encosed image.</p>', '...Summary');
         $_->is('count(./a:author)', 0, '...Author');
         $_->is('./a:link[@rel="enclosure"]/@type', 'image/jpeg', '...Enclosure type');
@@ -325,7 +326,7 @@ sub test_entries {
             '...Enclosure link'
         );
         $_->ok('./a:source', '...Source', sub {
-            my $scount = $strict ? 5 : 1;
+            my $scount = $strict ? 7 : 1;
             $_->is('count(./*)', $scount, "......Should have $scount subelements");
             $_->is('./a:id', 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af7', '......ID');
             if ($strict) {
@@ -336,6 +337,7 @@ sub test_entries {
                 $_->is('count(./a:rights)', 0, '......Rights');
                 $_->is('./a:updated', '2009-12-13T18:30:02Z', '......Updated');
                 $_->is('./a:icon', "$icon_url=example.com", '......Icon');
+                $_->is("./a:category[\@scheme='http://$domain/ns/portal']/\@term", 1, '...Portal');
             }
         });
     });
