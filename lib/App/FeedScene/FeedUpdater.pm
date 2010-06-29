@@ -81,7 +81,7 @@ sub process {
                 next;
             }
 
-            my $feed     = App::FeedScene::Parser->parse_feed($res);
+            my $feed     = App::FeedScene::Parser->parse_feed($res) or next;
             $id          = $feed->can('id') ? $feed->id || $feed_url : $feed_url;
             my $site_url = $feed->link;
             $site_url    = $site_url->[0] if ref $site_url;

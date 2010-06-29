@@ -62,7 +62,8 @@ sub parse_feed {
                     redo TRY;
                 }
                 default {
-                    die $err;
+                    # Send error to STDERR but don't die.
+                    say STDERR $err;
                 }
             }
         }
