@@ -1,4 +1,4 @@
-App::FeedScene version 0.03
+App::FeedScene version 0.04
 ===========================
 
 App::FeedScene handles the server-side feed generation for the FeedScene iPad
