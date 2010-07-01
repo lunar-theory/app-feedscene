@@ -63,7 +63,7 @@ sub parse_feed {
                 }
                 default {
                     # Send error to STDERR but don't die.
-                    say STDERR $err;
+                    say STDERR "Error parsing ", $res->request->uri, ":\n\n$err";
                 }
             }
         }
