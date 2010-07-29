@@ -3,6 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
+use File::Path;
 use Test::More tests => 9;
 #use Test::More 'no_plan';
 use LWP::Protocol::file; # Turn on local fetches.
@@ -12,6 +13,10 @@ BEGIN {
     $CLASS = 'App::FeedScene::Parser';
     use_ok $CLASS or die;
     use_ok 'App::FeedScene::UA';
+}
+
+END {
+    File::Path::remove_tree 'cache/foo';
 }
 
 my $uri = 'file://localhost' . File::Spec->rel2abs('t/data');

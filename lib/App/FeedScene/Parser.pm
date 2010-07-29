@@ -85,6 +85,21 @@ sub parse_feed {
                     $body = encode($charset, decode_entities(decode($charset, $body)));
                     redo TRY;
                 }
+                when (XML::LibXML::ErrNo::ERR_NAME_REQUIRED) {
+                    # A character that should be an entity but isn't. Split into lines.
+                    $body =~ s/\r\n?/\n/g;
+                    my @lines = split /\n/ => $body;
+
+                    # Grab the bogus character and encode it.
+                    my $line_idx = $err->line - 1;
+                    my ($ent) = substr($lines[$line_idx], $err->column - 1) =~ /^(\S+)/;
+                    my $encoded = encode_entities($ent, q{&<>"'});
+
+                    # Replace with the encoded version and try again.
+                    substr $lines[$line_idx], $err->column - 1, length $ent, $encoded;
+                    $body = join $/ => @lines;
+                    redo TRY;
+                }
                 default {
                     _handle_error $err, $res;
                 }
