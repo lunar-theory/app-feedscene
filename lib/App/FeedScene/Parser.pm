@@ -45,14 +45,24 @@ sub parse_feed {
     $parser->recover(0);
     local $@;
 
+    my $fixed_invalid_char = 0;
     TRY: {
         my $feed = eval { Data::Feed->parse(\$body) };
         if (my $err = $@) {
             given (eval { $err->code }) {
                 when (XML::LibXML::ErrNo::ERR_INVALID_CHAR) {
                     # See if we can clean up the mess.
-                    my $charset = $res->content_charset;
-                    $body = encode($charset, decode($charset, $body));
+                    if ($fixed_invalid_char++) {
+                        say STDERR "Error parsing ", $res->request->uri, ":\n\n$err"
+                            if $fixed_invalid_char > 2;
+                        # We fixed it already, but maybe there are characters
+                        # disallowed by the XML standard.
+                        # http://www.w3.org/TR/xml11/#charsets
+                        $body =~ s/[\x01-\x08\x0b-\x0c\x0e-\x1f\x7f-\x84\x86-\x9f]//msg;
+                    } else {
+                        my $charset = $res->content_charset;
+                        $body = encode($charset, decode($charset, $body));
+                    }
                     redo TRY;
                 }
                 when (XML::LibXML::ErrNo::ERR_UNDECLARED_ENTITY) {

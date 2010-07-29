@@ -21,7 +21,7 @@
     <id>urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a</id>
     <updated>2009-12-13T18:30:02Z</updated>
     <published>2009-12-13T08:29:29-04:00</published>
-    <summary type="html">&lt;p&gt;Summary of the story&lt;/p&gt;</summary>
+    <summary type="html">&lt;p&gt;Summary of the story&lt;/p&gt;</summary>
     <content type="html">&lt;p&gt;Content of the story&lt;/p&gt;</content>
     <author>
       <name>Ira Glass</name>
