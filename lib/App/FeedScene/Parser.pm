@@ -58,7 +58,7 @@ sub parse_feed {
                         # We fixed it already, but maybe there are characters
                         # disallowed by the XML standard.
                         # http://www.w3.org/TR/xml11/#charsets
-                        $body =~ s/[\x01-\x08\x0b-\x0c\x0e-\x1f\x7f-\x84\x86-\x9f]//msg;
+                        $body =~ s/[\x00-\x08\x0b-\x0c\x0e-\x1f\x7f-\x84\x86-\x9f]//msg;
                     } else {
                         my $charset = $res->content_charset;
                         $body = encode($charset, decode($charset, $body));
