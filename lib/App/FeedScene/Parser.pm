@@ -36,6 +36,12 @@ for my $entity qw( amp gt lt quot apos) {
     delete $HTML::Entities::entity2char{$entity};
 }
 
+sub _handle_error {
+    my ($err, $res) = @_;
+    say STDERR "Error parsing ", $res->request->uri, ":\n\n",
+        eval { $err->dump } || $err;
+}
+
 sub parse_feed {
     my ($self, $res) = @_;
 
@@ -53,8 +59,7 @@ sub parse_feed {
                 when (XML::LibXML::ErrNo::ERR_INVALID_CHAR) {
                     # See if we can clean up the mess.
                     if ($fixed_invalid_char++) {
-                        say STDERR "Error parsing ", $res->request->uri, ":\n\n$err"
-                            if $fixed_invalid_char > 2;
+                        _handle_error $err, $res if $fixed_invalid_char > 1;
                         # We fixed it already, but maybe there are characters
                         # disallowed by the XML standard.
                         # http://www.w3.org/TR/xml11/#charsets
@@ -72,8 +77,7 @@ sub parse_feed {
                     redo TRY;
                 }
                 default {
-                    # Send error to STDERR but don't die.
-                    say STDERR "Error parsing ", $res->request->uri, ":\n\n$err";
+                    _handle_error $err, $res;
                 }
             }
         }
