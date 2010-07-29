@@ -1,4 +1,4 @@
-package App::FeedScene::EntryUpdater 0.05;
+package App::FeedScene::EntryUpdater 0.06;
 
 use 5.12.0;
 use utf8;
