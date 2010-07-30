@@ -63,6 +63,15 @@ for my $p (0..1) {
     )->run;
 }
 
+# Set one entry to have a date in the future to make sure it's excluded.
+$conn->run(sub {
+    diag shift->do(q{
+        UPDATE entries
+           SET published_at = strftime('%Y-%m-%dT%H:%M:%SZ','now','+1 day')
+         WHERE id = 'urn:uuid:7e5c7b98-44de-5b73-bd70-289b3ed1a770'
+    });
+});
+
 ok my $gen = $CLASS->new(
     app => 'foo',
     dir => 'bar',
@@ -277,7 +286,7 @@ sub test_root_metadata {
 
 sub test_entries {
     my ($tx, $strict) =@_;
-    $tx->is('count(/a:feed/a:entry)', 15, 'Should have 15 entries' );
+    $tx->is('count(/a:feed/a:entry)', 14, 'Should have 14 entries' );
 
     # Check the first entry.
     $tx->ok('/a:feed/a:entry[1]', 'Check first entry', sub {
