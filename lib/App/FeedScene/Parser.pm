@@ -145,7 +145,7 @@ App::FeedScene::Parser - FeedScene feed parser tools
 
 =head1 Author
 
-David E. Wheeler <david@kineticode.com>
+David E. Wheeler <david@lunar-theory.com>
 
 =head1 Copyright
 

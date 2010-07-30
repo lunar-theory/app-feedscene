@@ -25,7 +25,7 @@ File::Path::make_path 'db';
 my $time = '2010-06-05T17:29:41Z';
 Test::MockTime::set_fixed_time($time);
 
-my $domain   = 'kineticode.com';
+my $domain   = 'lunar-theory.com';
 my $company  = 'Lunar Theory';
 my $icon_url = 'http://www.google.com/s2/favicons?domain';
 

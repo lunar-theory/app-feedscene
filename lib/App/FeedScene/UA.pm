@@ -29,7 +29,7 @@ App::FeedScene::UA - FeedScene Internet user agent
 
 =head1 Author
 
-David E. Wheeler <david@kineticode.com>
+David E. Wheeler <david@lunar-theory.com>
 
 =head1 Copyright
 

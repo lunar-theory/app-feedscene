@@ -10,7 +10,7 @@ use Moose;
 use File::Spec;
 use File::Path;
 
-my $domain  = 'kineticode.com';
+my $domain  = 'lunar-theory.com';
 my $company = 'Lunar Theory';
 
 (my $def_dir = __FILE__) =~ s{(?:blib/)?lib/App/FeedScene/Generator[.]pm$}{feeds};
@@ -176,7 +176,7 @@ App::FeedScene::Generator - FeedScene feed generator
 
 =head1 Author
 
-David E. Wheeler <david@kineticode.com>
+David E. Wheeler <david@lunar-theory.com>
 
 =head1 Copyright
 
