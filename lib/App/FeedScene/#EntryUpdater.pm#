@@ -80,7 +80,7 @@ sub process {
                      WHERE url = ?
                 }, undef, $feed_url);
                 say STDERR "Error #$count retrieving $feed_url -- " . $res->status_line
-                    if $count >= ERR_THRESHOLD && !($count % ERR_INTERVAL);
+                    if $count > ERR_THRESHOLD && !($count % ERR_INTERVAL);
             });
         }
 

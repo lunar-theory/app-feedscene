@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 139;
+use Test::More tests => 150;
 #use Test::More 'no_plan';
 use Test::More::UTF8;
 use Test::NoWarnings;
@@ -42,17 +42,17 @@ my $conn = App::FeedScene->new->conn;
 $conn->txn(sub {
     my $sth = shift->prepare('INSERT INTO feeds (portal, id, url, updated_at) VALUES(?, ?, ?, ?)');
     for my $spec (
-        [ 0, 'simple.atom'       ],
-        [ 0, 'simple.rss'        ],
-        [ 0, 'summaries.rss'     ],
-        [ 0, 'latin-1.atom'      ],
-        [ 0, 'latin-1.rss'       ],
-        [ 0, 'dates.rss'         ],
-        [ 0, 'conflict.rss'      ],
-        [ 0, 'entities.rss'      ],
-        [ 0, 'bogus.rss'         ],
-        [ 1, 'enclosures.atom'   ],
-        [ 1, 'enclosures.rss'    ],
+        [ 0, 'simple.atom'         ],
+        [ 0, 'simple.rss'          ],
+        [ 0, 'summaries.rss'       ],
+        [ 0, 'latin-1.atom'        ],
+        [ 0, 'latin-1.rss'         ],
+        [ 0, 'dates.rss'           ],
+        [ 0, 'conflict.rss'        ],
+        [ 0, 'entities.rss'        ],
+        [ 0, 'bogus.rss'           ],
+        [ 1, 'enclosures.atom'     ],
+        [ 1, 'enclosures.rss'      ],
         [ 1, 'more_summaries.atom' ],
         [ 1, 'nerbles.rss'         ],
     ) {
@@ -102,14 +102,42 @@ my $mock = Test::MockModule->new('HTTP::Response');
 $mock->mock( is_success => 0 );
 $mock->mock( code => HTTP_INTERNAL_SERVER_ERROR );
 $mock->mock( message => 'OMGWTF' );
-stderr_like { $eup->process("$uri/simple.atom") }
-    qr/000 Unknown code/, 'Should get exception request failure';
+test_fails(0, "$uri/simple.atom", 'Should start with no failures');
+ok $eup->process("$uri/simple.atom"), 'Process a feed';
 test_counts(0, 'Should still have no entries');
+test_fails(1, "$uri/simple.atom", 'Should have an fail count of one');
+
+# Go again.
+ok $eup->process("$uri/simple.atom"), 'Process a feed again';
+test_counts(0, 'Should still have no entries');
+test_fails(2, "$uri/simple.atom", 'Should now have fail count two');
 
 # Test HTTP_NOT_MODIFIED.
 $mock->mock( code => HTTP_NOT_MODIFIED );
-ok $eup->process("$uri/simple.atom"), 'Process a feed';
+ok $eup->process("$uri/simple.atom"), 'Process an unmodified feed';
 test_counts(0, 'Should still have no entries');
+test_fails(0, "$uri/simple.atom", 'fail count should be back to 0');
+
+# Let's trigger a warning.
+my $threshold =
+    App::FeedScene::EntryUpdater::ERR_THRESHOLD < App::FeedScene::EntryUpdater::ERR_INTERVAL
+    ? App::FeedScene::EntryUpdater::ERR_INTERVAL
+    : App::FeedScene::EntryUpdater::ERR_THRESHOLD + App::FeedScene::EntryUpdater::ERR_INTERVAL;
+
+$mock->mock( code => HTTP_INTERNAL_SERVER_ERROR );
+$conn->run(sub {
+    $_->do(
+        'UPDATE feeds SET fail_count = ? WHERE url = ?',
+        undef, $threshold - 1, "$uri/simple.atom"
+    );
+});
+stderr_like { $eup->process("$uri/simple.atom") }
+    qr{Error #$threshold retrieving \Q$uri/simple.atom\E -- 000 Unknown code},
+    'Should get exception request failure';
+test_fails($threshold, "$uri/simple.atom", 'fail count should be at threshold');
+stderr_is { $eup->process("$uri/simple.atom") }
+    '', 'But should get nothing on the next request failure';
+test_fails($threshold + 1, "$uri/simple.atom", 'fail count should be incremented');
 
 # Test success.
 $mock->unmock('code');
@@ -119,6 +147,7 @@ $mock->unmock('is_success');
 # Okay, now let's test the processing.
 ok $eup->process("$uri/simple.atom"), 'Process simple Atom feed';
 test_counts(3, 'Should now have three entries');
+test_fails(0, "$uri/simple.atom", 'fail count should be back to 0');
 
 # Check the feed data.
 is_deeply $conn->run(sub{ shift->selectrow_arrayref(
@@ -670,4 +699,14 @@ sub test_data {
             undef, $id
         );
     });
+}
+
+sub test_fails {
+    my ($count, $url, $descr) = @_;
+    is +App::FeedScene->new->conn->run(sub {
+        (shift->selectrow_array(
+            'SELECT fail_count FROM feeds WHERE url = ?',
+            undef, $url
+        ))[0]
+    }), $count, $descr;
 }
