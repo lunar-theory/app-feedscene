@@ -99,6 +99,65 @@ sub process {
     my $host     = $site_url ? $site_url->host : $feed_url->host;
     $base_url  ||= $site_url;
 
+    # Iterate over the entries;
+    my (@ids, @entries);
+    my $be_verbose = ($self->verbose || 0) > 1;
+    $conn->run(sub {
+        my $dbh = shift;
+
+        my $sth = $dbh->prepare(q{
+            SELECT updated_at >= ?
+              FROM entries
+             WHERE id = ?
+        });
+
+        for my $entry ($feed->entries) {
+            say STDERR '    ', $entry->link if $be_verbose;
+            my $entry_link = $base_url
+                ? URI->new_abs($entry->link, $base_url)
+                : URI->new($entry->link);
+            my ($enc_type, $enc_url) = ('', '');
+
+            if ($portal) {
+                # Need some media for non-text portals.
+                ($enc_type, $enc_url) = $self->_find_enclosure($entry, $base_url, $entry_link);
+                next unless $enc_type;
+            }
+
+            my $pub_date = $entry->issued;
+            my $upd_date = $entry->modified;
+            next unless $pub_date || $upd_date;
+            my $uuid     = _uuid($site_url, $entry_link);
+            $upd_date    = $upd_date->set_time_zone('UTC')->iso8601 . 'Z' if $upd_date;
+            $pub_date    = $pub_date
+                ? $pub_date->set_time_zone('UTC')->iso8601 . 'Z'
+                : $upd_date;
+            push @ids => $uuid;
+
+            my $up_to_date;
+            if ($upd_date) {
+                # See if we've been updated.
+                ($up_to_date) = $dbh->selectrow_array( $sth, undef, $upd_date, $uuid);
+                # Nothing to do if it's up-to-date.
+                next if $up_to_date;
+            }
+
+            # Gather params.
+            push @entries, [$upd_date, $up_to_date, _clean(
+                $feed_id,
+                $entry_link,
+                App::FeedScene::Parser->strip_html($entry->title || ''),
+                $pub_date,
+                $upd_date || $pub_date,
+                _find_summary($entry),
+                App::FeedScene::Parser->strip_html($entry->author || ''),
+                $enc_type,
+                $enc_url,
+                $uuid,
+            )];
+        }
+    });
+
     $conn->txn(sub {
         my $dbh = shift;
 
@@ -131,12 +190,6 @@ sub process {
         );
 
         # Get ready to update the entries.
-        my $sel = $dbh->prepare(q{
-            SELECT updated_at >= ?
-              FROM entries
-             WHERE id = ?
-        });
-
         my $ins = $dbh->prepare(q{
             INSERT INTO entries (
                 feed_id, url, title, published_at, updated_at, summary,
@@ -158,62 +211,20 @@ sub process {
              WHERE id = ?
         });
 
-        my @ids;
-        my $be_verbose = ($self->verbose || 0) > 1;
-        for my $entry ($feed->entries) {
-            say STDERR '    ', $entry->link if $be_verbose;
-            my $entry_link = $base_url
-                ? URI->new_abs($entry->link, $base_url)
-                : URI->new($entry->link);
-            my ($enc_type, $enc_url) = ('', '');
-
-            if ($portal) {
-                # Need some media for non-text portals.
-                ($enc_type, $enc_url) = $self->_find_enclosure($entry, $base_url, $entry_link);
-                next unless $enc_type;
-            }
-
-            my $pub_date = $entry->issued;
-            my $upd_date = $entry->modified;
-            next unless $pub_date || $upd_date;
-            $upd_date    = $upd_date->set_time_zone('UTC')->iso8601 . 'Z' if $upd_date;
-            $pub_date    = $pub_date ? $pub_date->set_time_zone('UTC')->iso8601 . 'Z' : $upd_date;
-            my $uuid     = _uuid($site_url, $entry_link);
-            push @ids, $uuid;
-
-            my $up_to_date;
-            if ($upd_date) {
-                # See if we've been updated.
-                ($up_to_date) = $dbh->selectrow_array( $sel, undef, $upd_date, $uuid);
-                # Nothing to do if it's up-to-date.
-                next if $up_to_date;
-            }
-
-            # Gather params.
-            my @params = _clean(
-                $feed_id,
-                $entry_link,
-                App::FeedScene::Parser->strip_html($entry->title || ''),
-                $pub_date,
-                $upd_date || $pub_date,
-                _find_summary($entry),
-                App::FeedScene::Parser->strip_html($entry->author || ''),
-                $enc_type,
-                $enc_url,
-                $uuid,
-            );
-
+        for my $params (@entries) {
             my $res = 0;
+            my ($upd_date, $up_to_date) = (shift @$params, shift @$params);
             if (defined $up_to_date) {
                 # Exists but is out-of date. So update it.
-                $upd->execute(@params);
+                $upd->execute(@$params);
             } elsif ($upd_date) {
                 # New entry. Insert it.
-                $ins->execute(@params);
+                $ins->execute(@$params);
             } else {
                 # No update date. Update or insert as appropriate.
-                $ins->execute(@params) if $upd->execute(@params) == 0;
+                $ins->execute(@$params) if $upd->execute(@$params) == 0;
             }
+            push @ids, $params->[-1];
         }
 
         $dbh->do(q{
