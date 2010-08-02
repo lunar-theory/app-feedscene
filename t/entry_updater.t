@@ -3,8 +3,8 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 170;
-#use Test::More 'no_plan';
+#use Test::More tests => 170;
+use Test::More 'no_plan';
 use Test::More::UTF8;
 use Test::NoWarnings;
 use Test::MockModule;
@@ -740,19 +740,42 @@ is_deeply [$eup->_audit_enclosure($type, $uri)],
     [$type, URI->new('http://farm2.static.flickr.com/1282/4661840263_019e867a6e_b.jpg')],
     'Should find the large image';
 
-# Try for the medium image when there is no large image.
+# Remove the large image. We should still have it from the cache.
 @content = grep { $_ !~ /label="Large"/ } @content;
+is_deeply [$eup->_audit_enclosure($type, $uri)],
+    [$type, URI->new('http://farm2.static.flickr.com/1282/4661840263_019e867a6e_b.jpg')],
+    'Should still have large image from cache';
+
+# Make sure the trigger on the entries table removes it from the cache.
+$conn->run(sub {
+    my $url = 'http://farm2.static.flickr.com/1169/4601733070_92cd987ff6_o.jpg';
+    $_->do(
+        'INSERT INTO audit_cache (id, url) VALUES (?, ?)',
+        undef, 'foo', $url
+    );
+    is +($_->selectrow_array('SELECT COUNT(*) FROM audit_cache WHERE url = ?', undef, $url))[0],
+        1, 'Should have URL in the cache';
+    ok $_->do('DELETE FROM entries WHERE enclosure_url = ?', undef, $url),
+        'Delete it from entries table';
+    is +($_->selectrow_array('SELECT COUNT(*) FROM audit_cache WHERE url = ?', undef, $url))[0],
+        0, 'It should now be cone from the cache';
+});
+
+# Try for the medium image when there is no large image.
+$conn->run(sub { shift->do('DELETE FROM audit_cache') });
 is_deeply [$eup->_audit_enclosure($type, $uri)],
     [$type, URI->new('http://farm2.static.flickr.com/1282/4661840263_019e867a6e.jpg')],
     'Should find the medium image';
 
 # Try for the original image when there is no medium.
+$conn->run(sub { shift->do('DELETE FROM audit_cache') });
 @content = grep { $_ !~ /label="Medium"/ } @content;
 is_deeply [$eup->_audit_enclosure($type, $uri)],
     [$type, URI->new('http://farm2.static.flickr.com/1282/4661840263_e146f57fd2_o.jpg')],
     'Should find the original image';
 
 # Try for the passed-in URL when there is no original.
+$conn->run(sub { shift->do('DELETE FROM audit_cache') });
 @content = grep { $_ !~ /label="Original"/ } @content;
 is_deeply [$eup->_audit_enclosure($type, $uri)], [$type, $uri],
     'Should get the passed URI when nothing found in XML';

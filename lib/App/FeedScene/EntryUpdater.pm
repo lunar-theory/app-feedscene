@@ -497,6 +497,18 @@ sub _audit_enclosure {
     my ($photo_id) = ($url->path_segments)[-1] =~ /^([^_]+)(?=_)/;
     return $type, $url unless $photo_id;
 
+    # See if we have it in the cache already.
+    my $conn = App::FeedScene->new($self->app)->conn;
+    if (my $cached_url = $conn->run(sub {
+        my ($url) = shift->selectrow_array(
+            'SELECT url FROM audit_cache WHERE id = ?',
+            undef, $photo_id,
+        );
+        return $url;
+    })) {
+        return $type, URI->new($cached_url);
+    }
+
     # Request information about the photo or return.
     my $api_key = '58e9ec90618e63825e2372a94e306bb3';
     my $api_url = 'http://api.flickr.com/services/rest/?method='
@@ -512,6 +524,12 @@ sub _audit_enclosure {
     for my $size qw(Large Medium Original) {
         if (my $source = $doc->find("/rsp/sizes/size[\@label='$size']/\@source")) {
             # This is the one we want.
+            $conn->run(sub {
+                shift->do(
+                    'INSERT INTO audit_cache (id, url) VALUES (?, ?)',
+                    undef, $photo_id, $source
+                );
+            });
             return $type, URI->new($source);
         }
     }
