@@ -9,6 +9,7 @@ use Test::XPath;
 use Test::MockTime;
 use Test::NoWarnings;
 use File::Path;
+use Test::MockModule;
 use LWP::Protocol::file; # Turn on local fetches.
 
 my $CLASS;
@@ -57,6 +58,12 @@ $conn->txn(sub {
 
 # Load the entries.
 for my $p (0..1) {
+    my $mock = Test::MockModule->new('App::FeedScene::EntryUpdater');
+    $mock->mock(_audit_enclosure => sub {
+        my ($self, $type, $url) = @_;
+        return $type, $url;
+    });
+
     App::FeedScene::EntryUpdater->new(
         app    => 'foo',
         portal => $p,

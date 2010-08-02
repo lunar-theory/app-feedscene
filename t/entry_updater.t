@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 150;
+use Test::More tests => 170;
 #use Test::More 'no_plan';
 use Test::More::UTF8;
 use Test::NoWarnings;
@@ -98,10 +98,10 @@ $eup->unmock('process');
 
 ##############################################################################
 # Test request failure.
-my $mock = Test::MockModule->new('HTTP::Response');
-$mock->mock( is_success => 0 );
-$mock->mock( code => HTTP_INTERNAL_SERVER_ERROR );
-$mock->mock( message => 'OMGWTF' );
+my $res_mock = Test::MockModule->new('HTTP::Response');
+$res_mock->mock( is_success => 0 );
+$res_mock->mock( code => HTTP_INTERNAL_SERVER_ERROR );
+$res_mock->mock( message => 'OMGWTF' );
 test_fails(0, "$uri/simple.atom", 'Should start with no failures');
 ok $eup->process("$uri/simple.atom"), 'Process a feed';
 test_counts(0, 'Should still have no entries');
@@ -113,7 +113,7 @@ test_counts(0, 'Should still have no entries');
 test_fails(2, "$uri/simple.atom", 'Should now have fail count two');
 
 # Test HTTP_NOT_MODIFIED.
-$mock->mock( code => HTTP_NOT_MODIFIED );
+$res_mock->mock( code => HTTP_NOT_MODIFIED );
 ok $eup->process("$uri/simple.atom"), 'Process an unmodified feed';
 test_counts(0, 'Should still have no entries');
 test_fails(0, "$uri/simple.atom", 'fail count should be back to 0');
@@ -124,7 +124,7 @@ my $threshold =
     ? App::FeedScene::EntryUpdater::ERR_INTERVAL
     : App::FeedScene::EntryUpdater::ERR_THRESHOLD + App::FeedScene::EntryUpdater::ERR_INTERVAL;
 
-$mock->mock( code => HTTP_INTERNAL_SERVER_ERROR );
+$res_mock->mock( code => HTTP_INTERNAL_SERVER_ERROR );
 $conn->run(sub {
     $_->do(
         'UPDATE feeds SET fail_count = ? WHERE url = ?',
@@ -140,8 +140,8 @@ stderr_is { $eup->process("$uri/simple.atom") }
 test_fails($threshold + 1, "$uri/simple.atom", 'fail count should be incremented');
 
 # Test success.
-$mock->unmock('code');
-$mock->unmock('is_success');
+$res_mock->unmock('code');
+$res_mock->unmock('is_success');
 
 ##############################################################################
 # Okay, now let's test the processing.
@@ -435,6 +435,13 @@ is_deeply $dbh->selectall_arrayref(
 
 ##############################################################################
 # Try a feed with enclosures.
+# Mock enclosure audit. Will unmock and test below.
+$eup->mock(_audit_enclosure => sub {
+    my ($self, $type, $url) = @_;
+    pass "_audit_enclosures($url)";
+    return $type, $url;
+});
+
 my $ua_mock = Test::MockModule->new('App::FeedScene::UA');
 my @types = qw(
     text/html
@@ -465,6 +472,12 @@ is_deeply $conn->run(sub{ shift->selectrow_arrayref(
     'http://www.google.com/s2/favicons?domain=example.com',
     '',
 ], 'Feed record should be updated';
+
+# Disable the `pass` in _audit_enclosures now that we're sure it gets called.
+$eup->mock(_audit_enclosure => sub {
+    my ($self, $type, $url) = @_;
+    return $type, $url;
+});
 
 @types = qw(
     text/html
@@ -682,6 +695,67 @@ is $dbh->selectrow_arrayref(
     _uuid('http://welie.example.com/', 'http://welie.example.com/broken')
 )->[0], "<p>\x{c3}\x{ad}Z\x{e2}\x{2030}\x{a4}F1\x{e2}\x{20ac}\x{201c}\x{c3}\x{2122}?Z\x{e2}\x{2c6},</p>",
     'Bogus characters should be removed from summary';
+
+##############################################################################
+# Test enclosure auditing.
+$eup->unmock('_audit_enclosure');
+
+# Start with non-Flickr URL.
+$uri = URI->new('http://example.com/hey/you/it.jpg');
+my $type = 'image/jpeg';
+is_deeply [$eup->_audit_enclosure($type, $uri)], [$type, $uri],
+    'Non-Flickr URI should not be audited';
+
+# Try Flickr static URL without photo ID.
+$uri = URI->new('http://farm3.static.flickr.com/hey/you/it.jpg');
+is_deeply [$eup->_audit_enclosure($type, $uri)], [$type, $uri],
+    'Flickr URL without photo ID should not be audited';
+
+# Need to mock UA response.
+$res_mock->mock( code => HTTP_INTERNAL_SERVER_ERROR );
+my $xml;
+$ua_mock->mock( get => sub {
+    my ($self, $url) = @_;
+    my $r = HTTP::Response->new(200, 'OK', ['Content-Type' => $type]);
+    return $r;
+});
+
+# Try URL with photo ID but let the response fail.
+$res_mock->mock( is_success => 0 );
+$uri = URI->new('http://farm2.static.flickr.com/1282/4661840263_019e867a6e_m.jpg');
+is_deeply [$eup->_audit_enclosure($type, $uri)], [$type, $uri],
+    'Audit should return the type and URI on request failure';
+
+# Let the request be successful.
+$res_mock->mock(is_success => 1);
+my @content = do {
+    my $fn = 't/data/flickr.xml';
+    open my $fh, '<', $fn or die "Cannot open $fn: $!\n";
+    <$fh>;
+};
+$res_mock->mock(content => sub { join '', @content });
+
+# Make sure we get the large image.
+is_deeply [$eup->_audit_enclosure($type, $uri)],
+    [$type, URI->new('http://farm2.static.flickr.com/1282/4661840263_019e867a6e_b.jpg')],
+    'Should find the large image';
+
+# Try for the medium image when there is no large image.
+@content = grep { $_ !~ /label="Large"/ } @content;
+is_deeply [$eup->_audit_enclosure($type, $uri)],
+    [$type, URI->new('http://farm2.static.flickr.com/1282/4661840263_019e867a6e.jpg')],
+    'Should find the medium image';
+
+# Try for the original image when there is no medium.
+@content = grep { $_ !~ /label="Medium"/ } @content;
+is_deeply [$eup->_audit_enclosure($type, $uri)],
+    [$type, URI->new('http://farm2.static.flickr.com/1282/4661840263_e146f57fd2_o.jpg')],
+    'Should find the original image';
+
+# Try for the passed-in URL when there is no original.
+@content = grep { $_ !~ /label="Original"/ } @content;
+is_deeply [$eup->_audit_enclosure($type, $uri)], [$type, $uri],
+    'Should get the passed URI when nothing found in XML';
 
 ##############################################################################
 sub test_counts {

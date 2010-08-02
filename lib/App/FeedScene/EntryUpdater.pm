@@ -436,7 +436,7 @@ sub _find_enclosure {
     for my $enc ($entry->enclosures) {
         my $type = $enc->type or next;
         next if $type !~ m{^(?:image|audio|video)/};
-        return $enc->type, URI->new($enc->url);
+        return $self->_audit_enclosure($enc->type, URI->new($enc->url));
     }
 
     # Use XML::LibXML and XPath to find something and link it up.
@@ -449,13 +449,15 @@ sub _find_enclosure {
             $url = $base_url ? URI->new_abs($url, $base_url) : URI->new($url);
             next if !$url->can('host') || $url->host =~ /\bdoubleclick[.]net$/;
             (my($type), $url) = $self->_get_type($url, $base_url);
-            return $type, $url if $type && $type =~ m{^(?:image|audio|video)/};
+            return $self->_audit_enclosure($type, $url)
+                if $type && $type =~ m{^(?:image|audio|video)/};
         }
     }
 
     # Look at the direct link.
     my ($type, $url) = $self->_get_type($entry_link, $base_url);
-    return $type, $url if $type && $type =~ m{^(?:image|audio|video)/};
+    return $self->_audit_enclosure($type, $url)
+        if $type && $type =~ m{^(?:image|audio|video)/};
 
     # Nothing to see.
     return;
@@ -485,6 +487,37 @@ sub _get_type {
     return $res->is_success
         ? (scalar $res->content_type, URI->new($res->request->uri))
         : undef;
+}
+
+sub _audit_enclosure {
+    my ($self, $type, $url) = @_;
+    return $type, $url unless $url->host =~ /^farm\d+[.]static[.]flickr[.]com$/;
+
+    # Grab the photo ID or return.
+    my ($photo_id) = ($url->path_segments)[-1] =~ /^([^_]+)(?=_)/;
+    return $type, $url unless $photo_id;
+
+    # Request information about the photo or return.
+    my $api_key = '58e9ec90618e63825e2372a94e306bb3';
+    my $api_url = 'http://api.flickr.com/services/rest/?method='
+        . "flickr.photos.getSizes&api_key=$api_key&photo_id=$photo_id";
+    my $res = $self->ua->get($api_url);
+    return ($type, $url) unless $res->is_success
+        || $res->code == HTTP_NOT_MODIFIED;
+
+    # Parse it.
+    my $doc = App::FeedScene::Parser->libxml->parse_string($res->content);
+
+    # Go for large, medium, or original.
+    for my $size qw(Large Medium Original) {
+        if (my $source = $doc->find("/rsp/sizes/size[\@label='$size']/\@source")) {
+            # This is the one we want.
+            return $type, URI->new($source);
+        }
+    }
+
+    # Bah! Just go with what we've got.
+    return $type, $url;
 }
 
 1;
