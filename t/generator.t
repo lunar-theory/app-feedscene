@@ -72,7 +72,7 @@ for my $p (0..1) {
 
 # Set one entry to have a date in the future to make sure it's excluded.
 $conn->run(sub {
-    diag shift->do(q{
+    shift->do(q{
         UPDATE entries
            SET published_at = strftime('%Y-%m-%dT%H:%M:%SZ','now','+1 day')
          WHERE id = 'urn:uuid:7e5c7b98-44de-5b73-bd70-289b3ed1a770'
