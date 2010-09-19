@@ -3,8 +3,8 @@
 use strict;
 use 5.12.0;
 use utf8;
-#use Test::More tests => 170;
-use Test::More 'no_plan';
+use Test::More tests => 174;
+#use Test::More 'no_plan';
 use Test::More::UTF8;
 use Test::NoWarnings;
 use Test::MockModule;

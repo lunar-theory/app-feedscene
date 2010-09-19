@@ -88,10 +88,10 @@ sub process {
             $site_url    = $feed->base
                          ? URI->new_abs($site_url, $feed->base)
                          : URI->new($site_url);
-            my $icon_url = URI->new(
-                'http://www.google.com/s2/favicons?domain='
-                . ($site_url ? $site_url->host : $feed_url->host)
-            );
+            my $icon_url = URI->new(sprintf(
+                'http://getfavicon.appspot.com/%s?defaulticon=none',
+                $site_url || $feed_url
+            ));
 
             $ins->execute(_clean(
                 $feed_url,
