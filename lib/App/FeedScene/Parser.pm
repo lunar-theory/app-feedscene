@@ -41,6 +41,7 @@ sub _handle_error {
     say STDERR "Error parsing ", $res->request->uri, eval {
         ' (libxml2 error code ' . $err->code . "):\n\n" . $err->as_string
     } || ":\n\n$err";
+    return;
 }
 
 sub parse_feed {
@@ -61,7 +62,7 @@ sub parse_feed {
                 when (XML::LibXML::ErrNo::ERR_INVALID_CHAR) {
                     # See if we can clean up the mess.
                     if ($fixed_invalid_char++) {
-                        _handle_error $err, $res if $stripped_invalid_chars++;
+                        return _handle_error $err, $res if $stripped_invalid_chars++;
                         # We fixed it already, but maybe there are characters
                         # disallowed by the XML standard.
                         # http://www.w3.org/TR/xml11/#charsets
@@ -73,7 +74,7 @@ sub parse_feed {
                     redo TRY;
                 }
                 when (XML::LibXML::ErrNo::ERR_DOCUMENT_END) {
-                    _handle_error $err, $res if $stripped_invalid_chars++;
+                    return _handle_error $err, $res if $stripped_invalid_chars++;
                     # Maybe some invalid characters have brokenated it. Seen
                     # in the wild.
                     $body =~ s/[\x00-\x08\x0b-\x0c\x0e-\x1f\x7f-\x84\x86-\x9f]//msg;
@@ -101,7 +102,7 @@ sub parse_feed {
                     redo TRY;
                 }
                 default {
-                    _handle_error $err, $res;
+                    return _handle_error $err, $res;
                 }
             }
         }
