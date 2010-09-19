@@ -158,7 +158,7 @@ is_deeply $conn->run(sub{ shift->selectrow_arrayref(
     'Simple Atom Feed',
     'Witty & clever',
     'http://example.com/',
-    'http://www.google.com/s2/favicons?domain=example.com',
+    'http://getfavicon.appspot.com/http://example.com/?defaulticon=none',
     '2009-12-13T18:30:02Z',
     '© 2010 Big Fat Example',
 ], 'Atom feed should be updated';
@@ -357,7 +357,7 @@ is_deeply $conn->run(sub{ shift->selectrow_arrayref(
     'Summaries RSS Feed',
     '',
     'http://foo.org',
-    'http://www.google.com/s2/favicons?domain=foo.org',
+    'http://getfavicon.appspot.com/http://foo.org?defaulticon=none',
     '2010-06-05T17:29:41Z',
     '',
 ], 'Summaries feed should be updated including current updated time';
@@ -469,7 +469,7 @@ is_deeply $conn->run(sub{ shift->selectrow_arrayref(
     'Enclosures Atom Feed',
     '',
     'http://example.com/',
-    'http://www.google.com/s2/favicons?domain=example.com',
+    'http://getfavicon.appspot.com/http://example.com/?defaulticon=none',
     '',
 ], 'Feed record should be updated';
 

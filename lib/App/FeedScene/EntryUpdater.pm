@@ -181,7 +181,10 @@ sub process {
                 App::FeedScene::Parser->strip_html($feed->title || ''),
                 App::FeedScene::Parser->strip_html($feed->description || ''),
                 $site_url,
-                URI->new("http://www.google.com/s2/favicons?domain=$host"),
+                URI->new(sprintf(
+                    'http://getfavicon.appspot.com/%s?defaulticon=none',
+                    $site_url || $feed_url
+                )),
                 ($feed->modified || DateTime->now)->set_time_zone('UTC')->iso8601 . 'Z',
                 App::FeedScene::Parser->strip_html($feed->copyright || ''),
                 0,

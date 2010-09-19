@@ -28,7 +28,7 @@ Test::MockTime::set_fixed_time($time);
 
 my $domain   = 'lunar-theory.com';
 my $company  = 'Lunar Theory';
-my $icon_url = 'http://www.google.com/s2/favicons?domain';
+my $icon_url = 'http://getfavicon.appspot.com/%s?defaulticon=none';
 
 # Build a database for us to use.
 ok my $dba = App::FeedScene::DBA->new( app => 'foo' ),
@@ -137,7 +137,7 @@ $tx->ok('/a:feed/fs:sources', 'Should have sources', sub {
         $_->is('./fs:subtitle', 'Witty & clever', 'Subtitle should be correct');
         $_->is('./fs:updated', '2009-12-13T18:30:02Z', 'Updated should be correct');
         $_->is('./fs:rights', '© 2010 Big Fat Example', 'Rights should be correct');
-        $_->is('./fs:icon', "$icon_url=example.com", 'Icon should be correct');
+        $_->is('./fs:icon', sprintf($icon_url, 'http://example.com/'), 'Icon should be correct');
         $_->is("./fs:category[\@scheme='http://$domain/ns/portal']/\@term", 0, 'Portal should be correct');
     });
     $_->ok('./fs:source[2]', 'Second source', sub {
@@ -149,7 +149,7 @@ $tx->ok('/a:feed/fs:sources', 'Should have sources', sub {
         $_->is('./fs:updated', '2009-12-13T18:30:02Z', 'Updated should be correct');
         $_->is('./fs:subtitle', '', 'Subtitle should be correct');
         $_->is('./fs:rights', '', 'Rights should be correct');
-        $_->is('./fs:icon', "$icon_url=example.com", 'Icon should be correct');
+        $_->is('./fs:icon', sprintf($icon_url, 'http://example.com/'), 'Icon should be correct');
         $_->is("./fs:category[\@scheme='http://$domain/ns/portal']/\@term", 1, 'Portal should be correct');
     });
 });
@@ -319,7 +319,7 @@ sub test_entries {
                 $_->is('./a:subtitle', 'Witty & clever', '......Subtitle');
                 $_->is('./a:rights', '© 2010 Big Fat Example', '......Rights');
                 $_->is('./a:updated', '2009-12-13T18:30:02Z', '......Updated');
-                $_->is('./a:icon', "$icon_url=example.com", '......Icon');
+                $_->is('./a:icon', sprintf($icon_url, 'http://example.com/'), '......Icon');
                 $_->is("./a:category[\@scheme='http://$domain/ns/portal']/\@term", 0, '...Portal');
             }
         });
@@ -352,7 +352,7 @@ sub test_entries {
                 $_->is('count(./a:subtitle)', 0, '......Subtitle');
                 $_->is('count(./a:rights)', 0, '......Rights');
                 $_->is('./a:updated', '2009-12-13T18:30:02Z', '......Updated');
-                $_->is('./a:icon', "$icon_url=example.com", '......Icon');
+                $_->is('./a:icon', sprintf($icon_url, 'http://example.com/'), '......Icon');
                 $_->is("./a:category[\@scheme='http://$domain/ns/portal']/\@term", 1, '...Portal');
             }
         });
