@@ -81,7 +81,7 @@ sub go {
                    enclosure_url, enclosure_type, feed_id, portal$feed_cols
               FROM feed_entries
              WHERE portal = ?
-               AND published_at <= datetime('now')
+               AND published_at <= strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
              ORDER BY published_at DESC
              LIMIT ?
         });
