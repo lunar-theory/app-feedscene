@@ -60,6 +60,7 @@ sub process {
 
         my @ids;
         for my $line (@csv) {
+            next unless $line =~ /\S/;
             $csv->parse($line);
             my ($portal, $feed_url, $category) = $csv->fields;
             $portal = 0 if $portal eq 'text';
