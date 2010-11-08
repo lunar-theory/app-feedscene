@@ -1,4 +1,4 @@
-package App::FeedScene::FeedUpdater 0.14;
+package App::FeedScene::FeedUpdater 0.15;
 
 use 5.12.0;
 use utf8;
