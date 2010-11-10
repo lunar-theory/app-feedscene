@@ -21,6 +21,7 @@ use Moose;
 has app     => (is => 'rw', isa => 'Str');
 has portal  => (is => 'rw', isa => 'Int');
 has ua      => (is => 'rw', isa => 'App::FeedScene::UA');
+has icon    => (is => 'rw', isa => 'Str', default => 'none');
 has verbose => (is => 'rw', isa => 'Int');
 
 sub _clean {
@@ -182,8 +183,8 @@ sub process {
                 App::FeedScene::Parser->strip_html($feed->description || ''),
                 $site_url,
                 URI->new(sprintf(
-                    'http://getfavicon.appspot.com/%s?defaulticon=none',
-                    $site_url || $feed_url
+                    'http://getfavicon.appspot.com/%s?defaulticon=%s',
+                    $site_url || $feed_url, $self->icon
                 )),
                 ($feed->modified || DateTime->now)->set_time_zone('UTC')->iso8601 . 'Z',
                 App::FeedScene::Parser->strip_html($feed->copyright || ''),

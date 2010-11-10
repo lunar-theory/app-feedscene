@@ -344,7 +344,8 @@ is $summary, '<p>This description has nasty—dashes—.</p>',
     'Latin-1 Summary with ampersand entitis escaping CP1252 entities should be UTF-8';
 
 ##############################################################################
-# Test a variety of RSS summary formats.
+# Test a variety of RSS summary formats and another icon.
+$eup->icon('http://designsceneapp.com/favicon.ico');
 ok $eup->process("$uri/summaries.rss"), 'Process RSS feed with various summaries';
 test_counts(31, 'Should now have 31 entries');
 
@@ -357,7 +358,7 @@ is_deeply $conn->run(sub{ shift->selectrow_arrayref(
     'Summaries RSS Feed',
     '',
     'http://foo.org',
-    'http://getfavicon.appspot.com/http://foo.org?defaulticon=none',
+    'http://getfavicon.appspot.com/http://foo.org?defaulticon=http://designsceneapp.com/favicon.ico',
     '2010-06-05T17:29:41Z',
     '',
 ], 'Summaries feed should be updated including current updated time';
@@ -458,6 +459,7 @@ $ua_mock->mock(head => sub {
 });
 
 $eup->portal(1);
+$eup->icon('none');
 ok $eup->process("$uri/enclosures.atom"), 'Process Atom feed with enclosures';
 test_counts(51, 'Should now have 51 entries');
 
