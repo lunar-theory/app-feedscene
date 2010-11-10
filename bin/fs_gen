@@ -36,7 +36,7 @@ _pod2usage('-message' => 'Missing or invalid --app option') unless $app;
 App::FeedScene::Generator->new(
     app         => $app,
     strict      => $strict,
-    images_only => $images_only
+    images_only => $images_only,
     (defined $limit      ? (limit      => $limit     ) : ()),
     (defined $text_limit ? (text_limit => $text_limit) : ()),
 )->go;
