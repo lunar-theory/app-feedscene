@@ -5,7 +5,7 @@ use utf8;
 use Data::Feed;
 use Data::Feed::Parser::Atom;
 use Data::Feed::Parser::RSS;
-use XML::LibXML qw(XML_TEXT_NODE);
+use XML::LibXML qw(XML_TEXT_NODE XML_ELEMENT_NODE);
 use XML::LibXML::ErrNo;
 use Encode;
 use namespace::autoclean;
@@ -131,10 +131,11 @@ sub strip_html {
 sub _strip {
     my $ret = '';
     for my $elem (@_) {
-        $ret .= $elem->nodeType == XML_TEXT_NODE
-            ? $elem->data
-            : _strip($elem->childNodes);
+        $ret .= $elem->nodeType == XML_TEXT_NODE ? $elem->data
+              : $elem->nodeType == XML_ELEMENT_NODE && $elem->nodeName eq 'br' ? ' '
+              : _strip($elem->childNodes);
     }
+    $ret =~ s/\s{2,}/ /g;
     return $ret;
 }
 

@@ -400,39 +400,44 @@ sub _find_summary {
     my $entry = shift;
     if (my $sum = $entry->summary) {
         if (my $body = $sum->body) {
-            # We got something here. Clean it up and return it.
-            return join '', map { $_->toString } _clean_html(
-                App::FeedScene::Parser->parse_html_string($body)->firstChild
-            )->nonBlankChildNodes;
+            # We got something here. Strip any HTML and return it.
+            return join ' ', map {
+                App::FeedScene::Parser->strip_html($_->toString)
+            } _wanted_nodes_for($body);
         }
     }
 
     # Try the content of the entry.
     my $content = $entry->content or return '';
     my $body    = $content->body  or return '';
-    my $doc     = App::FeedScene::Parser->parse_html_string($body);
 
     # Fetch a reasonable amount of the content to use as a summary.
-    my $ret = '';
-    my @nodes = map {
-        # If it's an unwanted node but we want its children, keep them.
-        $keep_children{$_->nodeName} ? $_->childNodes : $_
-    } $doc->findnodes('/html/body')->get_node(1)->childNodes;
-
-    while (@nodes) {
-        my $elem = shift @nodes;
+    my @text;
+    for my $elem (_wanted_nodes_for($body)) {
         if ($elem->nodeType == XML_TEXT_NODE) {
-            $ret .= $elem->toString if $elem->toString =~ /\S/;
+            push @text, App::FeedScene::Parser->strip_html($elem->toString)
+                if $elem->toString =~ /\S/;
             next;
         }
         next if $elem->nodeType != XML_ELEMENT_NODE or !$allowed{$elem->nodeName};
 
-        # Clean the HTML.
-        $elem = _clean_html($elem);
-        $ret .= $elem->toString if $elem->hasChildNodes || $elem->hasAttributes;
+        push @text, App::FeedScene::Parser->strip_html($elem->toString)
+            if $elem->hasChildNodes || $elem->hasAttributes;
+        my $ret = join ' ', @text;
+        $ret =~ s/\s{2,}/ /g;
         return $ret if length $ret > 140;
     }
+    my $ret = join ' ', @text;
+    $ret =~ s/\s{2,}/ /g;
     return $ret;
+}
+
+sub _wanted_nodes_for {
+    my $doc = App::FeedScene::Parser->parse_html_string(shift);
+    map {
+        # If it's an unwanted node but we want its children, keep them.
+        $keep_children{$_->nodeName} ? $_->childNodes : $_
+    } $doc->findnodes('/html/body')->get_node(1)->childNodes;
 }
 
 sub _find_enclosure {

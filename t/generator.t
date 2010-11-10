@@ -305,7 +305,7 @@ sub test_entries {
         $_->is('./a:title', 'This is the title', '...Title');
         $_->is('./a:published', '2009-12-13T12:29:29Z', '...Published');
         $_->is('./a:updated', '2009-12-13T18:30:02Z', '...Updated');
-        $_->is('./a:summary[@type="html"]', '<p>Summary of the story</p>', '...Summary');
+        $_->is('./a:summary[@type="text"]', 'Summary of the story', '...Summary');
         $_->ok('./a:author', '...Author', sub {
             $_->is('count(./*)', 1, '......Should have 1 author subelement');
             $_->is('./a:name', 'Ira Glass', '......Name');
@@ -335,7 +335,7 @@ sub test_entries {
         $_->is('./a:title', 'This is the title', '...Title');
         $_->is('./a:published', '2009-12-13T08:29:29Z', '...Published');
         $_->is('./a:updated', '2009-12-13T08:29:29Z', '...Updated');
-        $_->is('./a:summary[@type="html"]', '<p>Caption for the encosed image.</p>', '...Summary');
+        $_->is('./a:summary[@type="text"]', 'Caption for the encosed image.', '...Summary');
         $_->is('count(./a:author)', 0, '...Author');
         $_->is('./a:link[@rel="enclosure"]/@type', 'image/jpeg', '...Enclosure type');
         $_->is(

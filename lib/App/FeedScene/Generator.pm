@@ -99,7 +99,7 @@ sub go {
                     $a->title($row->{title} || $row->{url}),
                     $a->published($row->{published_at}),
                     $a->updated($row->{updated_at}),
-                    ($row->{summary} ? ($a->summary({ type => 'html' }, $row->{summary} )) : ()),
+                    ($row->{summary} ? ($a->summary({ type => 'text' }, $row->{summary} )) : ()),
                     ($row->{author} ? ($a->author( $a->name($row->{author}) )) : ()),
                     $a->source(
                         $a->id($row->{feed_id}),

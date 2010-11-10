@@ -171,7 +171,7 @@ is_deeply test_data('urn:uuid:e287d28b-5a4b-575c-b9da-d3dc894b9aa2'), {
     title          => 'This is the title',
     published_at   => '2009-12-13T12:29:29Z',
     updated_at     => '2009-12-13T18:30:02Z',
-    summary        => '<p>Summary of the story</p>',
+    summary        => 'Summary of the story',
     author         => 'Ira Glass',
     enclosure_url  => '',
     enclosure_type => '',
@@ -184,7 +184,7 @@ is_deeply test_data('urn:uuid:4386a769-775f-5b78-a6f0-02e3ac8a457d'), {
     title          => 'This is another title',
     published_at   => '2009-12-12T12:29:29Z',
     updated_at     => '2009-12-13T18:30:03Z',
-    summary        => '<p>Summary of the second story</p>',
+    summary        => 'Summary of the second story',
     author         => '',
     enclosure_url  => '',
     enclosure_type => '',
@@ -197,7 +197,7 @@ is_deeply test_data('urn:uuid:0df1d4a7-6b9f-532c-9a94-52cafade78a2'), {
     title          => 'Title Three',
     published_at   => '2009-12-11T12:29:29Z',
     updated_at     => '2009-12-13T18:30:03Z',
-    summary        => '<p>Summary of the third story</p>',
+    summary        => 'Summary of the third story',
     author         => '',
     enclosure_url  => '',
     enclosure_type => '',
@@ -215,7 +215,7 @@ is_deeply test_data('urn:uuid:e287d28b-5a4b-575c-b9da-d3dc894b9aa2'), {
     title          => 'This is the new title',
     published_at   => '2009-12-13T12:29:29Z',
     updated_at     => '2009-12-14T18:30:02Z',
-    summary        => '<p>Summary of the story</p>',
+    summary        => 'Summary of the story',
     author         => 'Ira Glass',
     enclosure_url  => '',
     enclosure_type => '',
@@ -228,7 +228,7 @@ is_deeply test_data('urn:uuid:4386a769-775f-5b78-a6f0-02e3ac8a457d'), {
     title          => 'Updated without updated element',
     published_at   => '2009-12-12T12:29:29Z',
     updated_at     => '2009-12-12T12:29:29Z',
-    summary        => '<p>Summary of the second story</p>',
+    summary        => 'Summary of the second story',
     author         => '',
     enclosure_url  => '',
     enclosure_type => '',
@@ -241,7 +241,7 @@ is_deeply test_data('urn:uuid:0df1d4a7-6b9f-532c-9a94-52cafade78a2'), {
     title          => 'Title Three',
     published_at   => '2009-12-11T12:29:29Z',
     updated_at     => '2009-12-13T18:30:03Z',
-    summary        => '<p>Summary of the third story</p>',
+    summary        => 'Summary of the third story',
     author         => '',
     enclosure_url  => '',
     enclosure_type => '',
@@ -266,7 +266,7 @@ is_deeply test_data('urn:uuid:3577008b-ee22-5b79-9ca9-ac87e42ee601'), {
     title          => 'The Long Goodbye',
     published_at   => '2010-05-17T14:58:50Z',
     updated_at     => '2010-05-17T14:58:50Z',
-    summary        => '<p>Wherein Marlowe finds himeslf in trouble again.</p>',
+    summary        => 'Wherein Marlowe finds himeslf in trouble again.',
     author         => 'Raymond Chandler & Friends',
     enclosure_url  => '',
     enclosure_type => '',
@@ -279,7 +279,7 @@ is_deeply test_data('urn:uuid:5e125dfa-0b69-504c-96a0-83f552645c6b'), {
     title          => '',
     published_at   => '2010-05-16T14:58:50Z',
     updated_at     => '2010-05-16T14:58:50Z',
-    summary        => '<p>Hollywood babes.</p><p>A killer with an ice pick.</p><p>What could be better?</p>',
+    summary        => 'Hollywood babes. A killer with an ice pick. What could be better?',
     author         => 'Raymond Chandler & Friends',
     enclosure_url  => '',
     enclosure_type => '',
@@ -302,7 +302,7 @@ my ($title, $summary) = $conn->dbh->selectrow_array(
 );
 
 is $title, 'Title: æåø', 'Latin-1 Title should be UTF-8';
-is $summary, '<p>Latin-1: æåø</p>', 'Latin-1 Summary should be UTF-8';
+is $summary, 'Latin-1: æåø', 'Latin-1 Summary should be UTF-8';
 
 ($title, $summary) = $conn->dbh->selectrow_array(
     'SELECT title, summary FROM entries WHERE id = ?',
@@ -311,7 +311,7 @@ is $summary, '<p>Latin-1: æåø</p>', 'Latin-1 Summary should be UTF-8';
 
 is $title, 'Blah blah—blah',
     'Latin-1 Title with CP1252 entity should be UTF-8';
-is $summary, '<p>This description has nasty—dashes—.</p>',
+is $summary, 'This description has nasty—dashes—.',
     'Latin-1 Summary with ampersand entitis escaping CP1252 entities should be UTF-8';
 
 ##############################################################################
@@ -331,7 +331,7 @@ is $conn->run(sub{ shift->selectrow_array(
 );
 
 is $title, 'Title: æåø', 'Latin-1 Title should be UTF-8';
-is $summary, '<p>Latin-1: æåø (“CP1252”)</p>', 'Latin-1 Summary should be UTF-8';
+is $summary, 'Latin-1: æåø (“CP1252”)', 'Latin-1 Summary should be UTF-8';
 
 ($title, $summary) = $conn->dbh->selectrow_array(
     'SELECT title, summary FROM entries WHERE id = ?',
@@ -340,7 +340,7 @@ is $summary, '<p>Latin-1: æåø (“CP1252”)</p>', 'Latin-1 Summary should be
 
 is $title, 'Blah blah—blah',
     'Latin-1 Title with CP1252 entity should be UTF-8';
-is $summary, '<p>This description has nasty—dashes—.</p>',
+is $summary, 'This description has nasty—dashes—.',
     'Latin-1 Summary with ampersand entitis escaping CP1252 entities should be UTF-8';
 
 ##############################################################################
@@ -365,28 +365,28 @@ is_deeply $conn->run(sub{ shift->selectrow_arrayref(
 
 my $dbh = $conn->dbh;
 for my $spec (
-    [ 1  => '<p>Simple summary in plain text.</p>'],
-    [ 2  => '<p>Simple summary in a paragraph.</p>'],
-    [ 3  => '<p>Paragraph <em>summary</em> with emphasis.</p>' ],
-    [ 4  => '<p>Paragraph summary with anchor.</p>'],
-    [ 5  => '<p>First graph.</p><p>Second graph.</p>'],
-    [ 6  => '<p>First graph.</p><p>Second graph.</p><p>Third graph with a lot more stuff in it, to get us over 140 characters, if you know what I mean.</p>'],
-    [ 7  => '<p>Paragraph <em>summary</em> with em+attr.</p>' ],
-    [ 8  => '<p>The <abbr title="World Health Organization">WHO</abbr> was founded in 1948.</p>'],
-    [ 9  => '<p>Paragraph <i>summary</i> with anchor and child element.</p>'],
-    [ 10 => '<p>Paragraph summary with font.</p>' ],
-    [ 11 => '<p>Simple summary in plain text with <em>emphasis</em>.</p>'],
-    [ 12 => '<p>Simple summary in plain text with separate content.</p>'],
-    [ 13 => '<p>First graph.</p><p>Second graph.</p><p>Third graph with a lot more stuff in it, to get us over 140 characters, if you know what I mean.</p><p>Fourth graph should be included.</p>'],
-    [ 14 => '<p>Summary with <em>emphasis</em> complementing content.</p>' ],
-    [ 15 => '<p>Summary with <i>emphasis</i> in anchor.</p>' ],
-    [ 16 => '<p>Summary with leading img.</p>' ],
-    [ 17 => '<p>Summary with trailing img.</p>' ],
-    [ 18 => '<p>Centered Summary paragraph</p>' ],
+    [ 1  => 'Simple summary in plain text.'],
+    [ 2  => 'Simple summary in a paragraph.'],
+    [ 3  => 'Paragraph summary with emphasis.' ],
+    [ 4  => 'Paragraph summary with anchor.'],
+    [ 5  => 'First graph. Second graph.'],
+    [ 6  => 'First graph. Second graph. Third graph with a lot more stuff in it, to get us over 140 characters, if you know what I mean. And I think you do.'],
+    [ 7  => 'Paragraph summary with em+attr.' ],
+    [ 8  => 'The WHO was founded in 1948.'],
+    [ 9  => 'Paragraph summary with anchor and child element.'],
+    [ 10 => 'Paragraph summary with font.' ],
+    [ 11 => 'Simple summary in plain text with emphasis.'],
+    [ 12 => 'Simple summary in plain text with separate content.'],
+    [ 13 => 'First graph. Second graph. Third graph with a lot more stuff in it, to get us over 140 characters, if you know what I mean. Fourth graph should be included.'],
+    [ 14 => 'Summary with emphasis complementing content.' ],
+    [ 15 => 'Summary with emphasis in anchor.' ],
+    [ 16 => 'Summary with leading img.' ],
+    [ 17 => 'Summary with trailing img.' ],
+    [ 18 => 'Centered Summary paragraph' ],
     [ 19 => 'Centered Summary' ],
-    [ 20 => '<p>Summary with no tag but a link.</p>' ],
+    [ 20 => 'Summary with no tag but a link.' ],
     [ 21 => 'Summary in the description when we also have encoded content.' ],
-    [ 22 => '<div>Stuff inside a blockquote.</div>' ],
+    [ 22 => 'Stuff inside a blockquote.' ],
 ) {
     is +($dbh->selectrow_array(
         'SELECT summary FROM entries WHERE id = ?',
@@ -497,7 +497,7 @@ is_deeply test_data('urn:uuid:257c8075-dc7c-5678-8de0-5bb88360dff6'), {
     feed_id        => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af7',
     id             => 'urn:uuid:257c8075-dc7c-5678-8de0-5bb88360dff6',
     published_at   => '2009-12-13T08:29:29Z',
-    summary        => '<p>Caption for the encosed image.</p>',
+    summary        => 'Caption for the encosed image.',
     title          => 'This is the title',
     updated_at     => '2009-12-13T08:29:29Z',
     url            => 'http://flickr.com/some%C3%AEmage'
@@ -510,7 +510,7 @@ is_deeply test_data('urn:uuid:844df0ef-fed0-54f0-ac7d-2470fa7e9a9c'), {
     feed_id        => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af7',
     id             => 'urn:uuid:844df0ef-fed0-54f0-ac7d-2470fa7e9a9c',
     published_at   => '2009-12-12T08:19:29Z',
-    summary        => '<p>Caption for both of the the encosed images.</p>',
+    summary        => 'Caption for both of the the encosed images.',
     title          => 'This is the title',
     updated_at     => '2009-12-12T08:19:29Z',
     url            => 'http://flickr.com/twoimages'
@@ -524,7 +524,7 @@ is_deeply test_data('urn:uuid:db9bd827-0d7f-5067-ad18-2c666ab1a028'), {
     feed_id        => "$uri/enclosures.rss",
     id             => 'urn:uuid:db9bd827-0d7f-5067-ad18-2c666ab1a028',
     published_at   => '2009-12-13T08:29:29Z',
-    summary        => '<p>Caption for the encosed image.</p>',
+    summary        => 'Caption for the encosed image.',
     title          => 'This is the title',
     updated_at     => '2009-12-13T08:29:29Z',
     url            => 'http://flickr.org/some%C3%AEmage'
@@ -537,7 +537,7 @@ is_deeply test_data('urn:uuid:4aef01ff-75c3-5dcb-a53f-878e3042f3cf'), {
     feed_id        => "$uri/enclosures.rss",
     id             => 'urn:uuid:4aef01ff-75c3-5dcb-a53f-878e3042f3cf',
     published_at   => '2009-12-12T08:19:29Z',
-    summary        => '<p>Caption for both of the the encosed images.</p>',
+    summary        => 'Caption for both of the the encosed images.',
     title          => 'This is the title',
     updated_at     => '2009-12-12T08:19:29Z',
     url            => 'http://flickr.org/twoimages'
@@ -546,57 +546,57 @@ is_deeply test_data('urn:uuid:4aef01ff-75c3-5dcb-a53f-878e3042f3cf'), {
 # Now check for various enclosure configurations in both Atom and RSS.
 for my $spec (
     [ 'embeddedimage' => [
-        '<p>Caption for the embedded image.</p>',
+        'Caption for the embedded image.',
         'image/jpeg',
         'http://flickr.com/someimage.jpg'
     ], 'embedded JPEG' ],
     [ 'embedtwo' => [
-        '<p>Caption for both of the embedded images.</p>',
+        'Caption for both of the embedded images.',
         'image/jpeg',
         'http://flickr.com/some%C3%AEmage.jpg'
     ], 'two embedded JPEGs' ],
     [ 'audio' => [
-        '<p>Caption for the enclosed audio.</p>',
+        'Caption for the enclosed audio.',
         'audio/mpeg',
         'http://flickr.com/audio.mp3'
     ], 'audio enclosure' ],
     [ 'video' => [
-        '<p>Caption for the enclosed video.</p>',
+        'Caption for the enclosed video.',
         'video/mpeg',
         'http://flickr.com/video.mov'
     ], 'video enclosure' ],
     [ 'embedaudio' => [
-        '<p>Caption for the embedded audio.</p>',
+        'Caption for the embedded audio.',
         'audio/mpeg',
         'http://flickr.com/anotheraudio.mp3'
     ], 'embedded audio' ],
     [ 'embedvideo' => [
-        '<p>Caption for the embedded video.</p>',
+        'Caption for the embedded video.',
         'video/quicktime',
         'http://flickr.com/anothervideo.mov'
     ], 'embedded video' ],
     [ 'skipunwanted' => [
-        '<p>Caption for the enclosed audio.</p>',
+        'Caption for the enclosed audio.',
         'audio/mpeg',
         'http://flickr.com/audio.mp3'
     ], 'unwanted enclosure + audio enclosure' ],
     [ 'skipembed' => [
-        '<p>Caption for the embedded audio.</p>',
+        'Caption for the embedded audio.',
         'audio/mpeg',
         'http://flickr.com/audio.mp3'
     ], 'unwanted embed + embedded audio' ],
     [ 'audio.mp3' => [
-        '<p>Caption for the audio link.</p>',
+        'Caption for the audio link.',
         'audio/mpeg',
         'http://flickr.com/audio.mp3'
     ], 'direct link' ],
     [ 'redirimage' => [
-        '<p>Caption for the image link.</p>',
+        'Caption for the image link.',
         'image/jpeg',
         'http://flickr.com/realimage.jpg'
     ], 'redirected link' ],
     [ 'doubleclick' => [
-        '<p>Caption for the embedded image.</p>',
+        'Caption for the embedded image.',
         'image/jpeg',
         'http://flickr.com/someimage.jpg'
     ], 'unwanted doubleclick image + actual image' ],
@@ -625,17 +625,17 @@ test_counts(67, 'Should now have 67 entries');
 
 for my $spec (
     [ 'onclick' => [
-        '<div>Index Sans was conceived as a text face, so a  large x-height was combined with elliptical curves to open the counterforms and improve legibility at smaller sizes. Stroke endings  utilize a subtle radius at each corner; a reference to striking a steel  punch into a soft metal surface.<div/><div/>Index Sans Typeface on the Behance Network</div>',
+        'Index Sans was conceived as a text face, so a large x-height was combined with elliptical curves to open the counterforms and improve legibility at smaller sizes. Stroke endings utilize a subtle radius at each corner; a reference to striking a steel punch into a soft metal surface. Index Sans Typeface on the Behance Network',
         'image/jpeg',
         'http://behance.vo.llnwd.net/profiles2/146457/projects/441024/1464571267585065.jpg',
     ], 'onclick summary' ],
     [ 'broken' => [
-        '<p>first graph</p><p>second <em><strong>graph</strong></em> man</p>',
+        'first graph second graph man',
         'image/jpeg',
         'http://foo.com/hey.jpg',
     ], 'broken html' ],
     [ 'hrm' => [
-        q{Jeff Koons has just unveiled the newest model in BMW's Art Car series. His vibrant design is one of the best in the series, which began in 1975, because he takes full advantage of the shape of the vehicle, rather than just painting on its surface. His art flows with the lines of the car to create an impression of speed and power. I mean, don't you totally want to grab this car and drive ridiculously fast on one of those mythical German roads with no speed limit? Of course you do! (thanks Peter)},
+        q{Jeff Koons has just unveiled the newest model in BMW's Art Car series. His vibrant design is one of the best in the series, which began in 1975, because he takes full advantage of the shape of the vehicle, rather than just painting on its surface. His art flows with the lines of the car to create an impression of speed and power. I mean, don't you totally want to grab this car and drive ridiculously fast on one of those mythical German roads with no speed limit? Of course you do! (thanks Peter )},
         'image/jpeg',
         'http://ideas.veer.com/images/assets/posts/0012/0871/Koons_Car.jpg',
     ], 'no summary hrm' ],
@@ -652,10 +652,10 @@ ok $eup->process("$uri/entities.rss"), 'Process CP1252 RSS feed with entities';
 test_counts(71, 'Should now have 71 entries');
 
 for my $spec (
-    [ 4034, '<p>A space: Nice, eh?</p>', 'nbsp' ],
-    [ 8536, '<p>We don’t ever stop.</p>', 'rsquo' ],
-    [ 4179, '<p>Jakob Trollbäck explains why.</p>', 'auml' ],
-    [ 3851, '<p>Start thinking "out of the lightbox"—and win!</p>', 'quot and mdash' ],
+    [ 4034, 'A space: Nice, eh?', 'nbsp' ],
+    [ 8536, 'We don’t ever stop.', 'rsquo' ],
+    [ 4179, 'Jakob Trollbäck explains why.', 'auml' ],
+    [ 3851, 'Start thinking "out of the lightbox"—and win!', 'quot and mdash' ],
 ) {
     is $dbh->selectrow_arrayref(
         'SELECT summary FROM entries WHERE id = ?',
@@ -675,7 +675,7 @@ is $dbh->selectrow_arrayref(
     'SELECT summary FROM entries WHERE id = ?',
     undef,
     _uuid('http://pipes.yahoo.com/pipes22', 'http://flickr.com@N22')
-)->[0], "<p>Tomas Laurinavi\x{c4}\x{8d}ius has added a photo to the pool:</p>",
+)->[0], "Tomas Laurinavi\x{c4}\x{8d}ius has added a photo to the pool:",
     'Nerbles should be valid UTF-8 in summary';
 
 ##############################################################################
@@ -695,7 +695,7 @@ is $dbh->selectrow_arrayref(
     'SELECT summary FROM entries WHERE id = ?',
     undef,
     _uuid('http://welie.example.com/', 'http://welie.example.com/broken')
-)->[0], "<p>\x{c3}\x{ad}Z\x{e2}\x{2030}\x{a4}F1\x{e2}\x{20ac}\x{201c}\x{c3}\x{2122}?Z\x{e2}\x{2c6},</p>",
+)->[0], "\x{c3}\x{ad}Z\x{e2}\x{2030}\x{a4}F1\x{e2}\x{20ac}\x{201c}\x{c3}\x{2122}?Z\x{e2}\x{2c6},",
     'Bogus characters should be removed from summary';
 
 ##############################################################################
