@@ -10,7 +10,7 @@ Getopt::Long::Configure( qw(bundling) );
 GetOptions(
     'app|a=s'        => \my $app,
     'strict|s'       => \my $strict,
-    'images_only|i'  => \my $images_only,
+    'images-only|i'  => \my $images_only,
     'limit|l=i'      => \my $limit,
     'text-limit|t=i' => \my $text_limit,
 #    'verbose|V+'     => \my $verbose,
@@ -69,6 +69,7 @@ number of entries from the database and writing to an Atom feed file.
   -a --app NAME         Name of the FeedScene app.
   -l --limit LIMIT      Number of entries to output in each non-text portal.
   -t --text-limit LIMIT Number of entries to output in the text portal.
+  -i --images-only      Output enclosures only if they're images.
   -s --strict           Output strictly compliant Atom feed.
   -h --help             Print a usage statement and exit.
   -m --man              Print the complete documentation and exit.
