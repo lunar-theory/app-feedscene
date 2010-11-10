@@ -10,6 +10,7 @@ Getopt::Long::Configure( qw(bundling) );
 GetOptions(
     'app|a=s'        => \my $app,
     'strict|s'       => \my $strict,
+    'images_only|i'  => \my $images_only,
     'limit|l=i'      => \my $limit,
     'text-limit|t=i' => \my $text_limit,
 #    'verbose|V+'     => \my $verbose,
@@ -33,8 +34,9 @@ if ($version) {
 _pod2usage('-message' => 'Missing or invalid --app option') unless $app;
 
 App::FeedScene::Generator->new(
-    app    => $app,
-    strict => $strict,
+    app         => $app,
+    strict      => $strict,
+    images_only => $images_only
     (defined $limit      ? (limit      => $limit     ) : ()),
     (defined $text_limit ? (text_limit => $text_limit) : ()),
 )->go;

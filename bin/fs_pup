@@ -11,7 +11,7 @@ GetOptions(
     'app|a=s'    => \my $app,
     'portal|p=i' => \my $portal,
     'all'        => \my $all,
-    'icon'       => \my $icon,
+    'icon|i=s'   => \my $icon,
     'verbose|V+' => \my $verbose,
     'help|h'     => \my $help,
     'man|m'      => \my $man,
@@ -73,7 +73,7 @@ FeedScene feed by F<fs_gen>.
   -a --app NAME       Name of the FeedScene app.
   -u --portal PORTAL  Portal number to update.
      --all            Update all portals.
-  -i --icon           Favicon URL for the app. Defaults to "none".
+  -i --icon ICON      Favicon URL for the app. Defaults to "none".
   -V --verbose        Incremental verbosity to STDERR.
   -h --help           Print a usage statement and exit.
   -m --man            Print the complete documentation and exit.

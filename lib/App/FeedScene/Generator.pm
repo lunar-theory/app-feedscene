@@ -14,11 +14,12 @@ my $domain  = 'lunar-theory.com';
 my $company = 'Lunar Theory';
 
 (my $def_dir = __FILE__) =~ s{(?:blib/)?lib/App/FeedScene/Generator[.]pm$}{feeds};
-has app        => (is => 'rw', isa => 'Str',  required => 1 );
-has dir        => (is => 'rw', isa => 'Str',  default => $def_dir );
-has strict     => (is => 'rw', isa => 'Bool', default => 0 );
-has limit      => (is => 'rw', isa => 'Int',  default => 36 );
-has text_limit => (is => 'rw', isa => 'Int',  default => 256 );
+has app         => (is => 'rw', isa => 'Str',  required => 1 );
+has dir         => (is => 'rw', isa => 'Str',  default => $def_dir );
+has strict      => (is => 'rw', isa => 'Bool', default => 0 );
+has limit       => (is => 'rw', isa => 'Int',  default => 36 );
+has text_limit  => (is => 'rw', isa => 'Int',  default => 256 );
+has images_only => (is => 'rw', isa => 'Bool', default => 0 );
 
 sub go {
     my $self = shift;
@@ -76,12 +77,15 @@ sub go {
     # Assemble the entries.
     my @entries;
     $conn->run(sub {
+        my $img = $self->images_only
+            ? "\n               AND (enclosure_type = '' OR enclosure_type LIKE 'image/%')"
+            : '';
         my $sth = shift->prepare(qq{
             SELECT id, url, title, published_at, updated_at, summary, author,
                    enclosure_url, enclosure_type, feed_id, portal$feed_cols
               FROM feed_entries
              WHERE portal = ?
-               AND published_at <= strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+               AND published_at <= strftime('%Y-%m-%dT%H:%M:%SZ', 'now')$img
              ORDER BY published_at DESC
              LIMIT ?
         });

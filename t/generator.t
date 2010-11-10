@@ -2,7 +2,7 @@
 
 use 5.12.0;
 use utf8;
-use Test::More tests => 194;
+use Test::More tests => 198;
 #use Test::More 'no_plan';
 use Test::More::UTF8;
 use Test::XPath;
@@ -110,8 +110,9 @@ is $gen->link, "http://$domain/feeds/" . $gen->filename,
     'Its link should be correct';
 
 ##############################################################################
-# Test non-strict output.
+# Test non-strict output and images only.
 END { unlink $gen->filepath; }
+$gen->images_only(1);
 ok $gen->go, 'Go!';
 my $tx = Test::XPath->new(
     file  => $gen->filepath,
@@ -122,7 +123,7 @@ my $tx = Test::XPath->new(
 );
 
 test_root_metadata($tx);
-test_entries($tx, 0);
+test_entries($tx, 0, 1);
 
 # Check fs:sources element.
 $tx->is('count(/a:feed/fs:sources)', 1, 'Should have 1 sources element');
@@ -158,7 +159,7 @@ $tx->ok('/a:feed/fs:sources', 'Should have sources', sub {
 # Test strict output.
 ok $gen = $CLASS->new(app => 'foo', strict => 1), 'Create strict generator';
 ok $gen->strict, 'It Should be strict';
-ok $gen->go, 'Go strict!';
+ok $gen->go, 'Go strict and with images only!';
 
 $tx = Test::XPath->new(
     file  => $gen->filepath,
@@ -292,8 +293,9 @@ sub test_root_metadata {
 }
 
 sub test_entries {
-    my ($tx, $strict) =@_;
-    $tx->is('count(/a:feed/a:entry)', 14, 'Should have 14 entries' );
+    my ($tx, $strict, $images_only) = @_;
+    my $count = $images_only ? 8 : 14;
+    $tx->is('count(/a:feed/a:entry)', $count, "Should have $count entries" );
 
     # Check the first entry.
     $tx->ok('/a:feed/a:entry[1]', 'Check first entry', sub {
@@ -326,7 +328,7 @@ sub test_entries {
     });
 
     # Look at the fourth entry, from portal 2, with an enclosure.
-    $tx->ok('/a:feed/a:entry[4]', 'Check third entry', sub {
+    $tx->ok('/a:feed/a:entry[4]', 'Check fourth entry', sub {
         $_->is('count(./*)', 8, 'Should have 8 subelements');
         $_->is('./a:id', 'urn:uuid:257c8075-dc7c-5678-8de0-5bb88360dff6', '...Entry ID');
         $_->is('./a:link[@rel="alternate"]/@href', 'http://flickr.com/some%C3%AEmage', '...Link');
@@ -358,4 +360,21 @@ sub test_entries {
         });
     });
 
+    # Look at the eigtht entry with a movie enclosure.
+    $tx->ok('/a:feed/a:entry[8]', 'Check eighth entry', sub {
+        if ($images_only) {
+            $_->is(
+                './a:link[@rel="enclosure"]/@href',
+                'http://flickr.com/someimage.jpg',
+                '...Should have no movie enclosure link'
+            );
+        } else {
+            $_->is(
+                './a:link[@rel="enclosure"]/@href',
+                'http://flickr.com/video.mov',
+                '...Should have movie enclosure link'
+            );
+        }
+
+    });
 }

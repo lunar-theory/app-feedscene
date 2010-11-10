@@ -10,7 +10,7 @@ Getopt::Long::Configure( qw(bundling) );
 GetOptions(
     'app|a=s'    => \my $app,
     'url|u=s'    => \my $url,
-   'verbose|V+' => \my $verbose,
+    'verbose|V+' => \my $verbose,
     'help|h'     => \my $help,
     'man|m'      => \my $man,
     'version|v'  => \my $version,
