@@ -52,7 +52,8 @@ $conn->txn(sub {
         [ 'simple.atom',     0 ],
         [ 'enclosures.atom', 1 ],
     ) {
-        $sth->execute("$uri/$spec->[0]", @{$spec}, , '2010-06-08T14:13:38');
+        my $uri = URI->new("$uri/" . shift @{ $spec })->canonical;
+        $sth->execute($uri, $uri, @{$spec}, '2010-06-08T14:13:38');
     }
 });
 
@@ -130,9 +131,10 @@ $tx->is('count(/a:feed/fs:sources)', 1, 'Should have 1 sources element');
 $tx->ok('/a:feed/fs:sources', 'Should have sources', sub {
     $_->is('count(./fs:source)', 2, 'Should have two sources');
     $_->ok('./fs:source[1]', 'First source', sub {
+        my $url = URI->new("$uri/simple.atom")->canonical;
         $_->is('count(./*)', 9, 'Should have 9 source subelements');
         $_->is('./fs:id', 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6', 'ID should be correct');
-        $_->is('./fs:link[@rel="self"]/@href', "$uri/simple.atom", 'Should have self link');
+        $_->is('./fs:link[@rel="self"]/@href', $url, 'Should have self link');
         $_->is('./fs:link[@rel="alternate"]/@href', 'http://example.com/', 'Should have alternate link');
         $_->is('./fs:title', 'Simple Atom Feed', 'Title should be correct');
         $_->is('./fs:subtitle', 'Witty & clever', 'Subtitle should be correct');
@@ -142,9 +144,10 @@ $tx->ok('/a:feed/fs:sources', 'Should have sources', sub {
         $_->is("./fs:category[\@scheme='http://$domain/ns/portal']/\@term", 0, 'Portal should be correct');
     });
     $_->ok('./fs:source[2]', 'Second source', sub {
+        my $url = URI->new("$uri/enclosures.atom")->canonical;
         $_->is('count(./*)', 7, 'Should have 7 source subelements');
         $_->is('./fs:id', 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af7', 'ID should be correct');
-        $_->is('./fs:link[@rel="self"]/@href', "$uri/enclosures.atom", 'Should have self link');
+        $_->is('./fs:link[@rel="self"]/@href', $url, 'Should have self link');
         $_->is('./fs:link[@rel="alternate"]/@href', 'http://example.com/', 'Should have alternate link');
         $_->is('./fs:title', 'Enclosures Atom Feed', 'Title should be correct');
         $_->is('./fs:updated', '2009-12-13T18:30:02Z', 'Updated should be correct');
@@ -316,7 +319,8 @@ sub test_entries {
             $_->is('./a:id', 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6', '......ID');
             if ($strict) {
                 # Confirm all other elments.
-                $_->is('./a:link[@rel="self"]/@href', "$uri/simple.atom", '......Link');
+                my $url = URI->new("$uri/simple.atom")->canonical;
+                $_->is('./a:link[@rel="self"]/@href', $url, '......Link');
                 $_->is('./a:title', 'Simple Atom Feed', '......Title');
                 $_->is('./a:subtitle', 'Witty & clever', '......Subtitle');
                 $_->is('./a:rights', '© 2010 Big Fat Example', '......Rights');
@@ -349,7 +353,8 @@ sub test_entries {
             $_->is('./a:id', 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af7', '......ID');
             if ($strict) {
                 # Confirm all other elments.
-                $_->is('./a:link[@rel="self"]/@href', "$uri/enclosures.atom", '......Link');
+                my $url = URI->new("$uri/enclosures.atom")->canonical;
+                $_->is('./a:link[@rel="self"]/@href', $url, '......Link');
                 $_->is('./a:title', 'Enclosures Atom Feed', '......Title');
                 $_->is('count(./a:subtitle)', 0, '......Subtitle');
                 $_->is('count(./a:rights)', 0, '......Rights');

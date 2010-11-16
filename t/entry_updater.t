@@ -56,7 +56,11 @@ $conn->txn(sub {
         [ 1, 'more_summaries.atom' ],
         [ 1, 'nerbles.rss'         ],
     ) {
-        $sth->execute(@{ $spec }, "$uri/$spec->[1]", '2010-06-08T14:13:38' );
+        $sth->execute(
+            @{ $spec },
+            URI->new("$uri/$spec->[1]")->canonical,
+            '2010-06-08T14:13:38'
+        );
     }
 });
 
@@ -76,7 +80,7 @@ is $eup->app, 'foo', 'The app attribute should be set';
 
 $eup = Test::MockObject::Extends->new( $eup );
 
-my @urls = (
+my @urls = map { URI->new($_)->canonical } (
     "$uri/simple.atom",
     "$uri/simple.rss",
     "$uri/summaries.rss",
@@ -105,7 +109,7 @@ $res_mock->mock( message => 'OMGWTF' );
 test_fails(0, "$uri/simple.atom", 'Should start with no failures');
 ok $eup->process("$uri/simple.atom"), 'Process a feed';
 test_counts(0, 'Should still have no entries');
-test_fails(1, "$uri/simple.atom", 'Should have an fail count of one');
+test_fails(1, "$uri/simple.atom", 'Should have a fail count of one');
 
 # Go again.
 ok $eup->process("$uri/simple.atom"), 'Process a feed again';
@@ -124,20 +128,21 @@ my $threshold =
     ? App::FeedScene::EntryUpdater::ERR_INTERVAL
     : App::FeedScene::EntryUpdater::ERR_THRESHOLD + App::FeedScene::EntryUpdater::ERR_INTERVAL;
 
+my $feed = URI->new("$uri/simple.atom")->canonical;
 $res_mock->mock( code => HTTP_INTERNAL_SERVER_ERROR );
 $conn->run(sub {
     $_->do(
         'UPDATE feeds SET fail_count = ? WHERE url = ?',
-        undef, $threshold - 1, "$uri/simple.atom"
+        undef, $threshold - 1, $feed
     );
 });
 stderr_like { $eup->process("$uri/simple.atom") }
-    qr{Error #$threshold retrieving \Q$uri/simple.atom\E -- 000 Unknown code},
+    qr{Error #$threshold retrieving \Q$feed\E -- 000 Unknown code},
     'Should get exception request failure';
-test_fails($threshold, "$uri/simple.atom", 'fail count should be at threshold');
-stderr_is { $eup->process("$uri/simple.atom") }
+test_fails($threshold, $feed, 'fail count should be at threshold');
+stderr_is { $eup->process($feed) }
     '', 'But should get nothing on the next request failure';
-test_fails($threshold + 1, "$uri/simple.atom", 'fail count should be incremented');
+test_fails($threshold + 1, $feed, 'fail count should be incremented');
 
 # Test success.
 $res_mock->unmock('code');
@@ -147,13 +152,13 @@ $res_mock->unmock('is_success');
 # Okay, now let's test the processing.
 ok $eup->process("$uri/simple.atom"), 'Process simple Atom feed';
 test_counts(3, 'Should now have three entries');
-test_fails(0, "$uri/simple.atom", 'fail count should be back to 0');
+test_fails(0, $feed, 'fail count should be back to 0');
 
 # Check the feed data.
 is_deeply $conn->run(sub{ shift->selectrow_arrayref(
     'SELECT title, subtitle, site_url, icon_url, updated_at, rights
        FROM feeds WHERE url = ?',
-    undef, "$uri/simple.atom",
+    undef, $feed,
 )}), [
     'Simple Atom Feed',
     'Witty & clever',
@@ -253,15 +258,16 @@ ok $eup->process("$uri/simple.rss"), 'Process simple RSS feed';
 test_counts(5, 'Should now have five entries');
 
 # Check the feed data.
+$feed = URI->new("$uri/simple.rss")->canonical;
 is_deeply $conn->run(sub{ shift->selectrow_arrayref(
     'SELECT title, site_url FROM feeds WHERE url = ?',
-    undef, "$uri/simple.rss",
+    undef, $feed
 )}), ['Simple RSS Feed', 'http://example.net/f%C3%B8%C3%B8'], 'RSS feed should be updated';
 
 # Check the entry data.
 is_deeply test_data('urn:uuid:3577008b-ee22-5b79-9ca9-ac87e42ee601'), {
     id             => 'urn:uuid:3577008b-ee22-5b79-9ca9-ac87e42ee601',
-    feed_id        => "$uri/simple.rss",
+    feed_id        => $feed,
     url            => 'http://example.net/2010/05/17/long-goodbye/',
     title          => 'The Long Goodbye',
     published_at   => '2010-05-17T14:58:50Z',
@@ -274,7 +280,7 @@ is_deeply test_data('urn:uuid:3577008b-ee22-5b79-9ca9-ac87e42ee601'), {
 
 is_deeply test_data('urn:uuid:5e125dfa-0b69-504c-96a0-83f552645c6b'), {
     id             => 'urn:uuid:5e125dfa-0b69-504c-96a0-83f552645c6b',
-    feed_id        => "$uri/simple.rss",
+    feed_id        => $feed,
     url            => 'http://example.net/2010/05/16/little-sister/',
     title          => '',
     published_at   => '2010-05-16T14:58:50Z',
@@ -291,9 +297,10 @@ ok $eup->process("$uri/latin-1.atom"), 'Process Latin-2 Atom feed';
 test_counts(7, 'Should now have seven entries');
 
 # Check that the title was converted to UTF-8.
+$feed = URI->new("$uri/latin-1.atom")->canonical;
 is $conn->run(sub{ shift->selectrow_array(
     'SELECT title FROM feeds WHERE url = ?',
-    undef, "$uri/latin-1.atom",
+    undef, $feed,
 )}), 'Latin-1 Atom “Feed”', 'Atom Feed title CP1252 Entities should be UTF-8';
 
 my ($title, $summary) = $conn->dbh->selectrow_array(
@@ -320,9 +327,10 @@ ok $eup->process("$uri/latin-1.rss"), 'Process Latin-1 RSS feed';
 test_counts(9, 'Should now have nine entries');
 
 # Check that the rights were converted to UTF-8.
+$feed = URI->new("$uri/latin-1.rss")->canonical;
 is $conn->run(sub{ shift->selectrow_array(
     'SELECT rights FROM feeds WHERE url = ?',
-    undef, "$uri/latin-1.rss",
+    undef, $feed,
 )}), 'David “Theory” Wheeler', 'RSS Feed rights CP1252 Entities should be UTF-8';
 
 ($title, $summary) = $conn->dbh->selectrow_array(
@@ -350,15 +358,16 @@ ok $eup->process("$uri/summaries.rss"), 'Process RSS feed with various summaries
 test_counts(31, 'Should now have 31 entries');
 
 # Check the feed data.
+$feed = URI->new("$uri/summaries.rss")->canonical;
 is_deeply $conn->run(sub{ shift->selectrow_arrayref(
     'SELECT title, subtitle, site_url, icon_url, updated_at, rights
        FROM feeds WHERE url = ?',
-    undef, "$uri/summaries.rss",
+    undef, $feed
 )}), [
     'Summaries RSS Feed',
     '',
-    'http://foo.org',
-    'http://getfavicon.appspot.com/http://foo.org?defaulticon=http://designsceneapp.com/favicon.ico',
+    'http://foo.org/',
+    'http://getfavicon.appspot.com/http://foo.org/?defaulticon=http://designsceneapp.com/favicon.ico',
     '2010-06-05T17:29:41Z',
     '',
 ], 'Summaries feed should be updated including current updated time';
@@ -390,7 +399,7 @@ for my $spec (
 ) {
     is +($dbh->selectrow_array(
         'SELECT summary FROM entries WHERE id = ?',
-        undef, _uuid('http://foo.org', "http://foo.org/lg$spec->[0]")
+        undef, _uuid('http://foo.org/', "http://foo.org/lg$spec->[0]")
     ))[0], $spec->[1], "Should have proper summary for entry $spec->[0]";
 }
 
@@ -410,7 +419,7 @@ for my $spec (
     is_deeply $dbh->selectrow_arrayref(
         'SELECT published_at, updated_at FROM entries WHERE id = ?',
         undef,
-        _uuid('http://baz.org', "http://baz.org/lg$spec->[0]")
+        _uuid('http://baz.org/', "http://baz.org/lg$spec->[0]")
     ), $spec->[1], "Should have $spec->[2]";
 }
 
@@ -426,11 +435,11 @@ is_deeply $dbh->selectall_arrayref(
 ), [
     [
         'urn:uuid:3577008b-ee22-5b79-9ca9-ac87e42ee601',
-        "$uri/simple.rss",
+        URI->new("$uri/simple.rss")->canonical,
     ],
     [
-        'urn:uuid:bd1ce00c-ab8c-50bc-81c9-60ece4baa685',
-        "$uri/conflict.rss",
+        'urn:uuid:7ff1dcfc-42cb-52d8-aaf5-759103cc8f8c',
+        URI->new("$uri/conflict.rss")->canonical,
     ]
 ], 'Should have two rows with the same link but different IDs and feed URLs';
 
@@ -466,7 +475,7 @@ test_counts(51, 'Should now have 51 entries');
 # Check the feed data.
 is_deeply $conn->run(sub{ shift->selectrow_arrayref(
     'SELECT title, subtitle, site_url, icon_url, rights FROM feeds WHERE url = ?',
-    undef, "$uri/enclosures.atom",
+    undef, URI->new("$uri/enclosures.atom")->canonical,
 )}), [
     'Enclosures Atom Feed',
     '',
@@ -517,11 +526,12 @@ is_deeply test_data('urn:uuid:844df0ef-fed0-54f0-ac7d-2470fa7e9a9c'), {
 }, 'Data for entry with two should have just the first enclosure';
 
 # Look at the RSS versions, too.
+$feed = URI->new("$uri/enclosures.rss")->canonical;
 is_deeply test_data('urn:uuid:db9bd827-0d7f-5067-ad18-2c666ab1a028'), {
     author         => '',
     enclosure_type => 'image/jpeg',
     enclosure_url  => 'http://farm2.static.flickr.org/1169/4601733070_92cd987ff5_%C3%AE.jpg',
-    feed_id        => "$uri/enclosures.rss",
+    feed_id        => $feed,
     id             => 'urn:uuid:db9bd827-0d7f-5067-ad18-2c666ab1a028',
     published_at   => '2009-12-13T08:29:29Z',
     summary        => 'Caption for the encosed image.',
@@ -534,7 +544,7 @@ is_deeply test_data('urn:uuid:4aef01ff-75c3-5dcb-a53f-878e3042f3cf'), {
     author         => '',
     enclosure_type => 'image/jpeg',
     enclosure_url  => 'http://farm2.static.flickr.org/1169/4601733070_92cd987ff6_o.jpg',
-    feed_id        => "$uri/enclosures.rss",
+    feed_id        => $feed,
     id             => 'urn:uuid:4aef01ff-75c3-5dcb-a53f-878e3042f3cf',
     published_at   => '2009-12-12T08:19:29Z',
     summary        => 'Caption for both of the the encosed images.',
@@ -674,7 +684,7 @@ test_counts(72, 'Should now have 72 entries');
 is $dbh->selectrow_arrayref(
     'SELECT summary FROM entries WHERE id = ?',
     undef,
-    _uuid('http://pipes.yahoo.com/pipes22', 'http://flickr.com@N22')
+    _uuid('http://pipes.yahoo.com/pipes22', 'http://flickr.com@n22/')
 )->[0], "Tomas Laurinavi\x{c4}\x{8d}ius has added a photo to the pool:",
     'Nerbles should be valid UTF-8 in summary';
 
@@ -805,7 +815,7 @@ sub test_fails {
     is +App::FeedScene->new->conn->run(sub {
         (shift->selectrow_array(
             'SELECT fail_count FROM feeds WHERE url = ?',
-            undef, $url
+            undef, URI->new($url)->canonical
         ))[0]
     }), $count, $descr;
 }

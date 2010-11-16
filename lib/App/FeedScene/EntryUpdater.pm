@@ -51,7 +51,7 @@ sub process {
     my ($self, $feed_url) = @_;
     my $portal = $self->portal;
     say STDERR "  Processing $feed_url" if $self->verbose;
-    $feed_url = URI->new($feed_url);
+    $feed_url = URI->new($feed_url)->canonical;
 
     my $conn = App::FeedScene->new($self->app)->conn;
     my $res  = $self->ua->get($feed_url);
@@ -95,8 +95,8 @@ sub process {
     my $site_url = $feed->link;
     $site_url    = $site_url->[0] if ref $site_url;
     $site_url    = $base_url
-                 ? URI->new_abs($site_url, $base_url)
-                 : URI->new($site_url);
+                 ? URI->new_abs($site_url, $base_url)->canonical
+                 : URI->new($site_url)->canonical;
     my $host     = $site_url ? $site_url->host : $feed_url->host;
     $base_url  ||= $site_url;
 
@@ -115,8 +115,8 @@ sub process {
         for my $entry ($feed->entries) {
             say STDERR '    ', $entry->link if $be_verbose;
             my $entry_link = $base_url
-                ? URI->new_abs($entry->link, $base_url)
-                : URI->new($entry->link);
+                ? URI->new_abs($entry->link, $base_url)->canonical
+                : URI->new($entry->link)->canonical;
             my ($enc_type, $enc_url) = ('', '');
 
             if ($portal) {
@@ -185,7 +185,7 @@ sub process {
                 URI->new(sprintf(
                     'http://getfavicon.appspot.com/%s?defaulticon=%s',
                     $site_url || $feed_url, $self->icon
-                )),
+                ))->canonical,
                 ($feed->modified || DateTime->now)->set_time_zone('UTC')->iso8601 . 'Z',
                 App::FeedScene::Parser->strip_html($feed->copyright || ''),
                 0,
@@ -445,7 +445,7 @@ sub _find_enclosure {
     for my $enc ($entry->enclosures) {
         my $type = $enc->type or next;
         next if $type !~ m{^(?:image|audio|video)/};
-        return $self->_audit_enclosure($enc->type, URI->new($enc->url));
+        return $self->_audit_enclosure($enc->type, URI->new($enc->url)->canonical);
     }
 
     # Use XML::LibXML and XPath to find something and link it up.
@@ -455,7 +455,9 @@ sub _find_enclosure {
         my $doc = App::FeedScene::Parser->parse_html_string($body) or next;
         for my $node ($doc->findnodes('//img/@src|//audio/@src|//video/@src')) {
             my $url = $node->nodeValue or next;
-            $url = $base_url ? URI->new_abs($url, $base_url) : URI->new($url);
+            $url = $base_url
+                ? URI->new_abs($url, $base_url)->canonical
+                : URI->new($url)->canonical;
             next if !$url->can('host') || $url->host =~ /\bdoubleclick[.]net$/;
             (my($type), $url) = $self->_get_type($url, $base_url);
             return $self->_audit_enclosure($type, $url)
@@ -486,7 +488,9 @@ sub _uuid {
 my $mt = MIME::Types->new;
 sub _get_type {
     my ($self, $url, $base_url) = @_;
-    $url = $base_url ? URI->new_abs($url, $base_url) : URI->new($url);
+    $url = $base_url
+        ? URI->new_abs($url, $base_url)->canonical
+        : URI->new($url)->canonical;
     if (my $type = $mt->mimeTypeOf($url)) {
         return $type, $url;
     }
@@ -494,7 +498,7 @@ sub _get_type {
     # Maybe the thing redirects? Ask it for its content type.
     my $res = $self->ua->head($url);
     return $res->is_success
-        ? (scalar $res->content_type, URI->new($res->request->uri))
+        ? (scalar $res->content_type, URI->new($res->request->uri)->canonical)
         : undef;
 }
 
@@ -515,7 +519,7 @@ sub _audit_enclosure {
         );
         return $url;
     })) {
-        return $type, URI->new($cached_url);
+        return $type, URI->new($cached_url)->canonical;
     }
 
     # Request information about the photo or return.
@@ -539,7 +543,7 @@ sub _audit_enclosure {
                     undef, $photo_id, $source
                 );
             });
-            return $type, URI->new($source);
+            return $type, URI->new($source)->canonical;
         }
     }
 

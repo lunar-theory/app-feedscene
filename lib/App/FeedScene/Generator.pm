@@ -146,7 +146,7 @@ sub go {
             }, 'FeedScene' ),
             $a->author(
                 $a->name($company),
-                $a->uri("http://$domain/")
+                $a->uri(URI->new("http://$domain/")->canonical),
             ),
             $sources,
             @entries,

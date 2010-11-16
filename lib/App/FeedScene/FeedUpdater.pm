@@ -65,7 +65,7 @@ sub process {
             my ($portal, $feed_url, $category) = $csv->fields;
             $portal = 0 if $portal eq 'text';
             say STDERR "$portal: $feed_url" if $self->verbose;
-            $feed_url = URI->new($feed_url);
+            $feed_url = URI->new($feed_url)->canonical;
 
             # Skip to the next entry if we've already got this URL.
             my ($id) = $dbh->selectrow_array($sel, undef, $feed_url->as_string);
@@ -87,12 +87,12 @@ sub process {
             my $site_url = $feed->link;
             $site_url    = $site_url->[0] if ref $site_url;
             $site_url    = $feed->base
-                         ? URI->new_abs($site_url, $feed->base)
-                         : URI->new($site_url);
+                         ? URI->new_abs($site_url, $feed->base)->canonical
+                         : URI->new($site_url)->canonical;
             my $icon_url = URI->new(sprintf(
                 'http://getfavicon.appspot.com/%s?defaulticon=none',
                 $site_url || $feed_url
-            ));
+            ))->canonical;
 
             $ins->execute(_clean(
                 $feed_url,

@@ -109,7 +109,7 @@ test_counts(7, 'Should now have 7 feeds');
 
     test_feeds(0, [
         {
-            url      => "$uri/simple.atom",
+            url      => URI->new("$uri/simple.atom")->canonical,
             title    => 'Simple Atom Feed',
             subtitle => 'Witty & clever',
             site_url => 'http://example.com/',
@@ -120,7 +120,7 @@ test_counts(7, 'Should now have 7 feeds');
             id       => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6',
         },
         {
-            url      => "$uri/simple.rss",
+            url      => URI->new("$uri/simple.rss")->canonical,
             title    => 'Simple RSS Feed',
             subtitle => '',
             site_url => 'http://example.net/f%C3%B8%C3%B8',
@@ -128,7 +128,7 @@ test_counts(7, 'Should now have 7 feeds');
             updated_at => '2010-05-17T00:00:00Z',
             rights   => '',
             category => '',
-            id       => "$uri/simple.rss",
+            id       => URI->new("$uri/simple.rss")->canonical,
         },
     ]);
 
@@ -152,7 +152,7 @@ sub test_feeds {
 sub test_initial_feeds {
     test_feeds(0, [
         {
-            url      => "$uri/simple.atom",
+            url      => URI->new("$uri/simple.atom")->canonical,
             title    => 'Simple Atom Feed',
             subtitle => 'Witty & clever',
             site_url => 'http://example.com/',
@@ -163,7 +163,7 @@ sub test_initial_feeds {
             id       => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6',
         },
         {
-            url      => "$uri/simple.rss",
+            url      => URI->new("$uri/simple.rss")->canonical,
             title    => 'Simple RSS Feed',
             subtitle => '',
             site_url => 'http://example.net/f%C3%B8%C3%B8',
@@ -171,14 +171,14 @@ sub test_initial_feeds {
             updated_at => '2010-05-17T00:00:00Z',
             rights   => '',
             category => '',
-            id       => "$uri/simple.rss",
+            id       => URI->new("$uri/simple.rss")->canonical,
         },
     ]);
 
     # Check feed encodings.
     test_feeds(1, [
         {
-            url      => "$uri/latin-1.atom",
+            url      => URI->new("$uri/latin-1.atom")->canonical,
             title    => 'Latin-1 Atom “Feed”',
             subtitle => '',
             site_url => 'http://foo.org/',
@@ -189,33 +189,33 @@ sub test_initial_feeds {
             id       => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af8',
         },
         {
-            url      => "$uri/summaries.rss",
+            url      => URI->new("$uri/summaries.rss")->canonical,
             title    => 'Summaries RSS Feed',
             subtitle => '',
-            site_url => 'http://foo.org',
-            icon_url => 'http://getfavicon.appspot.com/http://foo.org?defaulticon=none',
+            site_url => 'http://foo.org/',
+            icon_url => 'http://getfavicon.appspot.com/http://foo.org/?defaulticon=none',
             updated_at => '2010-06-05T17:29:41Z',
             rights   => '',
             category => 'Lögos & Branding',
-            id       => "$uri/summaries.rss",
+            id       => URI->new("$uri/summaries.rss")->canonical,
         },
     ]);
 
     # Check bogus encoding.
     test_feeds(2, [
         {
-            url      => "$uri/dates.rss",
+            url      => URI->new("$uri/dates.rss")->canonical,
             title    => 'Simple RSS Dates',
             subtitle => '',
-            site_url => 'http://baz.org',
-            icon_url => 'http://getfavicon.appspot.com/http://baz.org?defaulticon=none',
+            site_url => 'http://baz.org/',
+            icon_url => 'http://getfavicon.appspot.com/http://baz.org/?defaulticon=none',
             updated_at => '2010-05-17T00:00:00Z',
             rights   => '',
             category => 'Infographics',
-            id       => "$uri/dates.rss",
+            id       => URI->new("$uri/dates.rss")->canonical,
         },
         {
-            url      => "$uri/latin-1.rss",
+            url      => URI->new("$uri/latin-1.rss")->canonical,
             title    => '“Latin-1 RSS Feed”', # Quotation marks are CP1252 in the XML.
             subtitle => '',
             site_url => 'http://foo.net/',
@@ -223,14 +223,14 @@ sub test_initial_feeds {
             updated_at => '2009-12-13T18:30:02Z',
             rights   => 'David “Theory” Wheeler',
             category => 'Lögos & Branding',
-            id      => "$uri/latin-1.rss",
+            id       => URI->new("$uri/latin-1.rss")->canonical,
         },
     ]);
 
     # Check last feeds.
     test_feeds(6, [
         {
-            url      => "$uri/enclosures.atom",
+            url      => URI->new("$uri/enclosures.atom")->canonical,
             title    => 'Enclosures Atom Feed',
             subtitle => '',
             site_url => 'http://example.com/',
@@ -241,7 +241,7 @@ sub test_initial_feeds {
             id       => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af7',
         },
         {
-            url      => "$uri/enclosures.rss",
+            url      => URI->new("$uri/enclosures.rss")->canonical,
             title    => 'Enclosures RSS Feed',
             subtitle => '',
             site_url => 'http://example.org/',
@@ -249,7 +249,7 @@ sub test_initial_feeds {
             updated_at => '2010-05-17T14:58:50Z',
             rights   => '',
             category => 'Typography',
-            id       => "$uri/enclosures.rss",
+            id       => URI->new("$uri/enclosures.rss")->canonical,
         },
     ]);
 }
