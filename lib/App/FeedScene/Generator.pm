@@ -9,6 +9,7 @@ use DateTime;
 use Moose;
 use File::Spec;
 use File::Path;
+use URI;
 
 my $domain  = 'lunar-theory.com';
 my $company = 'Lunar Theory';
