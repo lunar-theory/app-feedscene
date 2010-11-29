@@ -41,6 +41,8 @@ sub _handle_error {
     say STDERR "Error parsing ", $res->request->uri, eval {
         ' (libxml2 error code ' . $err->code . "):\n\n" . $err->as_string
     } || ":\n\n$err";
+    say STDERR "Response Status: ", $res->status_line;
+    say STDERR "Headers: ", $res->headers_as_string;
     return;
 }
 
