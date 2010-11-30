@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 32;
+use Test::More tests => 34;
 #use Test::More 'no_plan';
 use Test::More::UTF8;
 use Test::NoWarnings;
@@ -61,6 +61,13 @@ isa_ok $lup->ua, 'App::FeedScene::UA', 'The ua attribute should now be set';
 # Test HTTP_NOT_MODIFIED.
 $mock->mock( code => HTTP_NOT_MODIFIED );
 ok $lup->run, 'Run the update';
+test_counts(0, 'Should still have no feeds');
+
+# Test non-XML.
+$mock->unmock_all;
+$mock->mock(content_is_xml => 0);
+stderr_like { $lup->run } qr{406 Not acceptable: text/html},
+    'Should get exception request failure';
 test_counts(0, 'Should still have no feeds');
 
 # Test success.

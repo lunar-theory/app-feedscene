@@ -57,7 +57,7 @@ sub process {
     my $res  = $self->ua->get($feed_url);
 
     # Handle errors.
-    unless ($res->is_success) {
+    if (!$res->is_success || !$res->content_is_xml) {
         if ($res->code == HTTP_NOT_MODIFIED) {
             # No error. Reset the fail count.
             $conn->run(sub {
@@ -80,8 +80,12 @@ sub process {
                       FROM feeds
                      WHERE url = ?
                 }, undef, $feed_url);
-                say STDERR "Error #$count retrieving $feed_url -- " . $res->status_line
-                    if $count >= ERR_THRESHOLD && !($count % ERR_INTERVAL);
+                if ($count >= ERR_THRESHOLD && !($count % ERR_INTERVAL)) {
+                    say STDERR "Error #$count retrieving $feed_url -- ",
+                        $res->is_success
+                            ? "406 Not acceptable: " . $res->content_type
+                            : $res->status_line;
+                }
             });
         }
 

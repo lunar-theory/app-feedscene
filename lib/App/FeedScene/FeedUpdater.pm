@@ -76,9 +76,13 @@ sub process {
             }
 
             my $res = $ua->get($feed_url);
-            unless ($res->is_success) {
-                say STDERR "Error retrieving $feed_url: " . $res->status_line
-                    if $res->code != HTTP_NOT_MODIFIED;
+            if (!$res->is_success || !$res->content_is_xml) {
+                if ($res->code != HTTP_NOT_MODIFIED) {
+                    say STDERR "Error retrieving $feed_url -- ",
+                        $res->is_success
+                            ? "406 Not acceptable: " . $res->content_type
+                            : $res->status_line;
+                }
                 next;
             }
 

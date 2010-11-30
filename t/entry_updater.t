@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 174;
+use Test::More tests => 177;
 #use Test::More 'no_plan';
 use Test::More::UTF8;
 use Test::NoWarnings;
@@ -116,7 +116,17 @@ ok $eup->process("$uri/simple.atom"), 'Process a feed again';
 test_counts(0, 'Should still have no entries');
 test_fails(2, "$uri/simple.atom", 'Should now have fail count two');
 
+# Test non-XML.
+$res_mock->unmock('code');
+$res_mock->unmock('is_success');
+$res_mock->mock(content_is_xml => 0);
+ok $eup->process("$uri/simple.atom"), 'Process an unmodified feed';
+test_counts(0, 'Should still have no entries');
+test_fails(3, "$uri/simple.atom", 'Should now have fail count three');
+
 # Test HTTP_NOT_MODIFIED.
+$res_mock->unmock('content_is_xml');
+$res_mock->mock( is_success => 0 );
 $res_mock->mock( code => HTTP_NOT_MODIFIED );
 ok $eup->process("$uri/simple.atom"), 'Process an unmodified feed';
 test_counts(0, 'Should still have no entries');
@@ -145,8 +155,7 @@ stderr_is { $eup->process($feed) }
 test_fails($threshold + 1, $feed, 'fail count should be incremented');
 
 # Test success.
-$res_mock->unmock('code');
-$res_mock->unmock('is_success');
+$res_mock->unmock_all;
 
 ##############################################################################
 # Okay, now let's test the processing.
