@@ -5,7 +5,7 @@ use utf8;
 use namespace::autoclean;
 use App::FeedScene;
 use App::FeedScene::UA;
-use App::FeedScene::Parser;
+use aliased 'App::FeedScene::Parser';
 use Encode::ZapCP1252;
 use HTTP::Status qw(HTTP_NOT_MODIFIED);
 use XML::LibXML qw(XML_ELEMENT_NODE XML_TEXT_NODE);
@@ -57,7 +57,7 @@ sub process {
     my $res  = $self->ua->get($feed_url);
 
     # Handle errors.
-    if (!$res->is_success || !$res->content_is_xml) {
+    if (!$res->is_success || !Parser->isa_feed($res)) {
         if ($res->code == HTTP_NOT_MODIFIED) {
             # No error. Reset the fail count.
             $conn->run(sub {
@@ -93,7 +93,7 @@ sub process {
         return $self;
     }
 
-    my $feed     = App::FeedScene::Parser->parse_feed($res) or return $self;
+    my $feed     = Parser->parse_feed($res) or return $self;
     my $feed_id  = $feed->can('id') ? $feed->id || $feed_url : $feed_url;
     my $base_url = $feed->base;
     my $site_url = $feed->link;
@@ -151,11 +151,11 @@ sub process {
             push @entries, [$upd_date, $up_to_date, _clean(
                 $feed_id,
                 $entry_link,
-                App::FeedScene::Parser->strip_html($entry->title || ''),
+                Parser->strip_html($entry->title || ''),
                 $pub_date,
                 $upd_date || $pub_date,
                 _find_summary($entry),
-                App::FeedScene::Parser->strip_html($entry->author || ''),
+                Parser->strip_html($entry->author || ''),
                 $enc_type,
                 $enc_url,
                 $uuid,
@@ -183,15 +183,15 @@ sub process {
             _clean(
                 undef,
                 $feed_id,
-                App::FeedScene::Parser->strip_html($feed->title || ''),
-                App::FeedScene::Parser->strip_html($feed->description || ''),
+                Parser->strip_html($feed->title || ''),
+                Parser->strip_html($feed->description || ''),
                 $site_url,
                 URI->new(sprintf(
                     'http://getfavicon.appspot.com/%s?defaulticon=%s',
                     $site_url || $feed_url, $self->icon
                 ))->canonical,
                 ($feed->modified || DateTime->now)->set_time_zone('UTC')->iso8601 . 'Z',
-                App::FeedScene::Parser->strip_html($feed->copyright || ''),
+                Parser->strip_html($feed->copyright || ''),
                 0,
                 $feed_url
             )
@@ -406,7 +406,7 @@ sub _find_summary {
         if (my $body = $sum->body) {
             # We got something here. Strip any HTML and return it.
             return join ' ', map {
-                App::FeedScene::Parser->strip_html($_->toString)
+                Parser->strip_html($_->toString)
             } _wanted_nodes_for($body);
         }
     }
@@ -419,13 +419,13 @@ sub _find_summary {
     my @text;
     for my $elem (_wanted_nodes_for($body)) {
         if ($elem->nodeType == XML_TEXT_NODE) {
-            push @text, App::FeedScene::Parser->strip_html($elem->toString)
+            push @text, Parser->strip_html($elem->toString)
                 if $elem->toString =~ /\S/;
             next;
         }
         next if $elem->nodeType != XML_ELEMENT_NODE or !$allowed{$elem->nodeName};
 
-        push @text, App::FeedScene::Parser->strip_html($elem->toString)
+        push @text, Parser->strip_html($elem->toString)
             if $elem->hasChildNodes || $elem->hasAttributes;
         my $ret = join ' ', @text;
         $ret =~ s/\s{2,}/ /g;
@@ -437,7 +437,7 @@ sub _find_summary {
 }
 
 sub _wanted_nodes_for {
-    my $doc = App::FeedScene::Parser->parse_html_string(shift);
+    my $doc = Parser->parse_html_string(shift);
     map {
         # If it's an unwanted node but we want its children, keep them.
         $keep_children{$_->nodeName} ? $_->childNodes : $_
@@ -456,7 +456,7 @@ sub _find_enclosure {
     for my $content ($entry->content, $entry->summary) {
         next unless $content;
         my $body = $content->body or next;
-        my $doc = App::FeedScene::Parser->parse_html_string($body) or next;
+        my $doc = Parser->parse_html_string($body) or next;
         for my $node ($doc->findnodes('//img/@src|//audio/@src|//video/@src')) {
             my $url = $node->nodeValue or next;
             $url = $base_url
@@ -535,7 +535,7 @@ sub _audit_enclosure {
         || $res->code == HTTP_NOT_MODIFIED;
 
     # Parse it.
-    my $doc = App::FeedScene::Parser->libxml->parse_string($res->content);
+    my $doc = Parser->libxml->parse_string($res->content);
 
     # Go for large, medium, or original.
     for my $size qw(Large Medium Original) {

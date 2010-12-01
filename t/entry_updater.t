@@ -117,15 +117,16 @@ test_counts(0, 'Should still have no entries');
 test_fails(2, "$uri/simple.atom", 'Should now have fail count two');
 
 # Test non-XML.
+my $parser_mock = Test::MockModule->new('App::FeedScene::Parser');
+$parser_mock->mock('isa_feed' => 0);
 $res_mock->unmock('code');
 $res_mock->unmock('is_success');
-$res_mock->mock(content_is_xml => 0);
-ok $eup->process("$uri/simple.atom"), 'Process an unmodified feed';
+ok $eup->process("$uri/simple.atom"), 'Process a non-feed';
 test_counts(0, 'Should still have no entries');
 test_fails(3, "$uri/simple.atom", 'Should now have fail count three');
+$parser_mock->unmock_all;
 
 # Test HTTP_NOT_MODIFIED.
-$res_mock->unmock('content_is_xml');
 $res_mock->mock( is_success => 0 );
 $res_mock->mock( code => HTTP_NOT_MODIFIED );
 ok $eup->process("$uri/simple.atom"), 'Process an unmodified feed';

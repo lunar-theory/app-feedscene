@@ -5,7 +5,7 @@ use utf8;
 use namespace::autoclean;
 use App::FeedScene;
 use App::FeedScene::UA;
-use App::FeedScene::Parser;
+use aliased 'App::FeedScene::Parser';
 use Encode::ZapCP1252;
 use Text::CSV_XS;
 use Text::Trim;
@@ -76,7 +76,7 @@ sub process {
             }
 
             my $res = $ua->get($feed_url);
-            if (!$res->is_success || !$res->content_is_xml) {
+            if (!$res->is_success || !Parser->isa_feed($res)) {
                 if ($res->code != HTTP_NOT_MODIFIED) {
                     say STDERR "Error retrieving $feed_url -- ",
                         $res->is_success
@@ -86,7 +86,7 @@ sub process {
                 next;
             }
 
-            my $feed     = App::FeedScene::Parser->parse_feed($res) or next;
+            my $feed     = Parser->parse_feed($res) or next;
             $id          = $feed->can('id') ? $feed->id || $feed_url : $feed_url;
             my $site_url = $feed->link;
             $site_url    = $site_url->[0] if ref $site_url;
@@ -100,12 +100,12 @@ sub process {
 
             $ins->execute(_clean(
                 $feed_url,
-                App::FeedScene::Parser->strip_html($feed->title),
-                App::FeedScene::Parser->strip_html($feed->description || ''),
+                Parser->strip_html($feed->title),
+                Parser->strip_html($feed->description || ''),
                 $site_url,
                 $icon_url,
                 ($feed->modified || DateTime->now)->set_time_zone('UTC')->iso8601 . 'Z',
-                App::FeedScene::Parser->strip_html($feed->copyright || ''),
+                Parser->strip_html($feed->copyright || ''),
                 $portal,
                 $category || '',
                 $id,

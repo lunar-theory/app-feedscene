@@ -38,12 +38,22 @@ for my $entity qw( amp gt lt quot apos) {
 
 sub _handle_error {
     my ($err, $res) = @_;
+    use Carp; $SIG{__DIE__} = \&Carp::confess;
     say STDERR "Error parsing ", $res->request->uri, eval {
         ' (libxml2 error code ' . $err->code . "):\n\n" . $err->as_string
     } || ":\n\n$err";
     say STDERR "Response Status: ", $res->status_line;
     say STDERR "Headers: ", $res->headers_as_string;
     return;
+}
+
+sub isa_feed {
+    my ($self, $res) = @_;
+    # Assume content type is correct if it says it's XML.
+    return 1 if $res->content_is_xml;
+
+    # Ask Data::Feed.
+    return !!Data::Feed->guess_format(\$res->content);
 }
 
 sub parse_feed {

@@ -65,13 +65,15 @@ test_counts(0, 'Should still have no feeds');
 
 # Test non-XML.
 $mock->unmock_all;
-$mock->mock(content_is_xml => 0);
+my $parser_mock = Test::MockModule->new('App::FeedScene::Parser');
+$parser_mock->mock('isa_feed' => 0);
 stderr_like { $lup->run } qr{406 Not acceptable: text/html},
     'Should get exception request failure';
 test_counts(0, 'Should still have no feeds');
 
 # Test success.
 $mock->unmock_all;
+$parser_mock->unmock_all;
 
 my $csv = Test::MockModule->new('Text::CSV_XS');
 my @feeds = qw(
