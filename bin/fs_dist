@@ -31,7 +31,7 @@ _pod2usage('-message' => 'Missing or invalid --app option') unless $app;
 
 App::FeedScene::Distributor->new(
     app     => $app,
-    bucket  => $bucket || 'feedscene',
+    bucket  => $bucket || 'feeds.lunar-theory.com',
     verbose => $verbose,
 )->run;
 
