@@ -112,7 +112,7 @@ is $gen->link, "http://$domain/feeds/" . $gen->filename,
 
 ##############################################################################
 # Test non-strict output and images only.
-END { unlink $gen->filepath; }
+END { unlink $gen->filepath; unlink $gen->filepath . ".$$"; }
 $gen->images_only(1);
 ok $gen->go, 'Go!';
 my $tx = Test::XPath->new(

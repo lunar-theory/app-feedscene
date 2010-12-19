@@ -10,6 +10,8 @@ use Moose;
 use File::Spec;
 use File::Path;
 use URI;
+use File::Copy 'move';
+use namespace::autoclean;
 
 my $domain  = 'lunar-theory.com';
 my $company = 'Lunar Theory';
@@ -33,7 +35,7 @@ sub go {
     my $fs;
 
     File::Path::make_path($self->dir);
-    open my $fh, '>', $path or die qq{Cannot open "$path": $!\n};
+    open my $fh, '>', "$path.$$" or die qq{Cannot open "$path.$$": $!\n};
 
     # Assemble sources.
     my ($sources, $feed_cols);
@@ -153,7 +155,8 @@ sub go {
             @entries,
         )
     );
-    close $fh or die qq{Canot close "$path": $!\n};
+    close $fh or die qq{Canot close "$path.$$": $!\n};
+    move "$path.$$", $path or die qq{Failed to move $path.$$" to "$path": $!\n};
 }
 
 sub filename {
