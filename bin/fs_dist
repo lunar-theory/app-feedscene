@@ -7,7 +7,7 @@ use Getopt::Long;
 Getopt::Long::Configure( qw(bundling) );
 
 GetOptions(
-    'file|f=s'   => \my $file,
+    'app|a=s'        => \my $app,
     'bucket|b=s' => \my $bucket,
     'verbose|V+' => \my $verbose,
     'help|h'     => \my $help,
@@ -27,12 +27,11 @@ if ($version) {
     exit;
 }
 
-_pod2usage('-message' => 'Missing or invalid --file option') unless $file;
-_pod2usage('-message' => 'Missing or invalid --bucket option') unless $bucket;
+_pod2usage('-message' => 'Missing or invalid --app option') unless $app;
 
 App::FeedScene::Distributor->new(
-    file    => $file,
-    bucket  => $bucket,
+    app     => $app,
+    bucket  => $bucket || 'feedscene',
     verbose => $verbose,
 )->run;
 
@@ -52,7 +51,7 @@ fs_dist - FeedScene feed distributor
 
 =head1 Usage
 
-  fs_dist --file feed.xml --bucket feedscene
+  fs_dist --app DesignScene --bucket feedscene
 
 =head1 Description
 
@@ -61,7 +60,7 @@ which it can be served via CloudFront.
 
 =head1 Options
 
-  -f --file FILE      File to compress and upload
+  -a --app NAME       Name of the FeedScene app.
   -b --bucket BUCKET  S3 bucket to which the file should be uploaded
   -V --verbose        Incremental verbosity to STDERR.
   -h --help           Print a usage statement and exit.

@@ -9,19 +9,24 @@ use namespace::autoclean;
 
 use Moose;
 
-has file    => (is => 'rw', isa => 'Str');
+(my $def_dir = __FILE__) =~ s{(?:blib/)?lib/App/FeedScene/Distributor[.]pm$}{feeds};
+has app     => (is => 'rw', isa => 'Str');
+has dir     => (is => 'rw', isa => 'Str',  default => $def_dir );
 has bucket  => (is => 'rw', isa => 'Str');
 has verbose => (is => 'rw', 'isa' => 'Bool');
 
 sub run {
     my $self = shift;
+    my $path = $self->filepath;
+    my $file = $self->filename;
 
     # Gzip the file.
-    say STDERR "Compressing ", $self->file if $self->verbose;
-    gzip $self->file, \my $data, (
+    say STDERR "Compressing $path" if $self->verbose;
+    gzip $path, \my $data, (
         AutoClose => 1,
         -Level    => Z_BEST_COMPRESSION,
         TextFlag  => 1,
+        Name      => $file,
     ) or die "gzip failed: $GzipError\n";
 
     # Upload it to S3.
@@ -32,14 +37,22 @@ sub run {
         retry                 => 1,
     );
 
-    my $fn = basename $self->file;
-    say STDERR "Uploading $fn to ", $self->bucket if $self->verbose;
+    say STDERR "Uploading $file to ", $self->bucket if $self->verbose;
     my $bucket = $s3->bucket($self->bucket);
-    $bucket->add_key($fn, $data, {
+    $bucket->add_key($file, $data, {
         content_type     => 'application/atom+xml',
         content_encoding => 'gzip',
         acl_short        => 'public-read',
     }) or die $s3->err . ": " . $s3->errstr;
+}
+
+sub filename {
+    shift->app . '.xml'
+}
+
+sub filepath {
+    my $self = shift;
+    File::Spec->catfile($self->dir, $self->filename);
 }
 
 1;
