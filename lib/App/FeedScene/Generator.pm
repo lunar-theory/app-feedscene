@@ -84,8 +84,8 @@ sub go {
             ? "\n               AND (enclosure_type = '' OR enclosure_type LIKE 'image/%')"
             : '';
         my $sth = shift->prepare(qq{
-            SELECT id, url, title, published_at, updated_at, summary, author,
-                   enclosure_url, enclosure_type, feed_id, portal$feed_cols
+            SELECT id, url, via_url, title, published_at, updated_at, summary,
+                   author, enclosure_url, enclosure_type, feed_id, portal$feed_cols
               FROM feed_entries
              WHERE portal = ?
                AND published_at <= strftime('%Y-%m-%dT%H:%M:%SZ', 'now')$img
@@ -99,6 +99,7 @@ sub go {
                 push @entries, $a->entry(
                     $a->id($row->{id}),
                     $a->link({rel => 'alternate', href => $row->{url} }),
+                    ($row->{via_url} ? ($a->link({ rel => 'via', href => $row->{via_url} })) : ()),
                     $a->title($row->{title} || $row->{url}),
                     $a->published($row->{published_at}),
                     $a->updated($row->{updated_at}),

@@ -2,7 +2,7 @@
 
 use 5.12.0;
 use utf8;
-use Test::More tests => 198;
+use Test::More tests => 229;
 #use Test::More 'no_plan';
 use Test::More::UTF8;
 use Test::XPath;
@@ -313,6 +313,34 @@ sub test_entries {
             $_->is('count(./*)', 1, '......Should have 1 author subelement');
             $_->is('./a:name', 'Ira Glass', '......Name');
         });
+        $_->ok('./a:source', '...Source', sub {
+            my $scount = $strict ? 9 : 1;
+            $_->is('count(./*)', $scount, "......Should have $scount subelements");
+            $_->is('./a:id', 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6', '......ID');
+            if ($strict) {
+                # Confirm all other elments.
+                my $url = URI->new("$uri/simple.atom")->canonical;
+                $_->is('./a:link[@rel="self"]/@href', $url, '......Link');
+                $_->is('./a:title', 'Simple Atom Feed', '......Title');
+                $_->is('./a:subtitle', 'Witty & clever', '......Subtitle');
+                $_->is('./a:rights', '© 2010 Big Fat Example', '......Rights');
+                $_->is('./a:updated', '2009-12-13T18:30:02Z', '......Updated');
+                $_->is('./a:icon', sprintf($icon_url, 'http://example.com/'), '......Icon');
+                $_->is("./a:category[\@scheme='http://$domain/ns/portal']/\@term", 0, '...Portal');
+            }
+        });
+    });
+
+    # Test the second entry, which features a "via" link.
+    $tx->ok('/a:feed/a:entry[2]', 'Check second entry', sub {
+        $_->is('count(./*)', 8, 'Should have 8 subelements');
+        $_->is('./a:id', 'urn:uuid:82e57dc3-0fdf-5a44-be61-7dfaeaa842ad', '...Entry ID');
+        $_->is('./a:link[@rel="alternate"]/@href', 'http://example.com/1234', '...Link');
+        $_->is('./a:link[@rel="via"]/@href', 'http://example.com/another-story.html', '...Via link');
+        $_->is('./a:title', 'This is another title', '...Title');
+        $_->is('./a:published', '2009-12-12T12:29:29Z', '...Published');
+        $_->is('./a:updated', '2009-12-13T18:30:03Z', '...Updated');
+        $_->is('./a:summary[@type="text"]', 'Summary of the second story', '...Summary');
         $_->ok('./a:source', '...Source', sub {
             my $scount = $strict ? 9 : 1;
             $_->is('count(./*)', $scount, "......Should have $scount subelements");
