@@ -398,7 +398,7 @@ sub test_entries {
         if ($images_only) {
             $_->is(
                 './a:link[@rel="enclosure"]/@href',
-                'http://flickr.com/someimage.jpg',
+                'http://flickr.com/someimage2.jpg',
                 '...Should have no movie enclosure link'
             );
         } else {
