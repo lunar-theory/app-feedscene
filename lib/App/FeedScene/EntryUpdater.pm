@@ -23,6 +23,7 @@ has portal  => (is => 'rw', isa => 'Int');
 has ua      => (is => 'rw', isa => 'App::FeedScene::UA');
 has icon    => (is => 'rw', isa => 'Str', default => 'none');
 has verbose => (is => 'rw', isa => 'Int');
+has eurls   => (is => 'rw', isa => 'HashRef' );
 
 sub _clean {
     trim map { fix_cp1252 $_ if $_; $_ } @_;
@@ -103,6 +104,7 @@ sub process {
                  : URI->new($site_url)->canonical;
     my $host     = $site_url ? $site_url->host : $feed_url->host;
     $base_url  ||= $site_url;
+    $self->eurls({});
 
     # Iterate over the entries;
     my (@ids, @entries);
@@ -137,12 +139,13 @@ sub process {
                     : URI->new($entry->link)->canonical;
             }
 
-            my ($enc_type, $enc_url) = ('', '');
+            my ($enc_type, $enc_url) = '';
 
             if ($portal) {
                 # Need some media for non-text portals.
                 ($enc_type, $enc_url) = $self->_find_enclosure($entry, $base_url, $entry_link);
                 next unless $enc_type;
+                $self->eurls->{$enc_url} = 1;
             }
 
             my $pub_date = $entry->issued;
@@ -465,9 +468,10 @@ sub _wanted_nodes_for {
 sub _find_enclosure {
     my ($self, $entry, $base_url, $entry_link) = @_;
     for my $enc ($entry->enclosures) {
-        my $type = $enc->type or next;
-        next if $type !~ m{^(?:image|audio|video)/};
-        return $self->_audit_enclosure($enc->type, URI->new($enc->url)->canonical);
+        my $etype = $enc->type or next;
+        next if $etype !~ m{^(?:image|audio|video)/};
+        my ($type, $url) = $self->_validate_enclosure($enc->type, URI->new($enc->url)->canonical);
+        return $type, $url if $type;
     }
 
     # Use XML::LibXML and XPath to find something and link it up.
@@ -482,14 +486,15 @@ sub _find_enclosure {
                 : URI->new($url)->canonical;
             next if !$url->can('host') || $url->host =~ /\bdoubleclick[.]net$/;
             (my($type), $url) = $self->_get_type($url, $base_url);
-            return $self->_audit_enclosure($type, $url)
-                if $type && $type =~ m{^(?:image|audio|video)/};
+            next unless $type && $type =~ m{^(?:image|audio|video)/};
+            ($type, $url) = $self->_validate_enclosure($type, $url);
+            return $type, $url if $type;
         }
     }
 
     # Look at the direct link.
     my ($type, $url) = $self->_get_type($entry_link, $base_url);
-    return $self->_audit_enclosure($type, $url)
+    return $self->_validate_enclosure($type, $url)
         if $type && $type =~ m{^(?:image|audio|video)/};
 
     # Nothing to see.
@@ -522,6 +527,22 @@ sub _get_type {
     return $res->is_success
         ? (scalar $res->content_type, URI->new($res->request->uri)->canonical)
         : undef;
+}
+
+sub _validate_enclosure {
+    my $self = shift;
+    my ($type, $url) = $self->_audit_enclosure(@_);
+
+    # Make sure it's not a dupe.
+    my $conn = App::FeedScene->new($self->app)->conn;
+    return if $self->eurls->{$url} || $conn->run(sub {
+        shift->selectcol_arrayref(
+            'SELECT 1 FROM entries WHERE enclosure_url = ?',
+            undef, $url
+        )->[0];
+    });
+
+    return $type, $url;
 }
 
 sub _audit_enclosure {

@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 177;
+use Test::More tests => 179;
 #use Test::More 'no_plan';
 use Test::More::UTF8;
 use Test::NoWarnings;
@@ -189,7 +189,7 @@ is_deeply test_data('urn:uuid:e287d28b-5a4b-575c-b9da-d3dc894b9aa2'), {
     updated_at     => '2009-12-13T18:30:02Z',
     summary        => 'Summary of the story',
     author         => 'Ira Glass',
-    enclosure_url  => '',
+    enclosure_url  => undef,
     enclosure_type => '',
 }, 'Data for first entry should be correct';
 
@@ -203,7 +203,7 @@ is_deeply test_data('urn:uuid:82e57dc3-0fdf-5a44-be61-7dfaeaa842ad'), {
     updated_at     => '2009-12-13T18:30:03Z',
     summary        => 'Summary of the second story',
     author         => '',
-    enclosure_url  => '',
+    enclosure_url  => undef,
     enclosure_type => '',
 }, 'Data for second entry should be correct';
 
@@ -217,7 +217,7 @@ is_deeply test_data('urn:uuid:0df1d4a7-6b9f-532c-9a94-52cafade78a2'), {
     updated_at     => '2009-12-13T18:30:03Z',
     summary        => 'Summary of the third story',
     author         => '',
-    enclosure_url  => '',
+    enclosure_url  => undef,
     enclosure_type => '',
 }, 'Data for second entry should be correct';
 
@@ -236,7 +236,7 @@ is_deeply test_data('urn:uuid:e287d28b-5a4b-575c-b9da-d3dc894b9aa2'), {
     updated_at     => '2009-12-14T18:30:02Z',
     summary        => 'Summary of the story',
     author         => 'Ira Glass',
-    enclosure_url  => '',
+    enclosure_url  => undef,
     enclosure_type => '',
 }, 'First entry should be updated';
 
@@ -250,7 +250,7 @@ is_deeply test_data('urn:uuid:4386a769-775f-5b78-a6f0-02e3ac8a457d'), {
     updated_at     => '2009-12-12T12:29:29Z',
     summary        => 'Summary of the second story',
     author         => '',
-    enclosure_url  => '',
+    enclosure_url  => undef,
     enclosure_type => '',
 }, 'Second entry, with no updated element, should be updated';
 
@@ -264,15 +264,13 @@ is_deeply test_data('urn:uuid:0df1d4a7-6b9f-532c-9a94-52cafade78a2'), {
     updated_at     => '2009-12-13T18:30:03Z',
     summary        => 'Summary of the third story',
     author         => '',
-    enclosure_url  => '',
+    enclosure_url  => undef,
     enclosure_type => '',
 }, 'Third entry should not be updated, because updated element not updated';
 
 ##############################################################################
 # Let's try a simple RSS feed.
-$ENV{FOO} = 1;
 ok $eup->process("$uri/simple.rss"), 'Process simple RSS feed';
-delete $ENV{FOO};
 test_counts(5, 'Should now have five entries');
 
 # Check the feed data.
@@ -293,7 +291,7 @@ is_deeply test_data('urn:uuid:3577008b-ee22-5b79-9ca9-ac87e42ee601'), {
     updated_at     => '2010-05-17T14:58:50Z',
     summary        => 'Wherein Marlowe finds himeslf in trouble again.',
     author         => 'Raymond Chandler & Friends',
-    enclosure_url  => '',
+    enclosure_url  => undef,
     enclosure_type => '',
 }, 'Data for first RSS entry, including unformatted summary';
 
@@ -307,7 +305,7 @@ is_deeply test_data('urn:uuid:5e125dfa-0b69-504c-96a0-83f552645c6b'), {
     updated_at     => '2010-05-16T14:58:50Z',
     summary        => 'Hollywood babes. A killer with an ice pick. What could be better?',
     author         => 'Raymond Chandler & Friends',
-    enclosure_url  => '',
+    enclosure_url  => undef,
     enclosure_type => '',
 }, 'Data for second RSS entry with no title and summary extracted from content';
 
@@ -612,17 +610,17 @@ for my $spec (
     [ 'skipunwanted' => [
         'Caption for the enclosed audio.',
         'audio/mpeg',
-        'http://flickr.com/audio.mp3'
+        'http://flickr.com/audio2.mp3'
     ], 'unwanted enclosure + audio enclosure' ],
     [ 'skipembed' => [
         'Caption for the embedded audio.',
         'audio/mpeg',
-        'http://flickr.com/audio.mp3'
+        'http://flickr.com/audio3.mp3'
     ], 'unwanted embed + embedded audio' ],
-    [ 'audio.mp3' => [
+    [ 'audio4.mp3' => [
         'Caption for the audio link.',
         'audio/mpeg',
-        'http://flickr.com/audio.mp3'
+        'http://flickr.com/audio4.mp3'
     ], 'direct link' ],
     [ 'redirimage' => [
         'Caption for the image link.',
@@ -632,19 +630,19 @@ for my $spec (
     [ 'doubleclick' => [
         'Caption for the embedded image.',
         'image/jpeg',
-        'http://flickr.com/someimage.jpg'
+        'http://flickr.com/someimage2.jpg'
     ], 'unwanted doubleclick image + actual image' ],
 ) {
     is_deeply $dbh->selectrow_arrayref(
         'SELECT summary, enclosure_type, enclosure_url FROM entries WHERE id = ?',
         undef, _uuid('http://example.com/', "http://flickr.com/$spec->[0]")
-    ), $spec->[1], "Should have proper Atom enclosure for $spec->[2]";
+    ) || ['no row'], $spec->[1], "Should have proper Atom enclosure for $spec->[2]";
 
     $spec->[1][2] =~ s{[.]com}{.org};
     is_deeply $dbh->selectrow_arrayref(
         'SELECT summary, enclosure_type, enclosure_url FROM entries WHERE id = ?',
         undef, _uuid('http://example.org/', "http://flickr.org/$spec->[0]")
-    ), $spec->[1], "Should have proper RSS enclosure for $spec->[2]";
+    ) || ['no row'], $spec->[1], "Should have proper RSS enclosure for $spec->[2]";
 }
 
 ##############################################################################

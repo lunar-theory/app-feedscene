@@ -10,10 +10,10 @@ CREATE TABLE entries (
     updated_at     DATETIME NOT NULL,
     summary        TEXT     NOT NULL DEFAULT '',
     author         TEXT     NOT NULL DEFAULT '',
-    enclosure_url  TEXT     NOT NULL DEFAULT '',
+    enclosure_url  TEXT         NULL DEFAULT '',
     enclosure_type TEXT     NOT NULL DEFAULT ''
 );
 
 CREATE INDEX idx_entries_published_at ON entries(published_at);
 CREATE INDEX idx_entry_feed_id ON entries(feed_id);
-CREATE INDEX idx_entry_feed_enclosure_url ON entries(enclosure_url);
+CREATE UNIQUE INDEX idx_entry_feed_enclosure_url ON entries(enclosure_url);
