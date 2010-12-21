@@ -129,6 +129,7 @@ sub process {
                     $entry_link = URI->new($link)->canonical;
                     $via_link   = URI->new($entry->link)->canonical;
                 }
+                $via_link = '' if $via_link->eq($entry_link);
             } else {
                 $via_link = '';
                 $entry_link = $base_url
