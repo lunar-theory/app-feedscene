@@ -118,9 +118,24 @@ sub process {
 
         for my $entry ($feed->entries) {
             say STDERR '    ', $entry->link if $be_verbose;
-            my $entry_link = $base_url
-                ? URI->new_abs($entry->link, $base_url)->canonical
-                : URI->new($entry->link)->canonical;
+
+            my ($entry_link, $via_link);
+            my ($link) = $entry->extract_node_values('origLink', 'feedburner');
+            if ($link) {
+                if ($base_url) {
+                    $entry_link = URI->new_abs($link, $base_url)->canonical;
+                    $via_link   = URI->new_abs($entry->link, $base_url)->canonical;
+                } else {
+                    $entry_link = URI->new($link)->canonical;
+                    $via_link   = URI->new($entry->link)->canonical;
+                }
+            } else {
+                $via_link = '';
+                $entry_link = $base_url
+                    ? URI->new_abs($entry->link, $base_url)->canonical
+                    : URI->new($entry->link)->canonical;
+            }
+
             my ($enc_type, $enc_url) = ('', '');
 
             if ($portal) {
@@ -151,6 +166,7 @@ sub process {
             push @entries, [$upd_date, $up_to_date, _clean(
                 $feed_id,
                 $entry_link,
+                $via_link,
                 Parser->strip_html($entry->title || ''),
                 $pub_date,
                 $upd_date || $pub_date,
@@ -200,15 +216,16 @@ sub process {
         # Get ready to update the entries.
         my $ins = $dbh->prepare(q{
             INSERT INTO entries (
-                feed_id, url, title, published_at, updated_at, summary,
+                feed_id, url, via_url, title, published_at, updated_at, summary,
                 author, enclosure_type, enclosure_url, id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         });
 
         my $upd = $dbh->prepare(q{
             UPDATE entries
                SET feed_id        = ?,
                    url            = ?,
+                   via_url        = ?,
                    title          = ?,
                    published_at   = ?,
                    updated_at     = ?,

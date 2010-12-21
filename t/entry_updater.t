@@ -183,6 +183,7 @@ is_deeply test_data('urn:uuid:e287d28b-5a4b-575c-b9da-d3dc894b9aa2'), {
     id             => 'urn:uuid:e287d28b-5a4b-575c-b9da-d3dc894b9aa2',
     feed_id        => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6',
     url            => 'http://example.com/story.html',
+    via_url        => '',
     title          => 'This is the title',
     published_at   => '2009-12-13T12:29:29Z',
     updated_at     => '2009-12-13T18:30:02Z',
@@ -192,10 +193,11 @@ is_deeply test_data('urn:uuid:e287d28b-5a4b-575c-b9da-d3dc894b9aa2'), {
     enclosure_type => '',
 }, 'Data for first entry should be correct';
 
-is_deeply test_data('urn:uuid:4386a769-775f-5b78-a6f0-02e3ac8a457d'), {
-    id             => 'urn:uuid:4386a769-775f-5b78-a6f0-02e3ac8a457d',
+is_deeply test_data('urn:uuid:82e57dc3-0fdf-5a44-be61-7dfaeaa842ad'), {
+    id             => 'urn:uuid:82e57dc3-0fdf-5a44-be61-7dfaeaa842ad',
     feed_id        => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6',
-    url            => 'http://example.com/another-story.html',
+    url            => 'http://example.com/1234',
+    via_url        => 'http://example.com/another-story.html',
     title          => 'This is another title',
     published_at   => '2009-12-12T12:29:29Z',
     updated_at     => '2009-12-13T18:30:03Z',
@@ -209,6 +211,7 @@ is_deeply test_data('urn:uuid:0df1d4a7-6b9f-532c-9a94-52cafade78a2'), {
     id             => 'urn:uuid:0df1d4a7-6b9f-532c-9a94-52cafade78a2',
     feed_id        => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6',
     url            => 'http://example.com/story-three.html',
+    via_url        => '',
     title          => 'Title Three',
     published_at   => '2009-12-11T12:29:29Z',
     updated_at     => '2009-12-13T18:30:03Z',
@@ -227,6 +230,7 @@ is_deeply test_data('urn:uuid:e287d28b-5a4b-575c-b9da-d3dc894b9aa2'), {
     id             => 'urn:uuid:e287d28b-5a4b-575c-b9da-d3dc894b9aa2',
     feed_id        => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6',
     url            => 'http://example.com/story.html',
+    via_url        => '',
     title          => 'This is the new title',
     published_at   => '2009-12-13T12:29:29Z',
     updated_at     => '2009-12-14T18:30:02Z',
@@ -240,6 +244,7 @@ is_deeply test_data('urn:uuid:4386a769-775f-5b78-a6f0-02e3ac8a457d'), {
     id             => 'urn:uuid:4386a769-775f-5b78-a6f0-02e3ac8a457d',
     feed_id        => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6',
     url            => 'http://example.com/another-story.html',
+    via_url        => '',
     title          => 'Updated without updated element',
     published_at   => '2009-12-12T12:29:29Z',
     updated_at     => '2009-12-12T12:29:29Z',
@@ -253,6 +258,7 @@ is_deeply test_data('urn:uuid:0df1d4a7-6b9f-532c-9a94-52cafade78a2'), {
     id             => 'urn:uuid:0df1d4a7-6b9f-532c-9a94-52cafade78a2',
     feed_id        => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6',
     url            => 'http://example.com/story-three.html',
+    via_url        => '',
     title          => 'Title Three',
     published_at   => '2009-12-11T12:29:29Z',
     updated_at     => '2009-12-13T18:30:03Z',
@@ -264,7 +270,9 @@ is_deeply test_data('urn:uuid:0df1d4a7-6b9f-532c-9a94-52cafade78a2'), {
 
 ##############################################################################
 # Let's try a simple RSS feed.
+$ENV{FOO} = 1;
 ok $eup->process("$uri/simple.rss"), 'Process simple RSS feed';
+delete $ENV{FOO};
 test_counts(5, 'Should now have five entries');
 
 # Check the feed data.
@@ -279,6 +287,7 @@ is_deeply test_data('urn:uuid:3577008b-ee22-5b79-9ca9-ac87e42ee601'), {
     id             => 'urn:uuid:3577008b-ee22-5b79-9ca9-ac87e42ee601',
     feed_id        => $feed,
     url            => 'http://example.net/2010/05/17/long-goodbye/',
+    via_url        => '',
     title          => 'The Long Goodbye',
     published_at   => '2010-05-17T14:58:50Z',
     updated_at     => '2010-05-17T14:58:50Z',
@@ -292,6 +301,7 @@ is_deeply test_data('urn:uuid:5e125dfa-0b69-504c-96a0-83f552645c6b'), {
     id             => 'urn:uuid:5e125dfa-0b69-504c-96a0-83f552645c6b',
     feed_id        => $feed,
     url            => 'http://example.net/2010/05/16/little-sister/',
+    via_url        => '',
     title          => '',
     published_at   => '2010-05-16T14:58:50Z',
     updated_at     => '2010-05-16T14:58:50Z',
@@ -519,7 +529,8 @@ is_deeply test_data('urn:uuid:257c8075-dc7c-5678-8de0-5bb88360dff6'), {
     summary        => 'Caption for the encosed image.',
     title          => 'This is the title',
     updated_at     => '2009-12-13T08:29:29Z',
-    url            => 'http://flickr.com/some%C3%AEmage'
+    url            => 'http://flickr.com/some%C3%AEmage',
+    via_url        => '',
 }, 'Data for first entry with enclosure should be correct';
 
 is_deeply test_data('urn:uuid:844df0ef-fed0-54f0-ac7d-2470fa7e9a9c'), {
@@ -532,7 +543,8 @@ is_deeply test_data('urn:uuid:844df0ef-fed0-54f0-ac7d-2470fa7e9a9c'), {
     summary        => 'Caption for both of the the encosed images.',
     title          => 'This is the title',
     updated_at     => '2009-12-12T08:19:29Z',
-    url            => 'http://flickr.com/twoimages'
+    url            => 'http://flickr.com/twoimages',
+    via_url        => '',
 }, 'Data for entry with two should have just the first enclosure';
 
 # Look at the RSS versions, too.
@@ -547,7 +559,8 @@ is_deeply test_data('urn:uuid:db9bd827-0d7f-5067-ad18-2c666ab1a028'), {
     summary        => 'Caption for the encosed image.',
     title          => 'This is the title',
     updated_at     => '2009-12-13T08:29:29Z',
-    url            => 'http://flickr.org/some%C3%AEmage'
+    url            => 'http://flickr.org/some%C3%AEmage',
+    via_url        => '',
 }, 'Data for first entry with enclosure should be correct';
 
 is_deeply test_data('urn:uuid:4aef01ff-75c3-5dcb-a53f-878e3042f3cf'), {
@@ -560,7 +573,8 @@ is_deeply test_data('urn:uuid:4aef01ff-75c3-5dcb-a53f-878e3042f3cf'), {
     summary        => 'Caption for both of the the encosed images.',
     title          => 'This is the title',
     updated_at     => '2009-12-12T08:19:29Z',
-    url            => 'http://flickr.org/twoimages'
+    url            => 'http://flickr.org/twoimages',
+    via_url        => '',
 }, 'Data for entry with two should have just the first enclosure';
 
 # Now check for various enclosure configurations in both Atom and RSS.

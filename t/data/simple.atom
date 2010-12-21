@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:feedburner="http://rssnamespace.org/feedburner/ext/1.0">
   <title>Simple Atom Feed</title>
   <subtitle>Witty &amp;amp; clever </subtitle>
   <link rel="alternate" href=" http://example.com/"/>
@@ -39,6 +39,7 @@
     <published>2009-12-12T08:29:29-04:00</published>
     <summary type="html"><![CDATA[<p>Summary of the second story</p>]]></summary>
     <content type="html">&lt;p&gt;Content of the & second story&lt;/p&gt;</content>
+    <feedburner:origLink>http://example.com/1234</feedburner:origLink>
   </entry>
 
   <entry>

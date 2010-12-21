@@ -4,6 +4,7 @@ CREATE TABLE entries (
     id             TEXT     NOT NULL PRIMARY KEY,
     feed_id        TEXT     NOT NULL REFERENCES feeds(id) ON DELETE CASCADE ON UPDATE CASCADE,
     url            TEXT     NOT NULL,
+    via_url        TEXT     NOT NULL DEFAULT '',
     title          TEXT     NOT NULL DEFAULT '',
     published_at   DATETIME NOT NULL,
     updated_at     DATETIME NOT NULL,
