@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 23;
+use Test::More tests => 24;
 #use Test::More 'no_plan';
 use Test::Exception;
 use Test::NoWarnings;
@@ -35,6 +35,8 @@ ok !$dbh->{PrintError}, 'PrintError should be disabled';
 ok !$dbh->{RaiseError}, 'RaiseError should be disabled';
 ok $dbh->{AutoCommit}, 'AutoCommit should be enabled';
 ok $dbh->{sqlite_unicode}, 'sqlite_unicode should be enabled';
+ok $dbh->{sqlite_use_immediate_transaction},
+    'sqlite_use_immediate_transaction should be enabled';
 isa_ok $dbh->{HandleError}, 'CODE', 'The error handler';
 isa_ok $dbh->{Callbacks}, 'HASH', 'Should have callbacks';
 isa_ok $dbh->{Callbacks}{connected}, 'CODE', 'Should have connected callback';

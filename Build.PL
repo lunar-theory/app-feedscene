@@ -24,7 +24,7 @@ Module::Build->new(
     requires           => {
         'Data::Feed'                 => '0.00014',
         'DateTime'                   => '0.55',
-        'DBD::SQLite'                => '1.29',
+        'DBD::SQLite'                => '1.31',
         'DBI'                        => '1.608',
         'DBIx::Connector'            => '0.34',
         'Encode::ZapCP1252'          => '0.20',

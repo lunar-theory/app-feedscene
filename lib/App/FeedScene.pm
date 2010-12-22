@@ -33,6 +33,7 @@ sub new {
         HandleError    => Exception::Class::DBI->handler,
         AutoCommit     => 1,
         sqlite_unicode => 1,
+        sqlite_use_immediate_transaction => 1,
         Callbacks      => {
             connected => sub { shift->do('PRAGMA foreign_keys = ON'); return; }
         }
