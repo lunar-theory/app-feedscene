@@ -166,7 +166,6 @@ sub process {
             if ($upd_date) {
                 # See if we've been updated.
                 ($up_to_date) = $dbh->selectrow_array( $sth, undef, $upd_date, $uuid);
-                $sth->finish;
                 # Nothing to do if it's up-to-date.
                 next if $up_to_date;
             }
@@ -262,7 +261,6 @@ sub process {
                 # No update date. Update or insert as appropriate.
                 $ins->execute(@$params) if $upd->execute(@$params) == 0;
             }
-            push @ids, $params->[-1];
         }
 
         say STDERR "       Deleting older entries" if $self->verbose > 1;
@@ -270,7 +268,7 @@ sub process {
             DELETE FROM entries
              WHERE feed_id = ?
                AND id <> ALL(?)
-        }, undef, $feed_id, \@ids) if @ids; # XXX DELETE all if no IDs?
+        }, undef, $feed_id, \@ids);
     });
     say STDERR "    ", scalar time, "Transction complete" if $self->verbose > 1;
 

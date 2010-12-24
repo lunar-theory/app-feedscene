@@ -118,7 +118,7 @@ sub process {
         $dbh->do(
             'DELETE FROM feeds WHERE id <> ALL(?)',
             undef, \@ids
-        ) if @ids; # XXX DELETE all if no IDs?
+        ) if @ids;
 
     });
     return $self;
