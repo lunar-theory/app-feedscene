@@ -15,12 +15,18 @@ CREATE TABLE entries (
     updated_at     TIMESTAMPTZ NOT NULL,
     summary        TEXT        NOT NULL DEFAULT '',
     author         TEXT        NOT NULL DEFAULT '',
-    enclosure_url  TEXT            NULL DEFAULT '',
-    enclosure_type TEXT        NOT NULL DEFAULT ''
+    enclosure_url  TEXT            NULL DEFAULT NULL,
+    enclosure_type TEXT        NOT NULL DEFAULT '',
+    enclosure_id   TEXT            NULL DEFAULT NULL,
+    enclosure_user TEXT            NULL DEFAULT NULL,
+    enclosure_hash TEXT            NULL DEFAULT NULL
 );
 
-CREATE INDEX idx_entries_published_at ON entries(published_at);
-CREATE INDEX idx_entry_feed_id ON entries(feed_id);
-CREATE UNIQUE INDEX idx_entry_feed_enclosure_url ON entries(enclosure_url);
+CREATE INDEX idx_entries_published_at             ON entries(published_at);
+CREATE INDEX idx_entry_feed_id                    ON entries(feed_id);
+CREATE UNIQUE INDEX idx_entry_feed_enclosure_url  ON entries(enclosure_url);
+CREATE UNIQUE INDEX idx_entry_feed_enclosure_id   ON entries(enclosure_id);
+CREATE UNIQUE INDEX idx_entry_feed_enclosure_user ON entries(enclosure_user);
+CREATE UNIQUE INDEX idx_entry_feed_enclosure_hash ON entries(enclosure_hash);
 
 COMMIT;

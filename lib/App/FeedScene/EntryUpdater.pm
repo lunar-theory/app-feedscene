@@ -23,6 +23,8 @@ has portal  => (is => 'rw', isa => 'Int');
 has ua      => (is => 'rw', isa => 'App::FeedScene::UA');
 has icon    => (is => 'rw', isa => 'Str', default => 'none');
 has eurls   => (is => 'rw', isa => 'HashRef' );
+has eids    => (is => 'rw', isa => 'HashRef' );
+has eusers  => (is => 'rw', isa => 'HashRef' );
 has verbose => (is => 'rw', isa => 'Int', default => 0);
 
 sub _clean {
@@ -108,6 +110,8 @@ sub process {
     my $host     = $site_url ? $site_url->host : $feed_url->host;
     $base_url  ||= $site_url;
     $self->eurls({});
+    $self->eids({});
+    $self->eusers({});
 
     # Iterate over the entries;
     my (@ids, @entries);

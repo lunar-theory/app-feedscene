@@ -193,6 +193,9 @@ is_deeply test_data('urn:uuid:e287d28b-5a4b-575c-b9da-d3dc894b9aa2'), {
     author         => 'Ira Glass',
     enclosure_url  => undef,
     enclosure_type => '',
+    enclosure_id   => undef,
+    enclosure_user => undef,
+    enclosure_hash => undef,
 }, 'Data for first entry should be correct';
 
 is_deeply test_data('urn:uuid:82e57dc3-0fdf-5a44-be61-7dfaeaa842ad'), {
@@ -207,6 +210,9 @@ is_deeply test_data('urn:uuid:82e57dc3-0fdf-5a44-be61-7dfaeaa842ad'), {
     author         => '',
     enclosure_url  => undef,
     enclosure_type => '',
+    enclosure_id   => undef,
+    enclosure_user => undef,
+    enclosure_hash => undef,
 }, 'Data for second entry should be correct';
 
 is_deeply test_data('urn:uuid:0df1d4a7-6b9f-532c-9a94-52cafade78a2'), {
@@ -221,6 +227,9 @@ is_deeply test_data('urn:uuid:0df1d4a7-6b9f-532c-9a94-52cafade78a2'), {
     author         => '',
     enclosure_url  => undef,
     enclosure_type => '',
+    enclosure_id   => undef,
+    enclosure_user => undef,
+    enclosure_hash => undef,
 }, 'Data for second entry should be correct';
 
 ##############################################################################
@@ -240,6 +249,9 @@ is_deeply test_data('urn:uuid:e287d28b-5a4b-575c-b9da-d3dc894b9aa2'), {
     author         => 'Ira Glass',
     enclosure_url  => undef,
     enclosure_type => '',
+    enclosure_id   => undef,
+    enclosure_user => undef,
+    enclosure_hash => undef,
 }, 'First entry should be updated';
 
 is_deeply test_data('urn:uuid:4386a769-775f-5b78-a6f0-02e3ac8a457d'), {
@@ -254,6 +266,9 @@ is_deeply test_data('urn:uuid:4386a769-775f-5b78-a6f0-02e3ac8a457d'), {
     author         => '',
     enclosure_url  => undef,
     enclosure_type => '',
+    enclosure_id   => undef,
+    enclosure_user => undef,
+    enclosure_hash => undef,
 }, 'Second entry, with no updated element, should be updated';
 
 is_deeply test_data('urn:uuid:0df1d4a7-6b9f-532c-9a94-52cafade78a2'), {
@@ -268,6 +283,9 @@ is_deeply test_data('urn:uuid:0df1d4a7-6b9f-532c-9a94-52cafade78a2'), {
     author         => '',
     enclosure_url  => undef,
     enclosure_type => '',
+    enclosure_id   => undef,
+    enclosure_user => undef,
+    enclosure_hash => undef,
 }, 'Third entry should not be updated, because updated element not updated';
 
 ##############################################################################
@@ -295,6 +313,9 @@ is_deeply test_data('urn:uuid:3577008b-ee22-5b79-9ca9-ac87e42ee601'), {
     author         => 'Raymond Chandler & Friends',
     enclosure_url  => undef,
     enclosure_type => '',
+    enclosure_id   => undef,
+    enclosure_user => undef,
+    enclosure_hash => undef,
 }, 'Data for first RSS entry, including unformatted summary';
 
 is_deeply test_data('urn:uuid:5e125dfa-0b69-504c-96a0-83f552645c6b'), {
@@ -309,6 +330,9 @@ is_deeply test_data('urn:uuid:5e125dfa-0b69-504c-96a0-83f552645c6b'), {
     author         => 'Raymond Chandler & Friends',
     enclosure_url  => undef,
     enclosure_type => '',
+    enclosure_id   => undef,
+    enclosure_user => undef,
+    enclosure_hash => undef,
 }, 'Data for second RSS entry with no title and summary extracted from content';
 
 ##############################################################################
@@ -531,6 +555,9 @@ is_deeply test_data('urn:uuid:257c8075-dc7c-5678-8de0-5bb88360dff6'), {
     updated_at     => '2009-12-13 08:29:29+00',
     url            => 'http://flickr.com/some%C3%AEmage',
     via_url        => '',
+    enclosure_id   => undef,
+    enclosure_user => undef,
+    enclosure_hash => undef,
 }, 'Data for first entry with enclosure should be correct';
 
 is_deeply test_data('urn:uuid:844df0ef-fed0-54f0-ac7d-2470fa7e9a9c'), {
@@ -545,6 +572,9 @@ is_deeply test_data('urn:uuid:844df0ef-fed0-54f0-ac7d-2470fa7e9a9c'), {
     updated_at     => '2009-12-12 08:19:29+00',
     url            => 'http://flickr.com/twoimages',
     via_url        => '',
+    enclosure_id   => undef,
+    enclosure_user => undef,
+    enclosure_hash => undef,
 }, 'Data for entry with two should have just the first enclosure';
 
 # Look at the RSS versions, too.
@@ -561,6 +591,9 @@ is_deeply test_data('urn:uuid:db9bd827-0d7f-5067-ad18-2c666ab1a028'), {
     updated_at     => '2009-12-13 08:29:29+00',
     url            => 'http://flickr.org/some%C3%AEmage',
     via_url        => '',
+    enclosure_id   => undef,
+    enclosure_user => undef,
+    enclosure_hash => undef,
 }, 'Data for first entry with enclosure should be correct';
 
 is_deeply test_data('urn:uuid:4aef01ff-75c3-5dcb-a53f-878e3042f3cf'), {
@@ -575,6 +608,9 @@ is_deeply test_data('urn:uuid:4aef01ff-75c3-5dcb-a53f-878e3042f3cf'), {
     updated_at     => '2009-12-12 08:19:29+00',
     url            => 'http://flickr.org/twoimages',
     via_url        => '',
+    enclosure_id   => undef,
+    enclosure_user => undef,
+    enclosure_hash => undef,
 }, 'Data for entry with two should have just the first enclosure';
 
 # Now check for various enclosure configurations in both Atom and RSS.
