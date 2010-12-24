@@ -3,7 +3,7 @@ package App::FeedScene 0.26;
 use 5.12.0;
 use utf8;
 use namespace::autoclean;
-use DBD::SQLite 1.29;
+use DBD::Pg 2.17.2;
 use DBIx::Connector 0.34;
 use Exception::Class::DBI 1.0;
 Exception::Class::DBI->Trace(1);
@@ -26,24 +26,21 @@ sub new {
     }
 
     $SELF = bless { app => $app } => $class;
-    my $dsn = 'dbi:SQLite:dbname=' . $SELF->db_name;
-    my $conn = $SELF->conn(DBIx::Connector->new($dsn, '', '', {
-        PrintError     => 0,
-        RaiseError     => 0,
-        HandleError    => Exception::Class::DBI->handler,
-        AutoCommit     => 1,
-        sqlite_unicode => 1,
-        sqlite_use_immediate_transaction => 1,
-        Callbacks      => {
-            connected => sub { shift->do('PRAGMA foreign_keys = ON'); return; }
-        }
+    my $dsn = 'dbi:Pg:dbname=' . lc $SELF->app;
+    my $conn = $SELF->conn(DBIx::Connector->new($dsn, 'postgres', '', {
+        PrintError        => 0,
+        RaiseError        => 0,
+        HandleError       => Exception::Class::DBI->handler,
+        AutoCommit        => 1,
+        pg_enable_utf8    => 1,
+        pg_server_prepare => 1,
     }));
     $conn->mode('fixup');
     return $SELF;
 }
 
 sub db_name {
-    'db/' . shift->app . '.db';
+    lc shift->app;
 }
 
 1;

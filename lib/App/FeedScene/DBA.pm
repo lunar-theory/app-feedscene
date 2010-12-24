@@ -8,25 +8,42 @@ use Moose;
 
 (my $def_dir = __FILE__) =~ s{(?:blib/)?lib/App/FeedScene/DBA[.]pm$}{sql};
 has app     => (is => 'rw', isa => 'Str');
-has client  => (is => 'rw', isa => 'Str', default => 'sqlite3');
+has client  => (is => 'rw', isa => 'Str', default => 'psql');
+has user    => (is => 'rw', isa => 'Str', default => 'postgres');
+has host    => (is => 'rw', isa => 'Str');
+has port    => (is => 'rw', isa => 'Str');
 has sql_dir => (is => 'rw', isa => 'Str', default => $def_dir );
 
 sub init {
     my $self = shift;
-    my $fs = App::FeedScene->new($self->app);
-    my $db_file = $fs->db_name;
-    die qq{Database "$db_file" already exists\n} if -e $db_file;
-    $fs->conn->run(sub { shift->do('PRAGMA schema_version = 0' ) });
+    my $fs   = App::FeedScene->new($self->app);
+    my $db   = $fs->db_name;
+    system($self->_command, '-d', 'template1', '-c', qq{CREATE DATABASE $db}) == 0 or die;
+    $fs->conn->run(sub {
+        $_->do('CREATE TABLE schema_version (version int)');
+        $_->do('INSERT INTO schema_version VALUES (0)');
+    });
+}
+
+sub drop {
+    my $self = shift;
+    my $fs   = App::FeedScene->new($self->app);
+    my $db   = $fs->db_name;
+    system($self->_command, '-d', 'template1', '-c', qq{DROP DATABASE $db}) == 0 or die;
 }
 
 sub upgrade {
     my $self = shift;
-    my $fs = App::FeedScene->new($self->app);
-    $self->init unless -e $fs->db_name;
+    my $fs   = App::FeedScene->new($self->app);
+    my $db   = $fs->db_name;
     my $conn = $fs->conn;
 
+    # Create the database if it doesn't exist.
+    eval { $conn->dbh };
+    $self->init if ref $@ && $@->err == 1;
+
     my $current_version = $conn->run(sub {
-        shift->selectrow_array('PRAGMA schema_version');
+        shift->selectrow_array('SELECT version FROM schema_version');
     });
 
     my $dir = $self->sql_dir;
@@ -36,22 +53,44 @@ sub upgrade {
                 grep { -f }
         glob $self->sql_dir . '/[0-9]*-*.sql';
 
-    my @args = (
-        $self->client, '-noheader', '-bail', '-column',
-        $fs->db_name,
-    );
+    my @cmd = $self->_command;
 
     for my $spec (@files) {
         my ($new_version, $file) = @{ $spec };
 
         # Apply the version.
-        system(@args, ".read $file") == 0  or die;
+        system(@cmd, '-d', $db, '-f', $file) == 0 or die;
 
         $conn->run(sub {
-            shift->do("PRAGMA schema_version = $new_version");
+            shift->do("UPDATE schema_version SET version = $new_version");
         });
     }
     return $self;
+}
+
+sub recreate {
+    my $self = shift;
+    $self->drop;
+    $self->init;
+    $self->upgrade;
+}
+
+sub _command {
+    my $self = shift;
+    my @cmd = (
+        $self->client,
+        '--username' => $self->user,
+        '--quiet',
+        '--no-psqlrc',
+        '--no-align',
+        '--tuples-only',
+        '--set' => 'ON_ERROR_ROLLBACK=1',
+        '--set' => 'ON_ERROR_STOP=1',
+    );
+    push @cmd, '--host' => $self->host if $self->host;
+    push @cmd, '--port' => $self->port if $self->port;
+
+    return @cmd;
 }
 
 1;

@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 21;
+use Test::More tests => 19;
 #use Test::More 'no_plan';
 use Test::NoWarnings;
 use Test::File;
@@ -27,8 +27,8 @@ is $dba->sql_dir, 'baz', 'The sql_dir attribute should be set';
 ok $dba = App::FeedScene::DBA->new( app => 'hey' ),
     'Create another DBA object';
 
-is $dba->app,     'hey',     'The app attribute should be set';
-is $dba->client,  'sqlite3', 'The client attribute should be the default';
+is $dba->app,     'hey',  'The app attribute should be set';
+is $dba->client,  'psql', 'The client attribute should be the default';
 is $dba->sql_dir, File::Spec->rel2abs('sql'),
     'The sql_dir attribute should be the default';
 
@@ -36,16 +36,14 @@ is $dba->sql_dir, File::Spec->rel2abs('sql'),
 ok $dba = App::FeedScene::DBA->new( app => 'fstest', sql_dir => 't/sql' ),
     'Create testing DBA object';
 
-my $fs = App::FeedScene->new('fstest');
-file_not_exists_ok $fs->db_name, 'The databse file should not (yet) exist';
-END { unlink $fs->db_name }
-
 ok $dba->init, 'Init the database';
-file_exists_ok $fs->db_name, 'Now the databse file should exist';
+END { $dba->drop }
 
 # Make sure that the schema version is set.
-is $fs->conn->run( sub { (shift->do('PRAGMA schema_version'))[0] }),
-    '0E0', 'The schema version should be 0';
+my $fs = App::FeedScene->new('fstest');
+is $fs->conn->run( sub { shift->selectcol_arrayref('SELECT version FROM schema_version')->[0] }),
+    0, 'The schema version should be 0';
+END { $fs->conn->disconnect }
 
 # Let's make sure that the upgrade works.
 my $conn = Test::MockObject::Extends->new( $fs->conn );
@@ -54,7 +52,7 @@ my @versions = (0, 42, 123, 124);
 $conn->mock(run => sub {
     $run->(@_);
     my $v = shift @versions;
-    is $conn->$run( sub { ($_->selectrow_array('PRAGMA schema_version'))[0] }), $v,
+    is $conn->$run( sub { ($_->selectrow_array('SELECT version FROM schema_version'))[0] }), $v,
         "Schema version should be $v";
 });
 

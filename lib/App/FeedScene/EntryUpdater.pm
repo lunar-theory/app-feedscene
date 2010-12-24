@@ -22,8 +22,8 @@ has app     => (is => 'rw', isa => 'Str');
 has portal  => (is => 'rw', isa => 'Int');
 has ua      => (is => 'rw', isa => 'App::FeedScene::UA');
 has icon    => (is => 'rw', isa => 'Str', default => 'none');
-has verbose => (is => 'rw', isa => 'Int');
 has eurls   => (is => 'rw', isa => 'HashRef' );
+has verbose => (is => 'rw', isa => 'Int', default => 0);
 
 sub _clean {
     trim map { fix_cp1252 $_ if $_; $_ } @_;
@@ -60,6 +60,7 @@ sub process {
     # Handle errors.
     if (!$res->is_success || !Parser->isa_feed($res)) {
         if ($res->code == HTTP_NOT_MODIFIED) {
+            say STDERR "    No change to $feed_url" if $self->verbose > 1;
             # No error. Reset the fail count.
             $conn->run(sub {
                 $_->do(q{
@@ -70,6 +71,8 @@ sub process {
                 }, undef, $feed_url);
             });
         } else {
+            say STDERR "    Error retrieving $feed_url: ", $res->status_line
+                 if $self->verbose > 1;
             $conn->txn(sub {
                 $_->do(q{
                     UPDATE feeds
@@ -112,6 +115,7 @@ sub process {
     $conn->run(sub {
         my $dbh = shift;
 
+        say STDERR "    Prepare udpated_at query" if $self->verbose > 1;
         my $sth = $dbh->prepare(q{
             SELECT updated_at >= ?
               FROM entries
@@ -162,6 +166,7 @@ sub process {
             if ($upd_date) {
                 # See if we've been updated.
                 ($up_to_date) = $dbh->selectrow_array( $sth, undef, $upd_date, $uuid);
+                $sth->finish;
                 # Nothing to do if it's up-to-date.
                 next if $up_to_date;
             }
@@ -183,10 +188,12 @@ sub process {
         }
     });
 
+    say STDERR "    ", scalar time, ": Starting transction" if $self->verbose > 1;
     $conn->txn(sub {
         my $dbh = shift;
 
         # Update the feed.
+        say STDERR "       Updating feed" if $self->verbose > 1;
         $dbh->do(
             q{
                 UPDATE feeds
@@ -218,6 +225,7 @@ sub process {
         );
 
         # Get ready to update the entries.
+        say STDERR "       Preparing INSERT statement" if $self->verbose > 1;
         my $ins = $dbh->prepare(q{
             INSERT INTO entries (
                 feed_id, url, via_url, title, published_at, updated_at, summary,
@@ -225,6 +233,7 @@ sub process {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         });
 
+        say STDERR "       Preparing UPDATE statement" if $self->verbose > 1;
         my $upd = $dbh->prepare(q{
             UPDATE entries
                SET feed_id        = ?,
@@ -256,6 +265,7 @@ sub process {
             push @ids, $params->[-1];
         }
 
+        say STDERR "       Deleting older entries" if $self->verbose > 1;
         $dbh->do(q{
             DELETE FROM entries
              WHERE feed_id = ?
@@ -263,6 +273,7 @@ sub process {
             undef, $feed_id, @ids
         );
     });
+    say STDERR "    ", scalar time, "Transction complete" if $self->verbose > 1;
 
     return $self;
 }
@@ -536,6 +547,7 @@ sub _validate_enclosure {
     # Make sure it's not a dupe.
     my $conn = App::FeedScene->new($self->app)->conn;
     return if $self->eurls->{$url} || $conn->run(sub {
+        say STDERR "       Checking enclosure" if $self->verbose > 1;
         shift->selectcol_arrayref(
             'SELECT 1 FROM entries WHERE enclosure_url = ?',
             undef, $url
@@ -556,6 +568,7 @@ sub _audit_enclosure {
     # See if we have it in the cache already.
     my $conn = App::FeedScene->new($self->app)->conn;
     if (my $cached_url = $conn->run(sub {
+        say STDERR "       Checking audit cache" if $self->verbose > 1;
         my ($url) = shift->selectrow_array(
             'SELECT url FROM audit_cache WHERE id = ?',
             undef, $photo_id,
@@ -581,6 +594,7 @@ sub _audit_enclosure {
         if (my $source = $doc->find("/rsp/sizes/size[\@label='$size']/\@source")) {
             # This is the one we want.
             $conn->run(sub {
+                say STDERR "       Inserting into cache" if $self->verbose > 1;
                 shift->do(
                     'INSERT INTO audit_cache (id, url) VALUES (?, ?)',
                     undef, $photo_id, $source

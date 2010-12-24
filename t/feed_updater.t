@@ -19,8 +19,6 @@ BEGIN {
     use_ok 'App::FeedScene::FeedUpdater' or die;
 }
 
-File::Path::make_path 'db';
-
 # Set an absolute time.
 my $time = '2010-06-05T17:29:41Z';
 Test::MockTime::set_fixed_time($time);
@@ -44,7 +42,8 @@ ok my $dba = App::FeedScene::DBA->new( app => 'foo' ),
     'Create a DBA object';
 ok $dba->upgrade, 'Initialize and upgrade the database';
 END {
-    unlink App::FeedScene->new->db_name;
+    App::FeedScene->new->conn->disconnect;
+    $dba->drop;
     File::Path::remove_tree 'cache/foo';
 };
 
@@ -123,7 +122,7 @@ test_counts(7, 'Should now have 7 feeds');
             subtitle => 'Witty & clever',
             site_url => 'http://example.com/',
             icon_url => 'http://getfavicon.appspot.com/http://example.com/?defaulticon=none',
-            updated_at => '2009-12-13T18:30:02Z',
+            updated_at => '2009-12-13 18:30:02+00',
             rights   => '© 2010 Big Fat Example',
             category => '',
             id       => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6',
@@ -134,7 +133,7 @@ test_counts(7, 'Should now have 7 feeds');
             subtitle => '',
             site_url => 'http://example.net/f%C3%B8%C3%B8',
             icon_url => 'http://getfavicon.appspot.com/http://example.net/f%C3%B8%C3%B8?defaulticon=none',
-            updated_at => '2010-05-17T00:00:00Z',
+            updated_at => '2010-05-17 00:00:00+00',
             rights   => '',
             category => '',
             id       => URI->new("$uri/simple.rss")->canonical,
@@ -166,7 +165,7 @@ sub test_initial_feeds {
             subtitle => 'Witty & clever',
             site_url => 'http://example.com/',
             icon_url => 'http://getfavicon.appspot.com/http://example.com/?defaulticon=none',
-            updated_at => '2009-12-13T18:30:02Z',
+            updated_at => '2009-12-13 18:30:02+00',
             rights   => '© 2010 Big Fat Example',
             category => '',
             id       => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6',
@@ -177,7 +176,7 @@ sub test_initial_feeds {
             subtitle => '',
             site_url => 'http://example.net/f%C3%B8%C3%B8',
             icon_url => 'http://getfavicon.appspot.com/http://example.net/f%C3%B8%C3%B8?defaulticon=none',
-            updated_at => '2010-05-17T00:00:00Z',
+            updated_at => '2010-05-17 00:00:00+00',
             rights   => '',
             category => '',
             id       => URI->new("$uri/simple.rss")->canonical,
@@ -192,7 +191,7 @@ sub test_initial_feeds {
             subtitle => '',
             site_url => 'http://foo.org/',
             icon_url => 'http://getfavicon.appspot.com/http://foo.org/?defaulticon=none',
-            updated_at => '2009-12-13T18:30:02Z',
+            updated_at => '2009-12-13 18:30:02+00',
             rights   => 'Copyright (c) 2010',
             category => 'Typography',
             id       => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af8',
@@ -203,7 +202,7 @@ sub test_initial_feeds {
             subtitle => '',
             site_url => 'http://foo.org/',
             icon_url => 'http://getfavicon.appspot.com/http://foo.org/?defaulticon=none',
-            updated_at => '2010-06-05T17:29:41Z',
+            updated_at => '2010-06-05 17:29:41+00',
             rights   => '',
             category => 'Lögos & Branding',
             id       => URI->new("$uri/summaries.rss")->canonical,
@@ -218,7 +217,7 @@ sub test_initial_feeds {
             subtitle => '',
             site_url => 'http://baz.org/',
             icon_url => 'http://getfavicon.appspot.com/http://baz.org/?defaulticon=none',
-            updated_at => '2010-05-17T00:00:00Z',
+            updated_at => '2010-05-17 00:00:00+00',
             rights   => '',
             category => 'Infographics',
             id       => URI->new("$uri/dates.rss")->canonical,
@@ -229,7 +228,7 @@ sub test_initial_feeds {
             subtitle => '',
             site_url => 'http://foo.net/',
             icon_url => 'http://getfavicon.appspot.com/http://foo.net/?defaulticon=none',
-            updated_at => '2009-12-13T18:30:02Z',
+            updated_at => '2009-12-13 18:30:02+00',
             rights   => 'David “Theory” Wheeler',
             category => 'Lögos & Branding',
             id       => URI->new("$uri/latin-1.rss")->canonical,
@@ -244,7 +243,7 @@ sub test_initial_feeds {
             subtitle => '',
             site_url => 'http://example.com/',
             icon_url => 'http://getfavicon.appspot.com/http://example.com/?defaulticon=none',
-            updated_at => '2009-12-13T18:30:02Z',
+            updated_at => '2009-12-13 18:30:02+00',
             rights   => '',
             category => 'Lögos & Branding',
             id       => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af7',
@@ -255,7 +254,7 @@ sub test_initial_feeds {
             subtitle => '',
             site_url => 'http://example.org/',
             icon_url => 'http://getfavicon.appspot.com/http://example.org/?defaulticon=none',
-            updated_at => '2010-05-17T14:58:50Z',
+            updated_at => '2010-05-17 14:58:50+00',
             rights   => '',
             category => 'Typography',
             id       => URI->new("$uri/enclosures.rss")->canonical,

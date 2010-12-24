@@ -20,8 +20,6 @@ BEGIN {
     use_ok $CLASS                         or die;
 }
 
-File::Path::make_path 'db';
-
 # Set an absolute time.
 my $time = '2010-06-05T17:29:41Z';
 Test::MockTime::set_fixed_time($time);
@@ -35,9 +33,10 @@ ok my $dba = App::FeedScene::DBA->new( app => 'foo' ),
     'Create a DBA object';
 ok $dba->upgrade, 'Initialize and upgrade the database';
 END {
-    unlink App::FeedScene->new->db_name;
+    App::FeedScene->new->conn->disconnect;
+    $dba->drop;
     File::Path::remove_tree 'cache/foo';
-};
+}
 
 # Load some feed data.
 my $uri = 'file://localhost' . File::Spec->rel2abs('t/data');
@@ -75,7 +74,7 @@ for my $p (0..1) {
 $conn->run(sub {
     shift->do(q{
         UPDATE entries
-           SET published_at = strftime('%Y-%m-%dT%H:%M:%SZ','now','+1 day')
+           SET published_at = NOW() + '1 day'::interval
          WHERE id = 'urn:uuid:7e5c7b98-44de-5b73-bd70-289b3ed1a770'
     });
 });

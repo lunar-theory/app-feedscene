@@ -25,7 +25,7 @@ Module::Build->new(
         'Crypt::SSLeay'              => '0.58',
         'Data::Feed'                 => '0.00014',
         'DateTime'                   => '0.55',
-        'DBD::SQLite'                => '1.31',
+        'DBD::Pg'                    => '2.17.2',
         'DBI'                        => '1.608',
         'DBIx::Connector'            => '0.34',
         'Encode::ZapCP1252'          => '0.20',

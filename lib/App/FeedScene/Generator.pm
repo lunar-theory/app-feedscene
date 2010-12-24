@@ -42,7 +42,7 @@ sub go {
     if ($self->strict) {
         $sources   = '';
         $feed_cols = ', feed_url, feed_title, feed_subtitle, site_url'
-                   . ', icon_url, feed_updated_at, rights';
+                   . q{, icon_url, to_char(feed_updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS feed_updated_at, rights};
     } else {
         $feed_cols = '';
         my $fsxb   = XML::Builder->new(encoding => 'utf-8');
@@ -50,7 +50,8 @@ sub go {
         $conn->run(sub {
             # Get together sources.
             my $sth = shift->prepare(q{
-                SELECT id, url, title, subtitle, rights, updated_at, site_url,
+                SELECT id, url, title, subtitle, rights, site_url,
+                       to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
                        icon_url, portal
                   FROM feeds
                  ORDER BY portal, url
@@ -84,11 +85,13 @@ sub go {
             ? "\n               AND (enclosure_type = '' OR enclosure_type LIKE 'image/%')"
             : '';
         my $sth = shift->prepare(qq{
-            SELECT id, url, via_url, title, published_at, updated_at, summary,
+            SELECT id, url, via_url, title, summary,
+                   to_char(published_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS published_at,
+                   to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
                    author, enclosure_url, enclosure_type, feed_id, portal$feed_cols
               FROM feed_entries
              WHERE portal = ?
-               AND published_at <= strftime('%Y-%m-%dT%H:%M:%SZ', 'now')$img
+               AND published_at <= NOW()$img
              ORDER BY published_at DESC
              LIMIT ?
         });
