@@ -87,7 +87,7 @@ sub process {
             }
 
             my $feed     = Parser->parse_feed($res) or next;
-            $id          = $feed->can('id') ? $feed->id || $feed_url : $feed_url;
+            $id          = $feed->can('id') ? $feed->id || $feed_url : $feed_url->as_string;
             my $site_url = $feed->link;
             $site_url    = $site_url->[0] if ref $site_url;
             $site_url    = $feed->base
@@ -116,8 +116,8 @@ sub process {
 
         # Remove old feeds.
         $dbh->do(
-            'DELETE FROM feeds WHERE id NOT IN (' . join(', ', ('?') x @ids) . ')',
-            undef, @ids
+            'DELETE FROM feeds WHERE id <> ALL(?)',
+            undef, \@ids
         ) if @ids;
 
     });

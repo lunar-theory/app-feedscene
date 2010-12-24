@@ -269,9 +269,8 @@ sub process {
         $dbh->do(q{
             DELETE FROM entries
              WHERE feed_id = ?
-               AND id NOT IN (}. join (', ', ('?') x @ids) . ')',
-            undef, $feed_id, @ids
-        );
+               AND id <> ALL(?)
+        }, undef, $feed_id, \@ids) if @ids;
     });
     say STDERR "    ", scalar time, "Transction complete" if $self->verbose > 1;
 
