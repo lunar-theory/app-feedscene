@@ -1,4 +1,4 @@
-package App::FeedScene::FeedUpdater 0.26;
+package App::FeedScene::FeedUpdater 0.27;
 
 use 5.12.0;
 use utf8;
@@ -118,7 +118,7 @@ sub process {
         $dbh->do(
             'DELETE FROM feeds WHERE id <> ALL(?)',
             undef, \@ids
-        ) if @ids;
+        ) if @ids; # XXX DELETE all if no IDs?
 
     });
     return $self;

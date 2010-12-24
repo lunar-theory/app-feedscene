@@ -1,4 +1,4 @@
-package App::FeedScene::EntryUpdater 0.26;
+package App::FeedScene::EntryUpdater 0.27;
 
 use 5.12.0;
 use utf8;
@@ -270,7 +270,7 @@ sub process {
             DELETE FROM entries
              WHERE feed_id = ?
                AND id <> ALL(?)
-        }, undef, $feed_id, \@ids) if @ids;
+        }, undef, $feed_id, \@ids) if @ids; # XXX DELETE all if no IDs?
     });
     say STDERR "    ", scalar time, "Transction complete" if $self->verbose > 1;
 
