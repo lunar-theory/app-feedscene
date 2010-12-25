@@ -152,8 +152,9 @@ sub process {
             if ($portal) {
                 # Need some media for non-text portals.
                 $enc = $self->_find_enclosure($entry, $base_url, $entry_link) or next;
-                $self->eurls->{$enc->{url}} = 1;
-                $self->eids->{$enc->{id}}   = 1 if $enc->{id};
+                $self->eurls->{$enc->{url}}   = 1;
+                $self->eids->{$enc->{id}}     = 1 if $enc->{id};
+                $self->eusers->{$enc->{user}} = 1 if $enc->{user};
             }
 
             my $pub_date = $entry->issued;
@@ -182,11 +183,12 @@ sub process {
                 Parser->strip_html($entry->title || ''),
                 $pub_date,
                 $upd_date || $pub_date,
-                _find_summary($entry),
+                _find_summary($entry), # XXX Use enclosure description here.
                 Parser->strip_html($entry->author || ''),
                 $enc->{type} || '',
                 $enc->{url},
                 $enc->{id},
+                $enc->{user},
                 $uuid,
             )];
         }
@@ -233,8 +235,9 @@ sub process {
         my $ins = $dbh->prepare(q{
             INSERT INTO entries (
                 feed_id, url, via_url, title, published_at, updated_at, summary,
-                author, enclosure_type, enclosure_url, enclosure_id, id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                author, enclosure_type, enclosure_url, enclosure_id,
+                enclosure_user, id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         });
 
         say STDERR "       Preparing UPDATE statement" if $self->verbose > 1;
@@ -250,7 +253,8 @@ sub process {
                    author         = ?,
                    enclosure_type = ?,
                    enclosure_url  = ?,
-                   enclosure_id   = ?
+                   enclosure_id   = ?,
+                   enclosure_user = ?
              WHERE id = ?
         });
 
@@ -589,18 +593,41 @@ sub _audit_enclosure {
     # Request information about the photo or return.
     my $api_key = '58e9ec90618e63825e2372a94e306bb3';
     my $api_url = 'http://api.flickr.com/services/rest/?method='
-        . "flickr.photos.getSizes&api_key=$api_key&photo_id=$photo_id";
+        . "flickr.photos.getInfo&api_key=$api_key&photo_id=$photo_id";
     my $res = $self->ua->get($api_url);
+
+    # If the request is unsuccessful, skip the photo.
+    return unless $res->is_success || $res->code == HTTP_NOT_MODIFIED;
+
+    # Grab the user ID and description.
+    my $doc = Parser->libxml->parse_string($res->content);
+    my $enc_user = 'flickr:' . $doc->findvalue('/rsp/photo/owner/@nsid');
+    return if $self->eusers->{$enc_user} || $conn->run(sub {
+        say STDERR "       Checking enclosure user $enc_user" if $self->verbose > 1;
+        shift->selectcol_arrayref(
+            'SELECT 1 FROM entries WHERE enclosure_user = ?',
+            undef, $enc_user
+        )->[0];
+    });
+
+    # Store the username and the description.
+    $enc->{user} = $enc_user;
+    $enc->{desc} = $doc->findvalue('/rsp/photo/description');
+
+    # Fetch sizes.
+    $api_url = 'http://api.flickr.com/services/rest/?method='
+        . "flickr.photos.getSizes&api_key=$api_key&photo_id=$photo_id";
+    $res = $self->ua->get($api_url);
     return $enc unless $res->is_success || $res->code == HTTP_NOT_MODIFIED;
 
     # Parse it.
-    my $doc = Parser->libxml->parse_string($res->content);
+    $doc = Parser->libxml->parse_string($res->content);
 
     # Go for large, medium, or original.
     for my $size qw(Large Medium Original) {
         if (my $source = $doc->find("/rsp/sizes/size[\@label='$size']/\@source")) {
             $enc->{url} = URI->new($source)->canonical;
-            return $enc;
+            last;
         }
     }
 

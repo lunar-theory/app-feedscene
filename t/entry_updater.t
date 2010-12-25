@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 177;
+use Test::More tests => 179;
 #use Test::More 'no_plan';
 use Test::More::UTF8;
 use Test::NoWarnings;
@@ -795,23 +795,31 @@ $ua_mock->mock( get => sub {
 # Try URL with photo ID but let the response fail.
 $res_mock->mock( is_success => 0 );
 $uri = URI->new('http://farm2.static.flickr.com/1282/4661840263_019e867a6e_m.jpg');
-is_deeply $eup->_audit_enclosure($type, $uri), { type => $type, url => $uri, id => 'flickr:4661840263' },
-    'Audit should return the type and URI on request failure';
+is $eup->_audit_enclosure($type, $uri), undef,
+    'Audit should return undef on request failure';
 
 # Let the request be successful.
 $res_mock->mock(is_success => 1);
-my @content = do {
+my @size_xml = do {
     my $fn = 't/data/flickr-sizes.xml';
     open my $fh, '<', $fn or die "Cannot open $fn: $!\n";
     <$fh>;
 };
-$res_mock->mock(content => sub { join '', @content });
+my @info_xml = do {
+    my $fn = 't/data/flickr-info.xml';
+    open my $fh, '<', $fn or die "Cannot open $fn: $!\n";
+    <$fh>;
+};
+my $i;
+$res_mock->mock(content => sub { join '', $i++ % 2 ? @size_xml : @info_xml });
 
 # Make sure we get the large image.
 is_deeply $eup->_audit_enclosure($type, $uri), {
     type => $type,
     url  => URI->new('http://farm2.static.flickr.com/1282/4661840263_019e867a6e_b.jpg'),
-    id   => 'flickr:4661840263'
+    id   => 'flickr:4661840263',
+    user => 'flickr:72575281@N00',
+    desc => 'The hammer is animated. To tacky. So hilarious. So cool.',
 }, 'Should find the large image';
 
 # Should get undef if the image with that ID is already in the cached IDs.
@@ -819,8 +827,14 @@ $eup->eids({  'flickr:4661840263' => 1 });
 is $eup->_audit_enclosure($type, $uri), undef,
     'Should get undef because the image is already in the cache';
 
-# Should get undef if the image with that ID is already in the database.
+# Should get undef if the user is already in the cache.
 $eup->eids({ });
+$eup->eusers({ 'flickr:72575281@N00' => 1 });
+is $eup->_audit_enclosure($type, $uri), undef,
+    'Should get undef because the username is already in the cache';
+
+# Should get undef if the image with that ID is already in the database.
+$eup->eusers({ });
 $conn->run(sub { shift->do(
     'UPDATE entries SET enclosure_id = ? WHERE id = ?',
     undef,  'flickr:4661840263', 'urn:uuid:257c8075-dc7c-5678-8de0-5bb88360dff6',
@@ -828,30 +842,51 @@ $conn->run(sub { shift->do(
 is $eup->_audit_enclosure($type, $uri), undef,
     'Should get undef because the image is already in the database';
 
+# Should get undef if the image with that user ID is already in the database.
+$i = 0;
+$conn->run(sub { shift->do(
+    'UPDATE entries SET enclosure_id = ?, enclosure_user = ? WHERE id = ?',
+    undef,  'flickr:whatever', 'flickr:72575281@N00',
+    'urn:uuid:257c8075-dc7c-5678-8de0-5bb88360dff6',
+)});
+is $eup->_audit_enclosure($type, $uri), undef,
+    'Should get undef because the user is already in the database';
+
 # Try for the medium image when there is no large image.
-@content = grep { $_ !~ /label="Large"/ } @content;
-$conn->run(sub { shift->do('DELETE FROM entries WHERE enclosure_id = ?', undef, 'flickr:4661840263') });
+@size_xml = grep { $_ !~ /label="Large"/ } @size_xml;
+$conn->run(sub {
+    shift->do(
+        'DELETE FROM entries WHERE id = ?',
+        undef, 'urn:uuid:257c8075-dc7c-5678-8de0-5bb88360dff6');
+});
+$i = 0;
 is_deeply $eup->_audit_enclosure($type, $uri), {
     type => $type,
     url  => URI->new('http://farm2.static.flickr.com/1282/4661840263_019e867a6e.jpg'),
-    id   => 'flickr:4661840263'
+    id   => 'flickr:4661840263',
+    user => 'flickr:72575281@N00',
+    desc => 'The hammer is animated. To tacky. So hilarious. So cool.',
 }, 'Should find the medium image';
 
 # Try for the original image when there is no medium.
-@content = grep { $_ !~ /label="Medium"/ } @content;
+@size_xml = grep { $_ !~ /label="Medium"/ } @size_xml;
 $conn->run(sub { shift->do('DELETE FROM entries WHERE enclosure_id = ?', undef, 'flickr:4661840263') });
 is_deeply $eup->_audit_enclosure($type, $uri), {
     type => $type,
     url  => URI->new('http://farm2.static.flickr.com/1282/4661840263_e146f57fd2_o.jpg'),
     id   => 'flickr:4661840263',
+    user => 'flickr:72575281@N00',
+    desc => 'The hammer is animated. To tacky. So hilarious. So cool.',
 }, 'Should find the original image';
 
 # Try for the passed-in URL when there is no original.
-@content = grep { $_ !~ /label="Original"/ } @content;
+@size_xml = grep { $_ !~ /label="Original"/ } @size_xml;
 is_deeply $eup->_audit_enclosure($type, $uri), {
     type => $type,
     url  => $uri,
     id   => 'flickr:4661840263',
+    user => 'flickr:72575281@N00',
+    desc => 'The hammer is animated. To tacky. So hilarious. So cool.',
 }, 'Should get the passed URI when nothing found in XML';
 
 ##############################################################################
