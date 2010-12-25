@@ -801,7 +801,7 @@ is_deeply $eup->_audit_enclosure($type, $uri), { type => $type, url => $uri, id 
 # Let the request be successful.
 $res_mock->mock(is_success => 1);
 my @content = do {
-    my $fn = 't/data/flickr.xml';
+    my $fn = 't/data/flickr-sizes.xml';
     open my $fh, '<', $fn or die "Cannot open $fn: $!\n";
     <$fh>;
 };
