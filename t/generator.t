@@ -61,7 +61,7 @@ for my $p (0..1) {
     my $mock = Test::MockModule->new('App::FeedScene::EntryUpdater');
     $mock->mock(_audit_enclosure => sub {
         my ($self, $type, $url) = @_;
-        return $type, $url;
+        return { type => $type, url => $url };
     });
 
     App::FeedScene::EntryUpdater->new(

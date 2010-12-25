@@ -147,13 +147,13 @@ sub process {
                     : URI->new($entry->link)->canonical;
             }
 
-            my ($enc_type, $enc_url) = '';
+            my $enc;
 
             if ($portal) {
                 # Need some media for non-text portals.
-                ($enc_type, $enc_url) = $self->_find_enclosure($entry, $base_url, $entry_link);
-                next unless $enc_type;
-                $self->eurls->{$enc_url} = 1;
+                $enc = $self->_find_enclosure($entry, $base_url, $entry_link) or next;
+                $self->eurls->{$enc->{url}} = 1;
+                $self->eids->{$enc->{id}}   = 1 if $enc->{id};
             }
 
             my $pub_date = $entry->issued;
@@ -184,8 +184,9 @@ sub process {
                 $upd_date || $pub_date,
                 _find_summary($entry),
                 Parser->strip_html($entry->author || ''),
-                $enc_type,
-                $enc_url,
+                $enc->{type} || '',
+                $enc->{url},
+                $enc->{id},
                 $uuid,
             )];
         }
@@ -232,8 +233,8 @@ sub process {
         my $ins = $dbh->prepare(q{
             INSERT INTO entries (
                 feed_id, url, via_url, title, published_at, updated_at, summary,
-                author, enclosure_type, enclosure_url, id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                author, enclosure_type, enclosure_url, enclosure_id, id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         });
 
         say STDERR "       Preparing UPDATE statement" if $self->verbose > 1;
@@ -248,7 +249,8 @@ sub process {
                    summary        = ?,
                    author         = ?,
                    enclosure_type = ?,
-                   enclosure_url  = ?
+                   enclosure_url  = ?,
+                   enclosure_id   = ?
              WHERE id = ?
         });
 
@@ -482,8 +484,8 @@ sub _find_enclosure {
     for my $enc ($entry->enclosures) {
         my $etype = $enc->type or next;
         next if $etype !~ m{^(?:image|audio|video)/};
-        my ($type, $url) = $self->_validate_enclosure($enc->type, URI->new($enc->url)->canonical);
-        return $type, $url if $type;
+        my $enc = $self->_validate_enclosure($enc->type, URI->new($enc->url)->canonical);
+        return $enc if $enc;
     }
 
     # Use XML::LibXML and XPath to find something and link it up.
@@ -499,8 +501,8 @@ sub _find_enclosure {
             next if !$url->can('host') || $url->host =~ /\bdoubleclick[.]net$/;
             (my($type), $url) = $self->_get_type($url, $base_url);
             next unless $type && $type =~ m{^(?:image|audio|video)/};
-            ($type, $url) = $self->_validate_enclosure($type, $url);
-            return $type, $url if $type;
+            my $enc = $self->_validate_enclosure($type, $url);
+            return $enc if $enc;
         }
     }
 
@@ -543,49 +545,53 @@ sub _get_type {
 
 sub _validate_enclosure {
     my $self = shift;
-    my ($type, $url) = $self->_audit_enclosure(@_);
+    my $enc  = $self->_audit_enclosure(@_) or return;
 
     # Make sure it's not a dupe.
     my $conn = App::FeedScene->new($self->app)->conn;
-    return if $self->eurls->{$url} || $conn->run(sub {
+    return if $self->eurls->{$enc->{url}} || $conn->run(sub {
         say STDERR "       Checking enclosure" if $self->verbose > 1;
         shift->selectcol_arrayref(
             'SELECT 1 FROM entries WHERE enclosure_url = ?',
-            undef, $url
+            undef, $enc->{url}
         )->[0];
     });
 
-    return $type, $url;
+    return $enc;
 }
 
 sub _audit_enclosure {
     my ($self, $type, $url) = @_;
-    return $type, $url unless $url->host =~ /^farm\d+[.]static[.]flickr[.]com$/;
+
+    my $enc = {
+        type => $type,
+        url  => $url
+    };
+
+    return $enc unless $url->host =~ /^farm\d+[.]static[.]flickr[.]com$/;
 
     # Grab the photo ID or return.
     my ($photo_id) = ($url->path_segments)[-1] =~ /^([^_]+)(?=_)/;
-    return $type, $url unless $photo_id;
+    return $enc unless $photo_id;
 
-    # See if we have it in the cache already.
+    # See if we have it already.
     my $conn = App::FeedScene->new($self->app)->conn;
-    if (my $cached_url = $conn->run(sub {
-        say STDERR "       Checking audit cache" if $self->verbose > 1;
-        my ($url) = shift->selectrow_array(
-            'SELECT url FROM audit_cache WHERE id = ?',
-            undef, $photo_id,
-        );
-        return $url;
-    })) {
-        return $type, URI->new($cached_url)->canonical;
-    }
+    my $enc_id = "flickr:$photo_id";
+    return if $self->eids->{$enc_id} || $conn->run(sub {
+        say STDERR "       Checking enclosure ID $enc_id" if $self->verbose > 1;
+        shift->selectcol_arrayref(
+            'SELECT 1 FROM entries WHERE enclosure_id = ?',
+            undef, $enc_id
+        )->[0];
+    });
+    $enc->{id} = $enc_id;
 
     # Request information about the photo or return.
     my $api_key = '58e9ec90618e63825e2372a94e306bb3';
     my $api_url = 'http://api.flickr.com/services/rest/?method='
         . "flickr.photos.getSizes&api_key=$api_key&photo_id=$photo_id";
     my $res = $self->ua->get($api_url);
-    return ($type, $url) unless $res->is_success
-        || $res->code == HTTP_NOT_MODIFIED;
+    return $enc unless $res->is_success || $res->code == HTTP_NOT_MODIFIED;
 
     # Parse it.
     my $doc = Parser->libxml->parse_string($res->content);
@@ -593,20 +599,13 @@ sub _audit_enclosure {
     # Go for large, medium, or original.
     for my $size qw(Large Medium Original) {
         if (my $source = $doc->find("/rsp/sizes/size[\@label='$size']/\@source")) {
-            # This is the one we want.
-            $conn->run(sub {
-                say STDERR "       Inserting into cache" if $self->verbose > 1;
-                shift->do(
-                    'INSERT INTO audit_cache (id, url) VALUES (?, ?)',
-                    undef, $photo_id, $source
-                );
-            });
-            return $type, URI->new($source)->canonical;
+            $enc->{url} = URI->new($source)->canonical;
+            return $enc;
         }
     }
 
     # Bah! Just go with what we've got.
-    return $type, $url;
+    return $enc;
 }
 
 1;

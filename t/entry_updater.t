@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 179;
+use Test::More tests => 177;
 #use Test::More 'no_plan';
 use Test::More::UTF8;
 use Test::NoWarnings;
@@ -493,7 +493,7 @@ is_deeply $dbh->selectall_arrayref(
 $eup->mock(_audit_enclosure => sub {
     my ($self, $type, $url) = @_;
     pass "_audit_enclosures($url)";
-    return $type, $url;
+    return { type => $type, url => $url };
 });
 
 my $ua_mock = Test::MockModule->new('App::FeedScene::UA');
@@ -531,7 +531,7 @@ is_deeply $conn->run(sub{ shift->selectrow_arrayref(
 # Disable the `pass` in _audit_enclosures now that we're sure it gets called.
 $eup->mock(_audit_enclosure => sub {
     my ($self, $type, $url) = @_;
-    return $type, $url;
+    return { type => $type, url => $url };
 });
 
 @types = qw(
@@ -775,12 +775,12 @@ $eup->unmock('_audit_enclosure');
 # Start with non-Flickr URL.
 $uri = URI->new('http://example.com/hey/you/it.jpg');
 my $type = 'image/jpeg';
-is_deeply [$eup->_audit_enclosure($type, $uri)], [$type, $uri],
+is_deeply $eup->_audit_enclosure($type, $uri), { type => $type, url => $uri },
     'Non-Flickr URI should not be audited';
 
 # Try Flickr static URL without photo ID.
 $uri = URI->new('http://farm3.static.flickr.com/hey/you/it.jpg');
-is_deeply [$eup->_audit_enclosure($type, $uri)], [$type, $uri],
+is_deeply $eup->_audit_enclosure($type, $uri), { type => $type, url => $uri },
     'Flickr URL without photo ID should not be audited';
 
 # Need to mock UA response.
@@ -795,7 +795,7 @@ $ua_mock->mock( get => sub {
 # Try URL with photo ID but let the response fail.
 $res_mock->mock( is_success => 0 );
 $uri = URI->new('http://farm2.static.flickr.com/1282/4661840263_019e867a6e_m.jpg');
-is_deeply [$eup->_audit_enclosure($type, $uri)], [$type, $uri],
+is_deeply $eup->_audit_enclosure($type, $uri), { type => $type, url => $uri, id => 'flickr:4661840263' },
     'Audit should return the type and URI on request failure';
 
 # Let the request be successful.
@@ -808,52 +808,51 @@ my @content = do {
 $res_mock->mock(content => sub { join '', @content });
 
 # Make sure we get the large image.
-is_deeply [$eup->_audit_enclosure($type, $uri)],
-    [$type, URI->new('http://farm2.static.flickr.com/1282/4661840263_019e867a6e_b.jpg')],
-    'Should find the large image';
+is_deeply $eup->_audit_enclosure($type, $uri), {
+    type => $type,
+    url  => URI->new('http://farm2.static.flickr.com/1282/4661840263_019e867a6e_b.jpg'),
+    id   => 'flickr:4661840263'
+}, 'Should find the large image';
 
-# Remove the large image. We should still have it from the cache.
-@content = grep { $_ !~ /label="Large"/ } @content;
-is_deeply [$eup->_audit_enclosure($type, $uri)],
-    [$type, URI->new('http://farm2.static.flickr.com/1282/4661840263_019e867a6e_b.jpg')],
-    'Should still have large image from cache';
+# Should get undef if the image with that ID is already in the cached IDs.
+$eup->eids({  'flickr:4661840263' => 1 });
+is $eup->_audit_enclosure($type, $uri), undef,
+    'Should get undef because the image is already in the cache';
 
-# Make sure the trigger on the entries table removes it from the cache.
-$conn->run(sub {
-    my $url = 'http://farm2.static.flickr.com/1169/4601733070_92cd987ff6_o.jpg';
-    $_->do(
-        'INSERT INTO audit_cache (id, url) VALUES (?, ?)',
-        undef, 'foo', $url
-    );
-    is +($_->selectrow_array('SELECT COUNT(*) FROM audit_cache WHERE url = ?', undef, $url))[0],
-        1, 'Should have URL in the cache';
-    ok $_->do('DELETE FROM entries WHERE enclosure_url = ?', undef, $url),
-        'Delete it from entries table';
-    TODO: {
-        local $TODO = 'Need to eliminate the cache and just store the photo ID in entries';
-        is +($_->selectrow_array('SELECT COUNT(*) FROM audit_cache WHERE url = ?', undef, $url))[0],
-            0, 'It should now be cone from the cache';
-    }
-});
+# Should get undef if the image with that ID is already in the database.
+$eup->eids({ });
+$conn->run(sub { shift->do(
+    'UPDATE entries SET enclosure_id = ? WHERE id = ?',
+    undef,  'flickr:4661840263', 'urn:uuid:257c8075-dc7c-5678-8de0-5bb88360dff6',
+)});
+is $eup->_audit_enclosure($type, $uri), undef,
+    'Should get undef because the image is already in the database';
 
 # Try for the medium image when there is no large image.
-$conn->run(sub { shift->do('DELETE FROM audit_cache') });
-is_deeply [$eup->_audit_enclosure($type, $uri)],
-    [$type, URI->new('http://farm2.static.flickr.com/1282/4661840263_019e867a6e.jpg')],
-    'Should find the medium image';
+@content = grep { $_ !~ /label="Large"/ } @content;
+$conn->run(sub { shift->do('DELETE FROM entries WHERE enclosure_id = ?', undef, 'flickr:4661840263') });
+is_deeply $eup->_audit_enclosure($type, $uri), {
+    type => $type,
+    url  => URI->new('http://farm2.static.flickr.com/1282/4661840263_019e867a6e.jpg'),
+    id   => 'flickr:4661840263'
+}, 'Should find the medium image';
 
 # Try for the original image when there is no medium.
-$conn->run(sub { shift->do('DELETE FROM audit_cache') });
 @content = grep { $_ !~ /label="Medium"/ } @content;
-is_deeply [$eup->_audit_enclosure($type, $uri)],
-    [$type, URI->new('http://farm2.static.flickr.com/1282/4661840263_e146f57fd2_o.jpg')],
-    'Should find the original image';
+$conn->run(sub { shift->do('DELETE FROM entries WHERE enclosure_id = ?', undef, 'flickr:4661840263') });
+is_deeply $eup->_audit_enclosure($type, $uri), {
+    type => $type,
+    url  => URI->new('http://farm2.static.flickr.com/1282/4661840263_e146f57fd2_o.jpg'),
+    id   => 'flickr:4661840263',
+}, 'Should find the original image';
 
 # Try for the passed-in URL when there is no original.
-$conn->run(sub { shift->do('DELETE FROM audit_cache') });
 @content = grep { $_ !~ /label="Original"/ } @content;
-is_deeply [$eup->_audit_enclosure($type, $uri)], [$type, $uri],
-    'Should get the passed URI when nothing found in XML';
+is_deeply $eup->_audit_enclosure($type, $uri), {
+    type => $type,
+    url  => $uri,
+    id   => 'flickr:4661840263',
+}, 'Should get the passed URI when nothing found in XML';
 
 ##############################################################################
 sub test_counts {
