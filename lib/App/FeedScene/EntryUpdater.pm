@@ -175,6 +175,11 @@ sub process {
                 next if $up_to_date;
             }
 
+            # Find the summary.
+            my $summary = _find_summary($entry);
+            $summary = $enc->{desc} if $enc->{desc}
+                && $summary =~ /\bhas added a photo to the pool\b/;
+
             # Gather params.
             push @entries, [$upd_date, $up_to_date, _clean(
                 $feed_id,
@@ -183,7 +188,7 @@ sub process {
                 Parser->strip_html($entry->title || ''),
                 $pub_date,
                 $upd_date || $pub_date,
-                _find_summary($entry), # XXX Use enclosure description here.
+                $summary,
                 Parser->strip_html($entry->author || ''),
                 $enc->{type} || '',
                 $enc->{url},
