@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 235;
+use Test::More tests => 222;
 #use Test::More 'no_plan';
 use Test::More::UTF8;
 use Test::NoWarnings;
@@ -491,7 +491,7 @@ is_deeply $dbh->selectall_arrayref(
 # Try a feed with enclosures.
 # Mock enclosure audit. Will unmock and test below.
 $eup->mock(_audit_enclosure => sub {
-    my ($self, $id, $url, $type) = @_;
+    my ($self, $url, $type) = @_;
     pass "_audit_enclosures($url)";
     return { type => $type, url => $url };
 });
@@ -504,16 +504,21 @@ $eup->mock(_check_size => sub {
 });
 
 my $ua_mock = Test::MockModule->new('App::FeedScene::UA');
-my @types = qw(
-    text/html
-    text/html
-    image/jpeg
+my %type_for = (
+    unwanted          => 'text/html',
+    unwantedembed     => 'text/html',
+    redirimage        => 'image/jpeg',
+    audiodupe         => 'text/html',
+    embeddedimagedupe => 'text/html',
 );
 
 $ua_mock->mock(head => sub {
     my ($self, $url) = @_;
-    my $r = HTTP::Response->new(200, 'OK', ['Content-Type' => shift @types]);
-    (my $u = $url) =~ s{redirimage$}{realimage.jpg};
+    (my $key = $url) =~ s{http://[^/]+/}{};
+    die "No mocked data type for $url" unless $type_for{$key};
+
+    my $r = HTTP::Response->new(200, 'OK', ['Content-Type' => $type_for{$key}]);
+    (my $u = $url) =~ s{redirimage$}{realimage.jpg} if $key eq 'redirimage';
     $r->request( HTTP::Request->new(GET => $u) );
     return $r;
 });
@@ -537,15 +542,10 @@ is_deeply $conn->run(sub{ shift->selectrow_arrayref(
 
 # Disable the `pass` in _audit_enclosures now that we're sure it gets called.
 $eup->mock(_audit_enclosure => sub {
-    my ($self, $id, $url, $type) = @_;
+    my ($self, $url, $type) = @_;
     return { type => $type, url => $url };
 });
 
-@types = qw(
-    text/html
-    text/html
-    image/jpeg
-);
 ok $eup->process("$uri/enclosures.rss"), 'Process RSS feed with enclosures';
 test_counts(64, 'Should now have 64 entries');
 
@@ -621,11 +621,6 @@ is_deeply test_data('urn:uuid:4aef01ff-75c3-5dcb-a53f-878e3042f3cf'), {
 }, 'Data for entry with two should have just the first enclosure';
 
 # Process it again.
-@types = qw(
-    text/html
-    text/html
-    image/jpeg
-);
 ok $eup->process("$uri/enclosures.rss"), 'Process RSS feed with enclosures again';
 test_counts(64, 'Should still have 64 entries');
 
@@ -719,11 +714,6 @@ for my $spec (
 
 ##############################################################################
 # Summary regressions.
-@types = qw(
-    image/png
-    image/jpeg
-);
-
 ok $eup->process("$uri/more_summaries.atom"), 'Process Summary regressions';
 test_counts(67, 'Should now have 67 entries');
 
@@ -770,7 +760,6 @@ for my $spec (
 
 ##############################################################################
 # Test Yahoo! Pipes feed with nerbles in it.
-@types = qw(image/jpeg);
 $eup->portal(1);
 ok $eup->process("$uri/nerbles.rss"), 'Process Yahoo! Pipes nerbles feed';
 test_counts(72, 'Should now have 72 entries');
@@ -809,13 +798,12 @@ $eup->unmock('_audit_enclosure');
 # Start with non-Flickr URL.
 $uri = URI->new('http://example.com/hey/you/it.jpg');
 my $type = 'image/jpeg';
-my $id   = 'whatever';
-is_deeply $eup->_audit_enclosure($id, $uri, $type), { type => $type, url => $uri },
+is_deeply $eup->_audit_enclosure($uri, $type), { type => $type, url => $uri },
     'Non-Flickr URI should not be audited';
 
 # Try Flickr static URL without photo ID.
 $uri = URI->new('http://farm3.static.flickr.com/hey/you/it.jpg');
-is_deeply $eup->_audit_enclosure($id, $uri, $type), { type => $type, url => $uri },
+is_deeply $eup->_audit_enclosure($uri, $type), { type => $type, url => $uri },
     'Flickr URL without photo ID should not be audited';
 
 # Need to mock UA response.
@@ -830,7 +818,7 @@ $ua_mock->mock( get => sub {
 # Try URL with photo ID but let the response fail.
 $res_mock->mock( is_success => 0 );
 $uri = URI->new('http://farm2.static.flickr.com/1282/4661840263_019e867a6e_m.jpg');
-is $eup->_audit_enclosure($id, $uri, $type), undef,
+is $eup->_audit_enclosure($uri, $type), undef,
     'Audit should return undef on request failure';
 
 # Let the request be successful.
@@ -849,7 +837,7 @@ my $i;
 $res_mock->mock(content => sub { join '', $i++ % 2 ? @size_xml : @info_xml });
 
 # Make sure we get the large image.
-is_deeply $eup->_audit_enclosure($id, $uri, $type), {
+is_deeply $eup->_audit_enclosure($uri, $type), {
     type => $type,
     url  => URI->new('http://farm2.static.flickr.com/1282/4661840263_019e867a6e_b.jpg'),
     id   => 'flickr:4661840263',
@@ -859,13 +847,13 @@ is_deeply $eup->_audit_enclosure($id, $uri, $type), {
 
 # Should get undef if the image with that ID is already in the cached IDs.
 $eup->eids({  'flickr:4661840263' => 1 });
-is $eup->_audit_enclosure($id, $uri, $type), undef,
+is $eup->_audit_enclosure($uri, $type), undef,
     'Should get undef because the image is already in the cache';
 
 # Should get undef if the user is already in the cache.
 $eup->eids({ });
 $eup->eusers({ 'flickr:72575281@N00' => 1 });
-is $eup->_audit_enclosure($id, $uri, $type), undef,
+is $eup->_audit_enclosure($uri, $type), undef,
     'Should get undef because the username is already in the cache';
 
 # Should get undef if the image with that ID is already in the database.
@@ -874,7 +862,7 @@ $conn->run(sub { shift->do(
     'UPDATE entries SET enclosure_id = ? WHERE id = ?',
     undef,  'flickr:4661840263', 'urn:uuid:257c8075-dc7c-5678-8de0-5bb88360dff6',
 )});
-is $eup->_audit_enclosure($id, $uri, $type), undef,
+is $eup->_audit_enclosure($uri, $type), undef,
     'Should get undef because the image is already in the database';
 
 # Should get undef if the image with that user ID is already in the database.
@@ -884,7 +872,7 @@ $conn->run(sub { shift->do(
     undef,  'flickr:whatever', 'flickr:72575281@N00',
     'urn:uuid:257c8075-dc7c-5678-8de0-5bb88360dff6',
 )});
-is $eup->_audit_enclosure($id, $uri, $type), undef,
+is $eup->_audit_enclosure($uri, $type), undef,
     'Should get undef because the user is already in the database';
 
 # Try for the medium image when there is no large image.
@@ -895,7 +883,7 @@ $conn->run(sub {
         undef, 'urn:uuid:257c8075-dc7c-5678-8de0-5bb88360dff6');
 });
 $i = 0;
-is_deeply $eup->_audit_enclosure($id, $uri, $type), {
+is_deeply $eup->_audit_enclosure($uri, $type), {
     type => $type,
     url  => URI->new('http://farm2.static.flickr.com/1282/4661840263_019e867a6e.jpg'),
     id   => 'flickr:4661840263',
@@ -906,7 +894,7 @@ is_deeply $eup->_audit_enclosure($id, $uri, $type), {
 # Try for the original image when there is no medium.
 @size_xml = grep { $_ !~ /label="Medium"/ } @size_xml;
 $conn->run(sub { shift->do('DELETE FROM entries WHERE enclosure_id = ?', undef, 'flickr:4661840263') });
-is_deeply $eup->_audit_enclosure($id, $uri, $type), {
+is_deeply $eup->_audit_enclosure($uri, $type), {
     type => $type,
     url  => URI->new('http://farm2.static.flickr.com/1282/4661840263_e146f57fd2_o.jpg'),
     id   => 'flickr:4661840263',
@@ -916,7 +904,7 @@ is_deeply $eup->_audit_enclosure($id, $uri, $type), {
 
 # Try for the passed-in URL when there is no original.
 @size_xml = grep { $_ !~ /label="Original"/ } @size_xml;
-is_deeply $eup->_audit_enclosure($id, $uri, $type), {
+is_deeply $eup->_audit_enclosure($uri, $type), {
     type => $type,
     url  => $uri,
     id   => 'flickr:4661840263',

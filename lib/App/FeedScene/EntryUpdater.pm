@@ -490,12 +490,29 @@ sub _wanted_nodes_for {
 }
 
 sub _find_enclosure {
-    my ($self, $uuid, $entry, $base_url, $entry_link) = @_;
+    my ($self, $entry_id, $entry, $base_url, $entry_link) = @_;
+
+    # If we already have the enclosure for this entry, just re-use it.
+    my $enc_data = App::FeedScene->new($self->app)->conn->run(sub {
+        say STDERR "       Checking for cached enclosure for entry $entry_id"
+            if $self->verbose > 1;
+        my $sth = $_->prepare_cached(q{
+            SELECT enclosure_type AS type, enclosure_url  AS url,
+                   enclosure_hash AS hash, enclosure_user AS user,
+                   enclosure_id   AS id,   summary        AS desc
+              FROM entries
+             WHERE id = ?
+        });
+        $_->selectrow_hashref($sth, undef, $entry_id);
+    });
+    return $enc_data if $enc_data;
+
+    # Have a look at the enclosures.
     for my $enc ($entry->enclosures) {
-        my $enc = $self->_validate_enclosure(
-            $uuid, URI->new($enc->url)->canonical, $enc->type
+        my $enc_data = $self->_validate_enclosure(
+            URI->new($enc->url)->canonical, $enc->type
         ) or next;
-        return $enc;
+        return $enc_data;
     }
 
     # Use XML::LibXML and XPath to find something and link it up.
@@ -508,13 +525,13 @@ sub _find_enclosure {
             $url = $base_url
                 ? URI->new_abs($url, $base_url)->canonical
                 : URI->new($url)->canonical;
-            my $enc = $self->_validate_enclosure($uuid, $url) or next;
-            return $enc;
+            my $enc_data = $self->_validate_enclosure($url) or next;
+            return $enc_data;
         }
     }
 
     # Fall back on the direct link.
-    return $self->_validate_enclosure($uuid, $entry_link);
+    return $self->_validate_enclosure($entry_link);
 }
 
 my $uuid_gen = OSSP::uuid->new;
@@ -543,7 +560,7 @@ sub _get_type {
 }
 
 sub _validate_enclosure {
-    my ($self, $id, $url, $type) = @_;
+    my ($self, $url, $type) = @_;
 
     # Ignore useless URIs and obvious ads.
     return if !$url->can('host') || $url->host =~ /\bdoubleclick[.]net$/;
@@ -555,15 +572,15 @@ sub _validate_enclosure {
     return unless $type && $type =~ m{^(?:image|audio|video)/};
 
     # Audit the enclosure.
-    my $enc  = $self->_audit_enclosure($id, $url, $type) or return;
+    my $enc  = $self->_audit_enclosure($url, $type) or return;
 
     # Make sure it's not a dupe.
     my $conn = App::FeedScene->new($self->app)->conn;
     return if $self->eurls->{$enc->{url}} || $conn->run(sub {
         say STDERR "       Checking enclosure" if $self->verbose > 1;
         shift->selectcol_arrayref(
-            'SELECT true FROM entries WHERE id <> ? AND enclosure_url = ?',
-            undef, $id, $enc->{url}
+            'SELECT true FROM entries WHERE enclosure_url = ?',
+            undef, $enc->{url}
         )->[0];
     });
 
@@ -594,7 +611,7 @@ sub _check_size {
 }
 
 sub _audit_enclosure {
-    my ($self, $id, $url, $type) = @_;
+    my ($self, $url, $type) = @_;
 
     # Set up the basic enclosure info. An undef $type is fine for now.
     my $enc = { type => $type, url  => $url };
@@ -611,8 +628,8 @@ sub _audit_enclosure {
     return if $self->eids->{$enc_id} || $conn->run(sub {
         say STDERR "       Checking enclosure ID $enc_id" if $self->verbose > 1;
         shift->selectcol_arrayref(
-            'SELECT true FROM entries WHERE id <> ? AND enclosure_id = ?',
-            undef, $id, $enc_id
+            'SELECT true FROM entries WHERE enclosure_id = ?',
+            undef, $enc_id
         )->[0];
     });
     $enc->{id} = $enc_id;
@@ -632,8 +649,8 @@ sub _audit_enclosure {
     return if $self->eusers->{$enc_user} || $conn->run(sub {
         say STDERR "       Checking enclosure user $enc_user" if $self->verbose > 1;
         shift->selectcol_arrayref(
-            'SELECT true FROM entries WHERE id <> ? AND enclosure_user = ?',
-            undef, $id, $enc_user
+            'SELECT true FROM entries WHERE enclosure_user = ?',
+            undef, $enc_user
         )->[0];
     });
 
