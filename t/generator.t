@@ -44,12 +44,12 @@ my $uri = 'file://localhost' . File::Spec->rel2abs('t/data');
 my $conn = App::FeedScene->new->conn;
 $conn->txn(sub {
     my $sth = shift->prepare(q{
-        INSERT INTO feeds (url, id, portal, updated_at)
-        VALUES(?, ?, ?, ?)
+        INSERT INTO feeds (url, id, portal, title, updated_at)
+        VALUES(?, ?, ?, ?, ?)
     });
     for my $spec (
-        [ 'simple.atom',     0 ],
-        [ 'enclosures.atom', 1 ],
+        [ 'simple.atom',     0, 'Simple Atom Feed'     ],
+        [ 'enclosures.atom', 1, 'Enclosures Atom Feed' ],
     ) {
         my $uri = URI->new("$uri/" . shift @{ $spec })->canonical;
         $sth->execute($uri, $uri, @{$spec}, '2010-06-08T14:13:38');
@@ -136,12 +136,13 @@ $tx->ok('/a:feed/fs:sources', 'Should have sources', sub {
     $_->is('count(./fs:source)', 2, 'Should have two sources');
     $_->ok('./fs:source[1]', 'First source', sub {
         my $url = URI->new("$uri/simple.atom")->canonical;
-        $_->is('count(./*)', 9, 'Should have 9 source subelements');
+        $_->is('count(./*)', 8, 'Should have 8 source subelements');
         $_->is('./fs:id', 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6', 'ID should be correct');
         $_->is('./fs:link[@rel="self"]/@href', $url, 'Should have self link');
         $_->is('./fs:link[@rel="alternate"]/@href', 'http://example.com/', 'Should have alternate link');
         $_->is('./fs:title', 'Simple Atom Feed', 'Title should be correct');
-        $_->is('./fs:subtitle', 'Witty & clever', 'Subtitle should be correct');
+        # $_->is('./fs:subtitle', 'Witty & clever', 'Subtitle should be correct');
+        $_->is('count(./fs:subtitle)', 0, 'Should have no subtitle');
         $_->is('./fs:updated', '2009-12-13T18:30:02Z', 'Updated should be correct');
         $_->is('./fs:rights', '© 2010 Big Fat Example', 'Rights should be correct');
         $_->is('./fs:icon', sprintf($icon_url, 'http://example.com/'), 'Icon should be correct');
@@ -155,7 +156,7 @@ $tx->ok('/a:feed/fs:sources', 'Should have sources', sub {
         $_->is('./fs:link[@rel="alternate"]/@href', 'http://example.com/', 'Should have alternate link');
         $_->is('./fs:title', 'Enclosures Atom Feed', 'Title should be correct');
         $_->is('./fs:updated', '2009-12-13T18:30:02Z', 'Updated should be correct');
-        $_->is('./fs:subtitle', '', 'Subtitle should be correct');
+        $_->is('count(./fs:subtitle)', 0, 'Should have no subtitle');
         $_->is('./fs:rights', '', 'Rights should be correct');
         $_->is('./fs:icon', sprintf($icon_url, 'http://example.com/'), 'Icon should be correct');
         $_->is("./fs:category[\@scheme='http://$domain/ns/portal']/\@term", 1, 'Portal should be correct');
@@ -318,7 +319,7 @@ sub test_entries {
             $_->is('./a:name', 'Ira Glass', '......Name');
         });
         $_->ok('./a:source', '...Source', sub {
-            my $scount = $strict ? 9 : 1;
+            my $scount = $strict ? 8 : 1;
             $_->is('count(./*)', $scount, "......Should have $scount subelements");
             $_->is('./a:id', 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6', '......ID');
             if ($strict) {
@@ -326,7 +327,8 @@ sub test_entries {
                 my $url = URI->new("$uri/simple.atom")->canonical;
                 $_->is('./a:link[@rel="self"]/@href', $url, '......Link');
                 $_->is('./a:title', 'Simple Atom Feed', '......Title');
-                $_->is('./a:subtitle', 'Witty & clever', '......Subtitle');
+                # $_->is('./a:subtitle', 'Witty & clever', '......Subtitle');
+                $_->is('count(./a:subtitle)', 0, 'Should have no subtitle');
                 $_->is('./a:rights', '© 2010 Big Fat Example', '......Rights');
                 $_->is('./a:updated', '2009-12-13T18:30:02Z', '......Updated');
                 $_->is('./a:icon', sprintf($icon_url, 'http://example.com/'), '......Icon');
@@ -346,7 +348,7 @@ sub test_entries {
         $_->is('./a:updated', '2009-12-13T18:30:03Z', '...Updated');
         $_->is('./a:summary[@type="text"]', 'Summary of the second story', '...Summary');
         $_->ok('./a:source', '...Source', sub {
-            my $scount = $strict ? 9 : 1;
+            my $scount = $strict ? 8 : 1;
             $_->is('count(./*)', $scount, "......Should have $scount subelements");
             $_->is('./a:id', 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6', '......ID');
             if ($strict) {
@@ -354,7 +356,8 @@ sub test_entries {
                 my $url = URI->new("$uri/simple.atom")->canonical;
                 $_->is('./a:link[@rel="self"]/@href', $url, '......Link');
                 $_->is('./a:title', 'Simple Atom Feed', '......Title');
-                $_->is('./a:subtitle', 'Witty & clever', '......Subtitle');
+                # $_->is('./a:subtitle', 'Witty & clever', '......Subtitle');
+                $_->is('count(./a:subtitle)', 0, 'Should have no subtitle');
                 $_->is('./a:rights', '© 2010 Big Fat Example', '......Rights');
                 $_->is('./a:updated', '2009-12-13T18:30:02Z', '......Updated');
                 $_->is('./a:icon', sprintf($icon_url, 'http://example.com/'), '......Icon');
