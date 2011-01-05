@@ -53,7 +53,7 @@ sub isa_feed {
     return 1 if $res->content_is_xml;
 
     # Ask Data::Feed.
-    return !!Data::Feed->guess_format(\$res->content);
+    return !!Data::Feed->guess_format($res->content_ref);
 }
 
 sub parse_feed {
@@ -61,14 +61,14 @@ sub parse_feed {
 
     # XML is always binary, so don't use decoded_content.
     # http://juerd.nl/site.plp/perluniadvice
-    my $body = $res->content;
+    my $body_ref = $res->content_ref;
     $parser->recover(0);
     local $@;
 
     my $fixed_invalid_char = 0;
     my $stripped_invalid_chars = 0;
     TRY: {
-        my $feed = eval { Data::Feed->parse(\$body) };
+        my $feed = eval { Data::Feed->parse($body_ref) };
         if (my $err = $@) {
             given (eval { $err->code }) {
                 when (XML::LibXML::ErrNo::ERR_INVALID_CHAR) {
@@ -78,10 +78,10 @@ sub parse_feed {
                         # We fixed it already, but maybe there are characters
                         # disallowed by the XML standard.
                         # http://www.w3.org/TR/xml11/#charsets
-                        $body =~ s/[\x00-\x08\x0b-\x0c\x0e-\x1f\x7f-\x84\x86-\x9f]//msg;
+                        $$body_ref =~ s/[\x00-\x08\x0b-\x0c\x0e-\x1f\x7f-\x84\x86-\x9f]//msg;
                     } else {
                         my $charset = $res->content_charset;
-                        $body = encode($charset, decode($charset, $body));
+                        $$body_ref = encode($charset, decode($charset, $$body_ref));
                     }
                     redo TRY;
                 }
@@ -89,19 +89,19 @@ sub parse_feed {
                     return _handle_error $err, $res if $stripped_invalid_chars++;
                     # Maybe some invalid characters have brokenated it. Seen
                     # in the wild.
-                    $body =~ s/[\x00-\x08\x0b-\x0c\x0e-\x1f\x7f-\x84\x86-\x9f]//msg;
+                    $$body_ref =~ s/[\x00-\x08\x0b-\x0c\x0e-\x1f\x7f-\x84\x86-\x9f]//msg;
                     redo TRY;
                 }
                 when (XML::LibXML::ErrNo::ERR_UNDECLARED_ENTITY) {
                     # Author included invalid entities. Convert them and try again.
                     my $charset = $res->content_charset;
-                    $body = encode($charset, decode_entities(decode($charset, $body)));
+                    $$body_ref = encode($charset, decode_entities(decode($charset, $$body_ref)));
                     redo TRY;
                 }
                 when (XML::LibXML::ErrNo::ERR_NAME_REQUIRED) {
                     # A character that should be an entity but isn't. Split into lines.
-                    $body =~ s/\r\n?/\n/g;
-                    my @lines = split /\n/ => $body;
+                    $$body_ref =~ s/\r\n?/\n/g;
+                    my @lines = split /\n/ => $$body_ref;
 
                     # Grab the bogus character and encode it.
                     my $line_idx = $err->line - 1;
@@ -110,7 +110,7 @@ sub parse_feed {
 
                     # Replace with the encoded version and try again.
                     substr $lines[$line_idx], $err->column - 1, length $ent, $encoded;
-                    $body = join $/ => @lines;
+                    $$body_ref = join $/ => @lines;
                     redo TRY;
                 }
                 default {
