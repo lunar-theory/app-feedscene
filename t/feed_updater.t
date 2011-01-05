@@ -118,7 +118,7 @@ test_counts(7, 'Should now have 7 feeds');
     test_feeds(0, [
         {
             url      => URI->new("$uri/simple.atom")->canonical,
-            title    => 'Simple Atom Feed',
+            title    => 'Strongrrl',
             subtitle => 'Witty & clever',
             site_url => 'http://example.com/',
             icon_url => 'http://getfavicon.appspot.com/http://example.com/?defaulticon=none',
@@ -161,7 +161,7 @@ sub test_initial_feeds {
     test_feeds(0, [
         {
             url      => URI->new("$uri/simple.atom")->canonical,
-            title    => 'Simple Atom Feed',
+            title    => 'Strongrrl',
             subtitle => 'Witty & clever',
             site_url => 'http://example.com/',
             icon_url => 'http://getfavicon.appspot.com/http://example.com/?defaulticon=none',
@@ -198,7 +198,7 @@ sub test_initial_feeds {
         },
         {
             url      => URI->new("$uri/summaries.rss")->canonical,
-            title    => 'Summaries RSS Feed',
+            title    => 'LünarBoy',
             subtitle => '',
             site_url => 'http://foo.org/',
             icon_url => 'http://getfavicon.appspot.com/http://foo.org/?defaulticon=none',

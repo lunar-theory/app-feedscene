@@ -62,7 +62,7 @@ sub process {
         for my $line (@csv) {
             next unless $line =~ /\S/;
             $csv->parse($line);
-            my ($portal, $feed_url, $category) = $csv->fields;
+            my ($portal, $feed_url, $site_name, $category) = _clean $csv->fields;
             $portal = 0 if $portal eq 'text';
             say STDERR "$portal: $feed_url" if $self->verbose;
             $feed_url = URI->new($feed_url)->canonical;
@@ -71,7 +71,7 @@ sub process {
             my ($id) = $dbh->selectrow_array($sel, undef, $feed_url->as_string);
             if ($id) {
                 push @ids, $id;
-                $upd->execute(_clean $portal, $category || '', $id);
+                $upd->execute($portal, $category || '', $id);
                 next;
             }
 
@@ -100,7 +100,7 @@ sub process {
 
             $ins->execute(_clean(
                 $feed_url,
-                Parser->strip_html($feed->title),
+                $site_name || Parser->strip_html($feed->title),
                 Parser->strip_html($feed->description || ''),
                 $site_url,
                 $icon_url,
