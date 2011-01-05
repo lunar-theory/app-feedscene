@@ -42,21 +42,24 @@ my $conn = App::FeedScene->new->conn;
 
 # Load some feed data.
 $conn->txn(sub {
-    my $sth = shift->prepare('INSERT INTO feeds (portal, id, url, updated_at) VALUES(?, ?, ?, ?)');
+    my $sth = shift->prepare(q{
+        INSERT INTO feeds (portal, id, title, url, updated_at)
+        VALUES(?, ?, ?, ?, ?)
+    });
     for my $spec (
-        [ 0, 'simple.atom'         ],
-        [ 0, 'simple.rss'          ],
-        [ 0, 'summaries.rss'       ],
-        [ 0, 'latin-1.atom'        ],
-        [ 0, 'latin-1.rss'         ],
-        [ 0, 'dates.rss'           ],
-        [ 0, 'conflict.rss'        ],
-        [ 0, 'entities.rss'        ],
-        [ 0, 'bogus.rss'           ],
-        [ 1, 'enclosures.atom'     ],
-        [ 1, 'enclosures.rss'      ],
-        [ 1, 'more_summaries.atom' ],
-        [ 1, 'nerbles.rss'         ],
+        [ 0, 'simple.atom',         'Simple Atom Feed'     ],
+        [ 0, 'simple.rss',          'Simple RSS Feed'      ],
+        [ 0, 'summaries.rss',       'Summaries RSS Feed'   ],
+        [ 0, 'latin-1.atom',        'Latin-1 Atom “Feed”'  ],
+        [ 0, 'latin-1.rss',         'Latin-1 RSS Feed'     ],
+        [ 0, 'dates.rss',           'Simple RSS Dates'     ],
+        [ 0, 'conflict.rss',        'Simple RSS Feed'      ],
+        [ 0, 'entities.rss',        'Whatever Blog'        ],
+        [ 0, 'bogus.rss',           'Broken Encoding'      ],
+        [ 1, 'enclosures.atom',     'Enclosures Atom Feed' ],
+        [ 1, 'enclosures.rss',      'Enclosures RSS Feed'  ],
+        [ 1, 'more_summaries.atom', 'More Summaries Feed'  ],
+        [ 1, 'nerbles.rss',         'Yahoo Pipes Feed'     ],
     ) {
         $sth->execute(
             @{ $spec },
@@ -96,7 +99,7 @@ my @urls = map { URI->new($_)->canonical } (
 
 $eup->mock(process => sub {
     my ($self, $url) = @_;
-    ok +(grep { $_ eq $url } @urls), 'Should have a feed URL';
+    ok +(grep { $_ eq $url } @urls), 'Should have feed URL $url';
 });
 
 ok $eup->run, 'Run the update again -- should have feeds in previous two tests';

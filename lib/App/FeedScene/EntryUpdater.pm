@@ -210,7 +210,6 @@ sub process {
             q{
                 UPDATE feeds
                    SET id         = ?,
-                       title      = ?,
                        subtitle   = ?,
                        site_url   = ?,
                        icon_url   = ?,
@@ -222,7 +221,6 @@ sub process {
             _clean(
                 undef,
                 $feed_id,
-                Parser->strip_html($feed->title || ''),
                 Parser->strip_html($feed->description || ''),
                 $site_url,
                 URI->new(sprintf(
