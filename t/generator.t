@@ -60,7 +60,7 @@ $conn->txn(sub {
 for my $p (0..1) {
     my $mock = Test::MockModule->new('App::FeedScene::EntryUpdater');
     $mock->mock(_audit_enclosure => sub {
-        my ($self, $id, $type, $url) = @_;
+        my ($self, $id, $url, $type) = @_;
         return { type => $type, url => $url };
     });
 

@@ -492,12 +492,10 @@ sub _wanted_nodes_for {
 sub _find_enclosure {
     my ($self, $uuid, $entry, $base_url, $entry_link) = @_;
     for my $enc ($entry->enclosures) {
-        my $etype = $enc->type or next;
-        next if $etype !~ m{^(?:image|audio|video)/};
         my $enc = $self->_validate_enclosure(
-            $uuid, $enc->type, URI->new($enc->url)->canonical
-        );
-        return $enc if $enc;
+            $uuid, URI->new($enc->url)->canonical, $enc->type
+        ) or next;
+        return $enc;
     }
 
     # Use XML::LibXML and XPath to find something and link it up.
@@ -510,21 +508,13 @@ sub _find_enclosure {
             $url = $base_url
                 ? URI->new_abs($url, $base_url)->canonical
                 : URI->new($url)->canonical;
-            next if !$url->can('host') || $url->host =~ /\bdoubleclick[.]net$/;
-            (my($type), $url) = $self->_get_type($url, $base_url);
-            next unless $type && $type =~ m{^(?:image|audio|video)/};
-            my $enc = $self->_validate_enclosure($uuid, $type, $url);
-            return $enc if $enc;
+            my $enc = $self->_validate_enclosure($uuid, $url) or next;
+            return $enc;
         }
     }
 
-    # Look at the direct link.
-    my ($type, $url) = $self->_get_type($entry_link, $base_url);
-    return $self->_validate_enclosure($uuid, $type, $url)
-        if $type && $type =~ m{^(?:image|audio|video)/};
-
-    # Nothing to see.
-    return;
+    # Fall back on the direct link.
+    return $self->_validate_enclosure($uuid, $entry_link);
 }
 
 my $uuid_gen = OSSP::uuid->new;
@@ -540,10 +530,7 @@ sub _uuid {
 
 my $mt = MIME::Types->new;
 sub _get_type {
-    my ($self, $url, $base_url) = @_;
-    $url = $base_url
-        ? URI->new_abs($url, $base_url)->canonical
-        : URI->new($url)->canonical;
+    my ($self, $url) = @_;
     if (my $type = $mt->mimeTypeOf($url)) {
         return $type, $url;
     }
@@ -556,9 +543,19 @@ sub _get_type {
 }
 
 sub _validate_enclosure {
-    my $self = shift;
-    my $enc  = $self->_audit_enclosure(@_) or return;
-    my $id   = shift;
+    my ($self, $id, $url, $type) = @_;
+
+    # Ignore useless URIs and obvious ads.
+    return if !$url->can('host') || $url->host =~ /\bdoubleclick[.]net$/;
+
+    # Make sure we have a type.
+    ($type, $url) = $self->_get_type($url) unless $type;
+
+    # Ignore types we're not interested in.
+    return unless $type && $type =~ m{^(?:image|audio|video)/};
+
+    # Audit the enclosure.
+    my $enc  = $self->_audit_enclosure($id, $url, $type) or return;
 
     # Make sure it's not a dupe.
     my $conn = App::FeedScene->new($self->app)->conn;
@@ -576,6 +573,10 @@ sub _validate_enclosure {
 
 sub _check_size {
     my ($self, $enc) = @_;
+
+    # Just return if it's not an image.
+    return $enc if $enc->{type} && $enc->{type} !~ m{^image/};
+
     # Fetch the image, we need to check it out.
     my $res = $self->ua->get($enc->{url});
 
@@ -593,12 +594,10 @@ sub _check_size {
 }
 
 sub _audit_enclosure {
-    my ($self, $id, $type, $url) = @_;
+    my ($self, $id, $url, $type) = @_;
 
-    my $enc = {
-        type => $type,
-        url  => $url
-    };
+    # Set up the basic enclosure info. An undef $type is fine for now.
+    my $enc = { type => $type, url  => $url };
 
     return $enc unless $url->host =~ /^farm\d+[.]static[.]flickr[.]com$/;
 

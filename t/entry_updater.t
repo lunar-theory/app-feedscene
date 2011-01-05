@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 234;
+use Test::More tests => 235;
 #use Test::More 'no_plan';
 use Test::More::UTF8;
 use Test::NoWarnings;
@@ -491,7 +491,7 @@ is_deeply $dbh->selectall_arrayref(
 # Try a feed with enclosures.
 # Mock enclosure audit. Will unmock and test below.
 $eup->mock(_audit_enclosure => sub {
-    my ($self, $id, $type, $url) = @_;
+    my ($self, $id, $url, $type) = @_;
     pass "_audit_enclosures($url)";
     return { type => $type, url => $url };
 });
@@ -537,7 +537,7 @@ is_deeply $conn->run(sub{ shift->selectrow_arrayref(
 
 # Disable the `pass` in _audit_enclosures now that we're sure it gets called.
 $eup->mock(_audit_enclosure => sub {
-    my ($self, $id, $type, $url) = @_;
+    my ($self, $id, $url, $type) = @_;
     return { type => $type, url => $url };
 });
 
@@ -810,12 +810,12 @@ $eup->unmock('_audit_enclosure');
 $uri = URI->new('http://example.com/hey/you/it.jpg');
 my $type = 'image/jpeg';
 my $id   = 'whatever';
-is_deeply $eup->_audit_enclosure($id, $type, $uri), { type => $type, url => $uri },
+is_deeply $eup->_audit_enclosure($id, $uri, $type), { type => $type, url => $uri },
     'Non-Flickr URI should not be audited';
 
 # Try Flickr static URL without photo ID.
 $uri = URI->new('http://farm3.static.flickr.com/hey/you/it.jpg');
-is_deeply $eup->_audit_enclosure($id, $type, $uri), { type => $type, url => $uri },
+is_deeply $eup->_audit_enclosure($id, $uri, $type), { type => $type, url => $uri },
     'Flickr URL without photo ID should not be audited';
 
 # Need to mock UA response.
@@ -830,7 +830,7 @@ $ua_mock->mock( get => sub {
 # Try URL with photo ID but let the response fail.
 $res_mock->mock( is_success => 0 );
 $uri = URI->new('http://farm2.static.flickr.com/1282/4661840263_019e867a6e_m.jpg');
-is $eup->_audit_enclosure($id, $type, $uri), undef,
+is $eup->_audit_enclosure($id, $uri, $type), undef,
     'Audit should return undef on request failure';
 
 # Let the request be successful.
@@ -849,7 +849,7 @@ my $i;
 $res_mock->mock(content => sub { join '', $i++ % 2 ? @size_xml : @info_xml });
 
 # Make sure we get the large image.
-is_deeply $eup->_audit_enclosure($id, $type, $uri), {
+is_deeply $eup->_audit_enclosure($id, $uri, $type), {
     type => $type,
     url  => URI->new('http://farm2.static.flickr.com/1282/4661840263_019e867a6e_b.jpg'),
     id   => 'flickr:4661840263',
@@ -859,13 +859,13 @@ is_deeply $eup->_audit_enclosure($id, $type, $uri), {
 
 # Should get undef if the image with that ID is already in the cached IDs.
 $eup->eids({  'flickr:4661840263' => 1 });
-is $eup->_audit_enclosure($id, $type, $uri), undef,
+is $eup->_audit_enclosure($id, $uri, $type), undef,
     'Should get undef because the image is already in the cache';
 
 # Should get undef if the user is already in the cache.
 $eup->eids({ });
 $eup->eusers({ 'flickr:72575281@N00' => 1 });
-is $eup->_audit_enclosure($id, $type, $uri), undef,
+is $eup->_audit_enclosure($id, $uri, $type), undef,
     'Should get undef because the username is already in the cache';
 
 # Should get undef if the image with that ID is already in the database.
@@ -874,7 +874,7 @@ $conn->run(sub { shift->do(
     'UPDATE entries SET enclosure_id = ? WHERE id = ?',
     undef,  'flickr:4661840263', 'urn:uuid:257c8075-dc7c-5678-8de0-5bb88360dff6',
 )});
-is $eup->_audit_enclosure($id, $type, $uri), undef,
+is $eup->_audit_enclosure($id, $uri, $type), undef,
     'Should get undef because the image is already in the database';
 
 # Should get undef if the image with that user ID is already in the database.
@@ -884,7 +884,7 @@ $conn->run(sub { shift->do(
     undef,  'flickr:whatever', 'flickr:72575281@N00',
     'urn:uuid:257c8075-dc7c-5678-8de0-5bb88360dff6',
 )});
-is $eup->_audit_enclosure($id, $type, $uri), undef,
+is $eup->_audit_enclosure($id, $uri, $type), undef,
     'Should get undef because the user is already in the database';
 
 # Try for the medium image when there is no large image.
@@ -895,7 +895,7 @@ $conn->run(sub {
         undef, 'urn:uuid:257c8075-dc7c-5678-8de0-5bb88360dff6');
 });
 $i = 0;
-is_deeply $eup->_audit_enclosure($id, $type, $uri), {
+is_deeply $eup->_audit_enclosure($id, $uri, $type), {
     type => $type,
     url  => URI->new('http://farm2.static.flickr.com/1282/4661840263_019e867a6e.jpg'),
     id   => 'flickr:4661840263',
@@ -906,7 +906,7 @@ is_deeply $eup->_audit_enclosure($id, $type, $uri), {
 # Try for the original image when there is no medium.
 @size_xml = grep { $_ !~ /label="Medium"/ } @size_xml;
 $conn->run(sub { shift->do('DELETE FROM entries WHERE enclosure_id = ?', undef, 'flickr:4661840263') });
-is_deeply $eup->_audit_enclosure($id, $type, $uri), {
+is_deeply $eup->_audit_enclosure($id, $uri, $type), {
     type => $type,
     url  => URI->new('http://farm2.static.flickr.com/1282/4661840263_e146f57fd2_o.jpg'),
     id   => 'flickr:4661840263',
@@ -916,7 +916,7 @@ is_deeply $eup->_audit_enclosure($id, $type, $uri), {
 
 # Try for the passed-in URL when there is no original.
 @size_xml = grep { $_ !~ /label="Original"/ } @size_xml;
-is_deeply $eup->_audit_enclosure($id, $type, $uri), {
+is_deeply $eup->_audit_enclosure($id, $uri, $type), {
     type => $type,
     url  => $uri,
     id   => 'flickr:4661840263',
@@ -946,6 +946,10 @@ for my $img (qw(dot_clear.gif share.gif line.jpeg)) {
     $enc->{url} = "$uri/$img";
     ok !$eup->_check_size($enc), "_check_size should reject $img";
 }
+
+# Make sure it ignores non-images.
+ok $eup->_check_size({type => 'audio/mpeg' }),
+    '_check_size should just return non-image type';
 
 ##############################################################################
 sub test_counts {
