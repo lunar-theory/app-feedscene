@@ -1,4 +1,4 @@
-package App::FeedScene::Distributor 0.40;
+package App::FeedScene::Distributor 0.41;
 
 use 5.12.0;
 use utf8;
