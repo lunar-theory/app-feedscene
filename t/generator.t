@@ -64,6 +64,11 @@ for my $p (0..1) {
         return { type => $type, url => $url };
     });
 
+    $mock->mock(_check_size => sub {
+        my ($self, $enc) = @_;
+        return $enc;
+    });
+
     App::FeedScene::EntryUpdater->new(
         app    => 'foo',
         portal => $p,

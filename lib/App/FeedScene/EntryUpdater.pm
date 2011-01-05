@@ -11,6 +11,7 @@ use HTTP::Status qw(HTTP_NOT_MODIFIED);
 use XML::LibXML qw(XML_ELEMENT_NODE XML_TEXT_NODE);
 use OSSP::uuid;
 use MIME::Types;
+use Image::Size;
 use Text::Trim;
 use URI;
 use constant ERR_THRESHOLD => 4; # Start conservative.
@@ -569,6 +570,25 @@ sub _validate_enclosure {
         )->[0];
     });
 
+    # If it's an adequate size, use it!
+    return $self->_check_size($enc);
+}
+
+sub _check_size {
+    my ($self, $enc) = @_;
+    # Fetch the image, we need to check it out.
+    my $res = $self->ua->get($enc->{url});
+
+    # If it fails, we don't want it.
+    return if !$res->is_success && $res->code != HTTP_NOT_MODIFIED;
+
+    # Make sure it's a minimum size.
+    my ($x, $y, $t) = imgsize $res->decoded_content(ref => 1);
+    return if !$x || $x < 300 || $y < 300;
+
+    # Make sure we have the canonical type and URL.
+    $enc->{type} = $res->content_type;
+    $enc->{url}  = URI->new($res->request->uri)->canonical;
     return $enc;
 }
 

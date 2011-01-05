@@ -33,6 +33,7 @@ Module::Build->new(
         'File::Spec'                 => '3.31',
         'File::Path'                 => '2.08',
         'HTML::Entities'             => '3.64',
+        'Image::Size'                => '3.230',
         'IO::Compress::Gzip'         => '2.030',
         'LWP'                        => '5.835',
         'LWP::UserAgent::WithCache'  => '0.11',

@@ -3,8 +3,8 @@
 use strict;
 use 5.12.0;
 use utf8;
-#use Test::More tests => 179;
-use Test::More 'no_plan';
+use Test::More tests => 234;
+#use Test::More 'no_plan';
 use Test::More::UTF8;
 use Test::NoWarnings;
 use Test::MockModule;
@@ -496,6 +496,13 @@ $eup->mock(_audit_enclosure => sub {
     return { type => $type, url => $url };
 });
 
+# Mock size check. Will unmock and test below.
+$eup->mock(_check_size => sub {
+    my ($self, $enc) = @_;
+    pass "_check_size($enc->{url})";
+    return $enc;
+});
+
 my $ua_mock = Test::MockModule->new('App::FeedScene::UA');
 my @types = qw(
     text/html
@@ -916,6 +923,29 @@ is_deeply $eup->_audit_enclosure($id, $type, $uri), {
     user => 'flickr:72575281@N00',
     desc => 'The hammer is animated. To tacky. So hilarious. So cool.',
 }, 'Should get the passed URI when nothing found in XML';
+
+##############################################################################
+# Test size check.
+$ua_mock->unmock_all;
+$eup->unmock('_check_size');
+$uri = 'file://localhost' . File::Spec->rel2abs('t/images');
+my $enc = { type => 'image/png', url => "$uri/300x300.png"};
+ok my $ret = $eup->_check_size({ %$enc }), '_check_size should like a 300px image';
+$uri = 'file://' . File::Spec->rel2abs('t/images');
+is $ret->{type}, 'image/png', '... The content type should be image/png';
+is $ret->{url},  "$uri/300x300.png", '... And the URL should be canonical';
+
+# Make sure it populates the type (and uses the cache).
+$enc = { type => 'image/gif', url => "$uri/300x300.png"};
+ok $ret = $eup->_check_size({ %$enc }), 'Get 300x300 image with wrong content type';
+is $ret->{type}, 'image/png', '... The content type should now be image/png';
+is $ret->{url},  "$uri/300x300.png", '... And the URL should be canonical';
+
+# Make sure it doesn't like various too-small images.
+for my $img (qw(dot_clear.gif share.gif line.jpeg)) {
+    $enc->{url} = "$uri/$img";
+    ok !$eup->_check_size($enc), "_check_size should reject $img";
+}
 
 ##############################################################################
 sub test_counts {
