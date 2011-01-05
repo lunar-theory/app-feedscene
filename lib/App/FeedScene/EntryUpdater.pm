@@ -147,11 +147,12 @@ sub process {
                     : URI->new($entry->link)->canonical;
             }
 
+            my $uuid = _uuid($site_url, $entry_link);
             my $enc;
 
             if ($portal) {
                 # Need some media for non-text portals.
-                $enc = $self->_find_enclosure($entry, $base_url, $entry_link) or next;
+                $enc = $self->_find_enclosure($uuid, $entry, $base_url, $entry_link) or next;
                 $self->eurls->{$enc->{url}}   = 1;
                 $self->eids->{$enc->{id}}     = 1 if $enc->{id};
                 $self->eusers->{$enc->{user}} = 1 if $enc->{user};
@@ -160,7 +161,6 @@ sub process {
             my $pub_date = $entry->issued;
             my $upd_date = $entry->modified;
             next unless $pub_date || $upd_date;
-            my $uuid     = _uuid($site_url, $entry_link);
             $upd_date    = $upd_date->set_time_zone('UTC')->iso8601 . 'Z' if $upd_date;
             $pub_date    = $pub_date
                 ? $pub_date->set_time_zone('UTC')->iso8601 . 'Z'
@@ -489,11 +489,13 @@ sub _wanted_nodes_for {
 }
 
 sub _find_enclosure {
-    my ($self, $entry, $base_url, $entry_link) = @_;
+    my ($self, $uuid, $entry, $base_url, $entry_link) = @_;
     for my $enc ($entry->enclosures) {
         my $etype = $enc->type or next;
         next if $etype !~ m{^(?:image|audio|video)/};
-        my $enc = $self->_validate_enclosure($enc->type, URI->new($enc->url)->canonical);
+        my $enc = $self->_validate_enclosure(
+            $uuid, $enc->type, URI->new($enc->url)->canonical
+        );
         return $enc if $enc;
     }
 
@@ -510,14 +512,14 @@ sub _find_enclosure {
             next if !$url->can('host') || $url->host =~ /\bdoubleclick[.]net$/;
             (my($type), $url) = $self->_get_type($url, $base_url);
             next unless $type && $type =~ m{^(?:image|audio|video)/};
-            my $enc = $self->_validate_enclosure($type, $url);
+            my $enc = $self->_validate_enclosure($uuid, $type, $url);
             return $enc if $enc;
         }
     }
 
     # Look at the direct link.
     my ($type, $url) = $self->_get_type($entry_link, $base_url);
-    return $self->_validate_enclosure($type, $url)
+    return $self->_validate_enclosure($uuid, $type, $url)
         if $type && $type =~ m{^(?:image|audio|video)/};
 
     # Nothing to see.
@@ -555,14 +557,15 @@ sub _get_type {
 sub _validate_enclosure {
     my $self = shift;
     my $enc  = $self->_audit_enclosure(@_) or return;
+    my $id   = shift;
 
     # Make sure it's not a dupe.
     my $conn = App::FeedScene->new($self->app)->conn;
     return if $self->eurls->{$enc->{url}} || $conn->run(sub {
         say STDERR "       Checking enclosure" if $self->verbose > 1;
         shift->selectcol_arrayref(
-            'SELECT 1 FROM entries WHERE enclosure_url = ?',
-            undef, $enc->{url}
+            'SELECT true FROM entries WHERE id <> ? AND enclosure_url = ?',
+            undef, $id, $enc->{url}
         )->[0];
     });
 
@@ -570,7 +573,7 @@ sub _validate_enclosure {
 }
 
 sub _audit_enclosure {
-    my ($self, $type, $url) = @_;
+    my ($self, $id, $type, $url) = @_;
 
     my $enc = {
         type => $type,
@@ -589,8 +592,8 @@ sub _audit_enclosure {
     return if $self->eids->{$enc_id} || $conn->run(sub {
         say STDERR "       Checking enclosure ID $enc_id" if $self->verbose > 1;
         shift->selectcol_arrayref(
-            'SELECT 1 FROM entries WHERE enclosure_id = ?',
-            undef, $enc_id
+            'SELECT true FROM entries WHERE id <> ? AND enclosure_id = ?',
+            undef, $id, $enc_id
         )->[0];
     });
     $enc->{id} = $enc_id;
@@ -610,8 +613,8 @@ sub _audit_enclosure {
     return if $self->eusers->{$enc_user} || $conn->run(sub {
         say STDERR "       Checking enclosure user $enc_user" if $self->verbose > 1;
         shift->selectcol_arrayref(
-            'SELECT 1 FROM entries WHERE enclosure_user = ?',
-            undef, $enc_user
+            'SELECT true FROM entries WHERE id <> ? AND enclosure_user = ?',
+            undef, $id, $enc_user
         )->[0];
     });
 
