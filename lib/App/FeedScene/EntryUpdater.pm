@@ -443,12 +443,19 @@ sub _clean_html {
     return $top;
 }
 
+sub _trim_summary($) {
+    my $sum = shift;
+    return $sum if length $sum <= 400;
+    $sum =~ s/\A(.{1,400})(?<=\p{IsWord})(?!\p{IsWord}).*\z/$1…/;
+    return $sum;
+}
+
 sub _find_summary {
     my $entry = shift;
     if (my $sum = $entry->summary) {
         if (my $body = $sum->body) {
             # We got something here. Strip any HTML and return it.
-            return join ' ', map {
+            return _trim_summary join ' ', map {
                 Parser->strip_html($_->toString)
             } _wanted_nodes_for($body);
         }
@@ -472,11 +479,11 @@ sub _find_summary {
             if $elem->hasChildNodes || $elem->hasAttributes;
         my $ret = join ' ', @text;
         $ret =~ s/\s{2,}/ /g;
-        return $ret if length $ret > 140;
+        return _trim_summary $ret if length $ret > 140;
     }
     my $ret = join ' ', @text;
     $ret =~ s/\s{2,}/ /g;
-    return $ret;
+    return _trim_summary $ret;
 }
 
 sub _wanted_nodes_for {

@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 222;
+use Test::More tests => 223;
 #use Test::More 'no_plan';
 use Test::More::UTF8;
 use Test::NoWarnings;
@@ -402,7 +402,7 @@ is $summary, 'This description has nasty—dashes—.',
 # Test a variety of RSS summary formats and another icon.
 $eup->icon('http://designsceneapp.com/favicon.ico');
 ok $eup->process("$uri/summaries.rss"), 'Process RSS feed with various summaries';
-test_counts(31, 'Should now have 31 entries');
+test_counts(32, 'Should now have 32 entries');
 
 # Check the feed data.
 $feed = URI->new("$uri/summaries.rss")->canonical;
@@ -443,6 +443,7 @@ for my $spec (
     [ 20 => 'Summary with no tag but a link.' ],
     [ 21 => 'Summary in the description when we also have encoded content.' ],
     [ 22 => 'Stuff inside a blockquote.' ],
+    [ 23 => 'Need a summary over 400 characters long. Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat…' ],
 ) {
     is +($dbh->selectrow_array(
         'SELECT summary FROM entries WHERE id = ?',
@@ -453,7 +454,7 @@ for my $spec (
 ##############################################################################
 # Try a bunch of different date combinations.
 ok $eup->process("$uri/dates.rss"), 'Process RSS feed with various dates';
-test_counts(37, 'Should now have 37 entries');
+test_counts(38, 'Should now have 38 entries');
 
 for my $spec (
     [ 1 => ['2010-05-17 06:58:50+00', '2010-05-17 07:45:09+00'], 'both dates' ],
@@ -473,7 +474,7 @@ for my $spec (
 ##############################################################################
 # Try a feed with a duplicate URI and no GUID.
 ok $eup->process("$uri/conflict.rss"), 'Process RSS feed with a duplicate link';
-test_counts(38, 'Should now have 38 entries');
+test_counts(39, 'Should now have 39 entries');
 
 # So now we should have two records with the same URL but different IDs.
 is_deeply $dbh->selectall_arrayref(
@@ -529,7 +530,7 @@ $ua_mock->mock(head => sub {
 $eup->portal(1);
 $eup->icon('none');
 ok $eup->process("$uri/enclosures.atom"), 'Process Atom feed with enclosures';
-test_counts(51, 'Should now have 51 entries');
+test_counts(52, 'Should now have 52 entries');
 
 # Check the feed data.
 is_deeply $conn->run(sub{ shift->selectrow_arrayref(
@@ -550,7 +551,7 @@ $eup->mock(_audit_enclosure => sub {
 });
 
 ok $eup->process("$uri/enclosures.rss"), 'Process RSS feed with enclosures';
-test_counts(64, 'Should now have 64 entries');
+test_counts(65, 'Should now have 65 entries');
 
 # First one is easy, has only one enclosure.
 is_deeply test_data('urn:uuid:257c8075-dc7c-5678-8de0-5bb88360dff6'), {
@@ -625,7 +626,7 @@ is_deeply test_data('urn:uuid:4aef01ff-75c3-5dcb-a53f-878e3042f3cf'), {
 
 # Process it again.
 ok $eup->process("$uri/enclosures.rss"), 'Process RSS feed with enclosures again';
-test_counts(64, 'Should still have 64 entries');
+test_counts(65, 'Should still have 65 entries');
 
 is_deeply test_data('urn:uuid:257c8075-dc7c-5678-8de0-5bb88360dff6'), {
     author         => '',
@@ -718,7 +719,7 @@ for my $spec (
 ##############################################################################
 # Summary regressions.
 ok $eup->process("$uri/more_summaries.atom"), 'Process Summary regressions';
-test_counts(67, 'Should now have 67 entries');
+test_counts(68, 'Should now have 68 entries');
 
 for my $spec (
     [ 'onclick' => [
@@ -732,7 +733,7 @@ for my $spec (
         'http://foo.com/hey.jpg',
     ], 'broken html' ],
     [ 'hrm' => [
-        q{Jeff Koons has just unveiled the newest model in BMW's Art Car series. His vibrant design is one of the best in the series, which began in 1975, because he takes full advantage of the shape of the vehicle, rather than just painting on its surface. His art flows with the lines of the car to create an impression of speed and power. I mean, don't you totally want to grab this car and drive ridiculously fast on one of those mythical German roads with no speed limit? Of course you do! (thanks Peter )},
+        q{Jeff Koons has just unveiled the newest model in BMW's Art Car series. His vibrant design is one of the best in the series, which began in 1975. I mean, don't you totally want to grab this car and drive ridiculously fast on one of those mythical German roads with no speed limit? Of course you do! (thanks Peter )},
         'image/jpeg',
         'http://ideas.veer.com/images/assets/posts/0012/0871/Koons_Car.jpg',
     ], 'no summary hrm' ],
@@ -746,7 +747,7 @@ for my $spec (
 ##############################################################################
 $eup->portal(0);
 ok $eup->process("$uri/entities.rss"), 'Process CP1252 RSS feed with entities';
-test_counts(71, 'Should now have 71 entries');
+test_counts(72, 'Should now have 72 entries');
 
 for my $spec (
     [ 4034, 'A space: Nice, eh?', 'nbsp' ],
@@ -765,7 +766,7 @@ for my $spec (
 # Test Yahoo! Pipes feed with nerbles in it.
 $eup->portal(1);
 ok $eup->process("$uri/nerbles.rss"), 'Process Yahoo! Pipes nerbles feed';
-test_counts(72, 'Should now have 72 entries');
+test_counts(73, 'Should now have 73 entries');
 
 is $dbh->selectrow_arrayref(
     'SELECT summary FROM entries WHERE id = ?',
@@ -778,7 +779,7 @@ is $dbh->selectrow_arrayref(
 # Test Feed with invalid bytes in it.
 $eup->portal(0);
 ok $eup->process("$uri/bogus.rss"), 'Process RSS with bogus bytes';
-test_counts(73, 'Should now have 73 entries');
+test_counts(74, 'Should now have 74 entries');
 
 is $dbh->selectrow_arrayref(
     'SELECT title FROM entries WHERE id = ?',
