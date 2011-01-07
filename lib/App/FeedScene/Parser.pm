@@ -38,7 +38,6 @@ for my $entity qw( amp gt lt quot apos) {
 
 sub _handle_error {
     my ($err, $res) = @_;
-    use Carp; $SIG{__DIE__} = \&Carp::confess;
     say STDERR "Error parsing ", $res->request->uri, eval {
         ' (libxml2 error code ' . $err->code . "):\n\n" . $err->as_string
     } || ":\n\n$err";
