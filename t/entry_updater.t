@@ -842,11 +842,13 @@ $res_mock->mock(content => sub { join '', $i++ % 2 ? @size_xml : @info_xml });
 
 # Make sure we get the large image.
 is_deeply $eup->_audit_enclosure($uri, $type), {
-    type => $type,
-    url  => URI->new('http://farm2.static.flickr.com/1282/4661840263_019e867a6e_b.jpg'),
-    id   => 'flickr:4661840263',
-    user => 'flickr:72575281@N00',
-    desc => 'The hammer is animated. To tacky. So hilarious. So cool.',
+    type   => $type,
+    url    => URI->new('http://farm2.static.flickr.com/1282/4661840263_019e867a6e_b.jpg'),
+    id     => 'flickr:4661840263',
+    user   => 'flickr:72575281@N00',
+    desc   => 'The hammer is animated. To tacky. So hilarious. So cool.',
+    width  => 1024,
+    height => 681,
 }, 'Should find the large image';
 
 # Should get undef if the image with that ID is already in the cached IDs.
@@ -888,22 +890,26 @@ $conn->run(sub {
 });
 $i = 0;
 is_deeply $eup->_audit_enclosure($uri, $type), {
-    type => $type,
-    url  => URI->new('http://farm2.static.flickr.com/1282/4661840263_019e867a6e.jpg'),
-    id   => 'flickr:4661840263',
-    user => 'flickr:72575281@N00',
-    desc => 'The hammer is animated. To tacky. So hilarious. So cool.',
+    type   => $type,
+    url    => URI->new('http://farm2.static.flickr.com/1282/4661840263_019e867a6e.jpg'),
+    id     => 'flickr:4661840263',
+    user   => 'flickr:72575281@N00',
+    desc   => 'The hammer is animated. To tacky. So hilarious. So cool.',
+    width  => 500,
+    height => 333,
 }, 'Should find the medium image';
 
 # Try for the original image when there is no medium.
 @size_xml = grep { $_ !~ /label="Medium"/ } @size_xml;
 $conn->run(sub { shift->do('DELETE FROM entries WHERE enclosure_id = ?', undef, 'flickr:4661840263') });
 is_deeply $eup->_audit_enclosure($uri, $type), {
-    type => $type,
-    url  => URI->new('http://farm2.static.flickr.com/1282/4661840263_e146f57fd2_o.jpg'),
-    id   => 'flickr:4661840263',
-    user => 'flickr:72575281@N00',
-    desc => 'The hammer is animated. To tacky. So hilarious. So cool.',
+    type   => $type,
+    url    => URI->new('http://farm2.static.flickr.com/1282/4661840263_e146f57fd2_o.jpg'),
+    id     => 'flickr:4661840263',
+    user   => 'flickr:72575281@N00',
+    desc   => 'The hammer is animated. To tacky. So hilarious. So cool.',
+    width  => 1024,
+    height => 681,
 }, 'Should find the original image';
 
 # Try for the passed-in URL when there is no original.

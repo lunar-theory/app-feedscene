@@ -111,6 +111,13 @@ sub parse_feed {
                     substr $lines[$line_idx], $err->column - 1, length $ent, $encoded;
                     $$body_ref = join $/ => @lines;
                     redo TRY;
+                # when (XML::LibXML::ErrNo::ERR_TAG_NOT_FINISHED) {
+                #     # Have XML::LibXML try to fix the missing tag.
+                #     $parser->recover(2);
+                #     $$body_ref = $parser->load_xml(string => $$body_ref)->toString(2);
+                #     $parser->recover(0);
+                #     redo TRY;
+                # }
                 }
                 default {
                     return _handle_error $err, $res;

@@ -599,19 +599,25 @@ sub _check_size {
     # Just return if it's not an image.
     return $enc if $enc->{type} && $enc->{type} !~ m{^image/};
 
-    # Fetch the image, we need to check it out.
-    my $res = $self->ua->get($enc->{url});
+    # Get the width and height.
+    my ($w, $h) = @{$enc}{qw(width height)};
+    unless ($w && $h) {
+        # Fetch the image, we need to check it out.
+        my $res = $self->ua->get($enc->{url});
 
-    # If it fails, we don't want it.
-    return if !$res->is_success && $res->code != HTTP_NOT_MODIFIED;
+        # If it fails, we don't want it.
+        return if !$res->is_success && $res->code != HTTP_NOT_MODIFIED;
+
+        ($w, $h) = imgsize $res->decoded_content(ref => 1);
+
+        # Make sure we have the canonical type and URL.
+        $enc->{type} = $res->content_type;
+        $enc->{url}  = URI->new($res->request->uri)->canonical;
+    }
 
     # Make sure it's a minimum size.
-    my ($x, $y, $t) = imgsize $res->decoded_content(ref => 1);
-    return if !$x || $x < 300 || $y < 300;
+    return if !$w || $w < 300 || $h < 300;
 
-    # Make sure we have the canonical type and URL.
-    $enc->{type} = $res->content_type;
-    $enc->{url}  = URI->new($res->request->uri)->canonical;
     return $enc;
 }
 
@@ -674,8 +680,11 @@ sub _audit_enclosure {
 
     # Go for large, medium, or original.
     for my $size qw(Large Medium Original) {
-        if (my $source = $doc->find("/rsp/sizes/size[\@label='$size']/\@source")) {
-            $enc->{url} = URI->new($source)->canonical;
+        if (my $source = $doc->find("/rsp/sizes/size[\@label='$size']")) {
+            $source        = $source->get_node(1);
+            $enc->{url}    = URI->new($source->findvalue('./@source'))->canonical;
+            $enc->{width}  = $source->findvalue('./@width');
+            $enc->{height} = $source->findvalue('./@height');
             last;
         }
     }
