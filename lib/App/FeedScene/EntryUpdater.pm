@@ -26,6 +26,7 @@ has icon    => (is => 'rw', isa => 'Str', default => 'none');
 has eurls   => (is => 'rw', isa => 'HashRef' );
 has eids    => (is => 'rw', isa => 'HashRef' );
 has eusers  => (is => 'rw', isa => 'HashRef' );
+has in_pool => (is => 'rw', isa => 'Bool');
 has verbose => (is => 'rw', isa => 'Int', default => 0);
 
 sub _clean {
@@ -59,6 +60,7 @@ sub process {
 
     my $conn = App::FeedScene->new($self->app)->conn;
     my $res  = $self->ua->get($feed_url);
+    $self->in_pool($feed_url->host eq 'api.flickr.com');
 
     # Handle errors.
     if (!$res->is_success || !Parser->isa_feed($res)) {
@@ -648,8 +650,8 @@ sub _audit_enclosure {
     # Request information about the photo or return.
     my $api_key = '58e9ec90618e63825e2372a94e306bb3';
     my $api_url = 'http://api.flickr.com/services/rest/?method='
-        . "flickr.photos.getInfo&api_key=$api_key&photo_id=$photo_id";
-    my $res = $self->ua->get($api_url);
+        . "flickr.photos.%s&api_key=$api_key&photo_id=$photo_id";
+    my $res = $self->ua->get(sprintf $api_url, 'getInfo');
 
     # If the request is unsuccessful, skip the photo.
     return unless $res->is_success || $res->code == HTTP_NOT_MODIFIED;
@@ -669,10 +671,16 @@ sub _audit_enclosure {
     $enc->{user} = $enc_user;
     $enc->{desc} = $doc->findvalue('/rsp/photo/description');
 
+    if ($self->in_pool) {
+        # Has it been favorited?
+        $res = $self->ua->get(sprintf $api_url, 'getFavorites');
+        return $enc unless $res->is_success || $res->code == HTTP_NOT_MODIFIED;
+        $doc = Parser->libxml->parse_string($res->content);
+        return unless $doc->findvalue('count(/rsp/photo/person)') > 0;
+    }
+
     # Fetch sizes.
-    $api_url = 'http://api.flickr.com/services/rest/?method='
-        . "flickr.photos.getSizes&api_key=$api_key&photo_id=$photo_id";
-    $res = $self->ua->get($api_url);
+    $res = $self->ua->get(sprintf $api_url, 'getSizes');
     return $enc unless $res->is_success || $res->code == HTTP_NOT_MODIFIED;
 
     # Parse it.

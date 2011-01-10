@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<rsp stat="ok">
+<photo id="5323912867" secret="fe0a2e007e" server="5204" farm="6" page="1" pages="1" perpage="10" total="1">
+	<person nsid="93807460@N00" username="lunarboy" favedate="1294164168" />
+</photo>
+</rsp>

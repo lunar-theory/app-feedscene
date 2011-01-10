@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 223;
+use Test::More tests => 227;
 #use Test::More 'no_plan';
 use Test::More::UTF8;
 use Test::NoWarnings;
@@ -837,10 +837,22 @@ my @info_xml = do {
     open my $fh, '<', $fn or die "Cannot open $fn: $!\n";
     <$fh>;
 };
+my @fav_xml = do {
+    my $fn = 't/data/flickr-favorites.xml';
+    open my $fh, '<', $fn or die "Cannot open $fn: $!\n";
+    <$fh>;
+};
 my $i;
-$res_mock->mock(content => sub { join '', $i++ % 2 ? @size_xml : @info_xml });
+$res_mock->mock(content => sub {
+    ++$i;
+    join '', $i == 1 ? @info_xml
+           : $i == 2 ? @fav_xml
+                     : @size_xml;
+});
+$eup->in_pool(1);
 
 # Make sure we get the large image.
+$i = 0;
 is_deeply $eup->_audit_enclosure($uri, $type), {
     type   => $type,
     url    => URI->new('http://farm2.static.flickr.com/1282/4661840263_019e867a6e_b.jpg'),
@@ -853,12 +865,14 @@ is_deeply $eup->_audit_enclosure($uri, $type), {
 
 # Should get undef if the image with that ID is already in the cached IDs.
 $eup->eids({  'flickr:4661840263' => 1 });
+$i = 0;
 is $eup->_audit_enclosure($uri, $type), undef,
     'Should get undef because the image is already in the cache';
 
 # Should get undef if the user is already in the cache.
 $eup->eids({ });
 $eup->eusers({ 'flickr:72575281@N00' => 1 });
+$i = 0;
 is $eup->_audit_enclosure($uri, $type), undef,
     'Should get undef because the username is already in the cache';
 
@@ -868,6 +882,7 @@ $conn->run(sub { shift->do(
     'UPDATE entries SET enclosure_id = ? WHERE id = ?',
     undef,  'flickr:4661840263', 'urn:uuid:257c8075-dc7c-5678-8de0-5bb88360dff6',
 )});
+$i = 0;
 is $eup->_audit_enclosure($uri, $type), undef,
     'Should get undef because the image is already in the database';
 
@@ -878,6 +893,7 @@ $conn->run(sub { shift->do(
     undef,  'flickr:whatever', 'flickr:72575281@N00',
     'urn:uuid:257c8075-dc7c-5678-8de0-5bb88360dff6',
 )});
+$i = 0;
 is $eup->_audit_enclosure($uri, $type), undef,
     'Should get undef because the user is already in the database';
 
@@ -901,7 +917,11 @@ is_deeply $eup->_audit_enclosure($uri, $type), {
 
 # Try for the original image when there is no medium.
 @size_xml = grep { $_ !~ /label="Medium"/ } @size_xml;
-$conn->run(sub { shift->do('DELETE FROM entries WHERE enclosure_id = ?', undef, 'flickr:4661840263') });
+$conn->run(sub { shift->do(
+    'DELETE FROM entries WHERE enclosure_id = ?',
+    undef, 'flickr:4661840263')
+});
+$i = 0;
 is_deeply $eup->_audit_enclosure($uri, $type), {
     type   => $type,
     url    => URI->new('http://farm2.static.flickr.com/1282/4661840263_e146f57fd2_o.jpg'),
@@ -914,6 +934,7 @@ is_deeply $eup->_audit_enclosure($uri, $type), {
 
 # Try for the passed-in URL when there is no original.
 @size_xml = grep { $_ !~ /label="Original"/ } @size_xml;
+$i = 0;
 is_deeply $eup->_audit_enclosure($uri, $type), {
     type => $type,
     url  => $uri,
@@ -921,6 +942,47 @@ is_deeply $eup->_audit_enclosure($uri, $type), {
     user => 'flickr:72575281@N00',
     desc => 'The hammer is animated. To tacky. So hilarious. So cool.',
 }, 'Should get the passed URI when nothing found in XML';
+
+# Now try when there is no favorite.
+@fav_xml = grep { $_ !~ /person nsid/ } @fav_xml;
+$conn->run(sub { shift->do(
+    'DELETE FROM entries WHERE enclosure_id = ?',
+    undef, 'flickr:4661840263')
+});
+$i = 0;
+is $eup->_audit_enclosure($uri, $type), undef,
+    'Should get undef because the image has not been favorited';
+
+# But we shouldn't care if we're not in a pool.
+$eup->in_pool(0);
+$res_mock->mock(content => sub { join '', $i++ % 2 ? @size_xml : @info_xml });
+$i = 0;
+is_deeply $eup->_audit_enclosure($uri, $type), {
+    type => $type,
+    url  => $uri,
+    id   => 'flickr:4661840263',
+    user => 'flickr:72575281@N00',
+    desc => 'The hammer is animated. To tacky. So hilarious. So cool.',
+}, 'Should get a result when not in a pool';
+
+# Make sure that process() properly sets in_pool.
+$eup->mock(in_pool => sub {
+    ok $_[1], 'process() should identify a Flickr pool';
+    die 'Short-circuit';
+});
+
+$uri = URI->new('http://api.flickr.com/services/feeds/groups_pool.gne?id=1106345@N23&lang=en-us&format=rss_200');
+eval { $eup->process($uri) };
+
+# Make sure it identifies other stuff as not a pool.
+$eup->mock(in_pool => sub {
+    ok !$_[1], 'process() should identify a non-Flickr pool';
+    die 'Short-circuit';
+});
+
+$uri = URI->new('http://www.flourish.org/news/flickr-daily-interesting-one.xml');
+eval { $eup->process($uri) };
+$eup->unmock('process');
 
 ##############################################################################
 # Test size check.
