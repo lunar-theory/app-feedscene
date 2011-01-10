@@ -49,6 +49,7 @@ Module::Build->new(
         'UNIVERSAL::can'             => '1.16',
         'URI'                        => '1.54',
         'XML::Builder'               => '0.902',
+        'XML::Liberal'               => '0.22',
         'XML::LibXML'                => '1.70',
         'XML::RSS::LibXML'           => '0.3100',
     },

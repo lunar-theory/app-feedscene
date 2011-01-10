@@ -27,7 +27,7 @@ my $ua = App::FeedScene::UA->new('foo');
 isa_ok $CLASS->parse_feed($ua->get("$uri/simple.atom")), 'Data::Feed::Atom';
 
 # Test XML::LibXML stuff.
-isa_ok $CLASS->libxml, 'XML::LibXML';
+isa_ok $CLASS->libxml, 'XML::Liberal::LibXML';
 isa_ok $CLASS->parse_html_string('<p>foo</p>'), 'XML::LibXML::Document';
 
 for my $spec (

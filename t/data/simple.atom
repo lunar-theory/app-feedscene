@@ -31,7 +31,7 @@
 
   <entry>
     <category term="text" />
-    <title>This is another title</title>
+    <title>This is another title™</title>
     <link rel="alternate" href="/another-story.html" />
     <link rel="related" href="http://example.com/" />
     <id>urn:uuid:1225c695-cfb8-4ebb-bbbb-80da344efa6b</id>

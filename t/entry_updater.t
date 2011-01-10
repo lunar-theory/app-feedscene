@@ -206,7 +206,7 @@ is_deeply test_data('urn:uuid:82e57dc3-0fdf-5a44-be61-7dfaeaa842ad'), {
     feed_id        => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6',
     url            => 'http://example.com/1234',
     via_url        => 'http://example.com/another-story.html',
-    title          => 'This is another title',
+    title          => 'This is another title™',
     published_at   => '2009-12-12 12:29:29+00',
     updated_at     => '2009-12-13 18:30:03+00',
     summary        => 'Summary of the second story',

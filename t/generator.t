@@ -343,7 +343,7 @@ sub test_entries {
         $_->is('./a:id', 'urn:uuid:82e57dc3-0fdf-5a44-be61-7dfaeaa842ad', '...Entry ID');
         $_->is('./a:link[@rel="alternate"]/@href', 'http://example.com/1234', '...Link');
         $_->is('./a:link[@rel="via"]/@href', 'http://example.com/another-story.html', '...Via link');
-        $_->is('./a:title', 'This is another title', '...Title');
+        $_->is('./a:title', 'This is another title™', '...Title');
         $_->is('./a:published', '2009-12-12T12:29:29Z', '...Published');
         $_->is('./a:updated', '2009-12-13T18:30:03Z', '...Updated');
         $_->is('./a:summary[@type="text"]', 'Summary of the second story', '...Summary');
