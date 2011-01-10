@@ -613,8 +613,11 @@ sub _check_size {
         ($w, $h) = imgsize $res->decoded_content(ref => 1);
 
         # Make sure we have the canonical type and URL.
-        $enc->{type} = $res->content_type;
-        $enc->{url}  = URI->new($res->request->uri)->canonical;
+        $enc->{type} = $res->content_type || $enc->{type};
+        if (my $req = $res->request) {
+            # No idea why sometimes request is undef.
+            $enc->{url} = $req->uri->canonical;
+        }
     }
 
     # Make sure it's a minimum size.
