@@ -679,7 +679,7 @@ sub _audit_enclosure {
         $res = $self->ua->get(sprintf $api_url, 'getFavorites');
         return $enc unless $res->is_success || $res->code == HTTP_NOT_MODIFIED;
         $doc = Parser->libxml->parse_string($res->content);
-        return unless $doc->findvalue('count(/rsp/photo/person)') > 0;
+        return unless $doc->findvalue('count(/rsp/photo/person)') > 1;
     }
 
     # Fetch sizes.
