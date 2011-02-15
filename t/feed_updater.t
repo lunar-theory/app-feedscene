@@ -118,7 +118,7 @@ test_counts(7, 'Should now have 7 feeds');
     test_feeds(0, [
         {
             url      => URI->new("$uri/simple.atom")->canonical,
-            title    => 'Strongrrl',
+            title    => 'Design with Muscle',
             subtitle => 'Witty & clever',
             site_url => 'http://example.com/',
             icon_url => 'http://getfavicon.appspot.com/http://example.com/?defaulticon=none',

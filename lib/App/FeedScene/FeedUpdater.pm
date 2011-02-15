@@ -48,6 +48,7 @@ sub process {
         my $upd = $dbh->prepare(q{
             UPDATE feeds
                SET portal   = ?,
+                   title    = COALESCE(?, title),
                    category = ?
              WHERE id       = ?
         });
@@ -71,7 +72,7 @@ sub process {
             my ($id) = $dbh->selectrow_array($sel, undef, $feed_url->as_string);
             if ($id) {
                 push @ids, $id;
-                $upd->execute($portal, $category || '', $id);
+                $upd->execute($portal, $site_name || undef, $category || '', $id);
                 next;
             }
 
