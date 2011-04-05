@@ -7,7 +7,7 @@ use Getopt::Long;
 Getopt::Long::Configure( qw(bundling) );
 
 GetOptions(
-    'app|a=s'        => \my $app,
+    'app|a=s'    => \my $app,
     'bucket|b=s' => \my $bucket,
     'verbose|V+' => \my $verbose,
     'help|h'     => \my $help,

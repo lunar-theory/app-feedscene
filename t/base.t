@@ -38,6 +38,6 @@ is $dbh->{Name}, 'dbname=myapp', 'Should be connected to "myapp"';
 ok !$dbh->{PrintError}, 'PrintError should be disabled';
 ok !$dbh->{RaiseError}, 'RaiseError should be disabled';
 ok $dbh->{AutoCommit}, 'AutoCommit should be enabled';
-ok $dbh->{pg_enable_utf8}, 'sqlite_unicode should be enabled';
+ok $dbh->{pg_enable_utf8}, 'pg_enable_utf8 should be enabled';
 ok $dbh->{pg_server_prepare}, 'pg_server_prepare should be enabled';
 isa_ok $dbh->{HandleError}, 'CODE', 'The error handler';
