@@ -34,7 +34,7 @@ RSSPARSER: {
 sub libxml { $parser }
 
 # Remove the XML entities, we don't want to decode them.
-for my $entity qw( amp gt lt quot apos) {
+for my $entity (qw( amp gt lt quot apos)) {
     delete $HTML::Entities::entity2char{$entity};
 }
 

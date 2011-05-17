@@ -690,7 +690,7 @@ sub _audit_enclosure {
     $doc = Parser->libxml->parse_string($res->content);
 
     # Go for large, medium, or original.
-    for my $size qw(Large Medium Original) {
+    for my $size (qw(Large Medium Original)) {
         if (my $source = $doc->find("/rsp/sizes/size[\@label='$size']")) {
             $source        = $source->get_node(1);
             $enc->{url}    = URI->new($source->findvalue('./@source'))->canonical;
