@@ -8,7 +8,6 @@ use Data::Feed::Parser::RSS;
 use XML::Liberal;
 use XML::LibXML qw(XML_TEXT_NODE XML_ELEMENT_NODE);
 use XML::LibXML::ErrNo;
-use Encode;
 use namespace::autoclean;
 use HTML::Entities;
 
@@ -44,7 +43,7 @@ sub isa_feed {
     return 1 if $res->content_is_xml;
 
     # Ask Data::Feed.
-    return !!Data::Feed->guess_format($res->decoded_content(ref => 1));
+    return !!Data::Feed->guess_format($res->decoded_content(ref => 1, charset => 'none'));
 }
 
 sub parse_feed {
@@ -59,11 +58,7 @@ sub parse_feed {
     # So we have to re-encode it, because HTTP::Message's decoded_content()
     # both decompresses *and* decodes. Reported here:
     # https://github.com/gisle/libwww-perl/issues/17.
-    # my $feed = eval { Data::Feed->parse($res->content_ref) };
-    my $feed = eval { Data::Feed->parse(\encode(
-        $res->content_type_charset || $res->content_charset,
-        $res->decoded_content
-    )) };
+    my $feed = eval { Data::Feed->parse($res->decoded_content(ref => 1, charset => 'none')) };
     if (my $err = $@) {
         say STDERR "Error parsing ", eval { $res->request->uri }, eval {
             ' (libxml2 error code ' . $err->code . "):\n\n" . $err->as_string
