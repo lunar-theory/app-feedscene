@@ -1,4 +1,4 @@
-package App::FeedScene::Generator 0.45;
+package App::FeedScene::Generator 0.46;
 
 use 5.12.0;
 use utf8;
