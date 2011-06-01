@@ -44,7 +44,7 @@ sub isa_feed {
     return 1 if $res->content_is_xml;
 
     # Ask Data::Feed.
-    return !!Data::Feed->guess_format($res->content_ref);
+    return !!Data::Feed->guess_format($res->decoded_content(ref => 1));
 }
 
 sub parse_feed {
@@ -53,7 +53,17 @@ sub parse_feed {
     # XML is always binary, so don't use decoded_content.
     # http://juerd.nl/site.plp/perluniadvice
     local $@;
-    my $feed = eval { Data::Feed->parse($res->content_ref) };
+
+    # Yikes. This line replaced so that we can get proper decoding of
+    # compressed content, but still need to pass the raw data to the parser.
+    # So we have to re-encode it, because HTTP::Message's decoded_content()
+    # both decompresses *and* decodes. Reported here:
+    # https://github.com/gisle/libwww-perl/issues/17.
+    # my $feed = eval { Data::Feed->parse($res->content_ref) };
+    my $feed = eval { Data::Feed->parse(\encode(
+        $res->content_type_charset || $res->content_charset,
+        $res->decoded_content
+    )) };
     if (my $err = $@) {
         say STDERR "Error parsing ", eval { $res->request->uri }, eval {
             ' (libxml2 error code ' . $err->code . "):\n\n" . $err->as_string

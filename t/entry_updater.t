@@ -3,7 +3,7 @@
 use strict;
 use 5.12.0;
 use utf8;
-use Test::More tests => 227;
+use Test::More tests => 229;
 #use Test::More 'no_plan';
 use Test::More::UTF8;
 use Test::NoWarnings;
@@ -794,6 +794,36 @@ is $dbh->selectrow_arrayref(
     _uuid('http://welie.example.com/', 'http://welie.example.com/broken')
 )->[0], "\x{c3}\x{ad}Z\x{e2}\x{2030}\x{a4}F1\x{e2}\x{20ac}\x{201c}\x{c3}\x{2122}?Z\x{e2}\x{2c6},",
     'Bogus characters should be removed from summary';
+
+##############################################################################
+# Test gzip encoding.
+$conn->txn(sub {
+    my $sth = shift->do(
+        'UPDATE feeds SET url = ? WHERE title = ?',
+        undef,
+        "$uri/simple.atom.gz", 'Simple Atom Feed'
+    );
+});
+
+$res_mock->mock( content_is_xml => 1);
+ok $eup->process("$uri/simple.atom.gz"), "Process gzip'ed simple atom feed";
+$res_mock->unmock('content_is_xml');
+is_deeply test_data('urn:uuid:82e57dc3-0fdf-5a44-be61-7dfaeaa842ad'), {
+    id             => 'urn:uuid:82e57dc3-0fdf-5a44-be61-7dfaeaa842ad',
+    feed_id        => 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6',
+    url            => 'http://example.com/1234',
+    via_url        => 'http://example.com/another-story.html',
+    title          => 'This is yet another title™',
+    published_at   => '2009-12-12 12:29:29+00',
+    updated_at     => '2009-12-13 18:30:03+00',
+    summary        => 'Summary of the second story',
+    author         => '',
+    enclosure_url  => undef,
+    enclosure_type => '',
+    enclosure_id   => undef,
+    enclosure_user => undef,
+    enclosure_hash => undef,
+}, 'Data for second entry should be updated';
 
 ##############################################################################
 # Test enclosure auditing.
