@@ -35,3 +35,4 @@ pod-spelling\.t$
 # Avoid databases and the cache.
 \.db$
 ^cache
+^MYMETA\.json$
