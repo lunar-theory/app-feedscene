@@ -5,6 +5,7 @@ use lib 'lib';
 use App::FeedScene::Distributor;
 use Getopt::Long;
 Getopt::Long::Configure( qw(bundling) );
+$ENV{PERL_LWP_SSL_VERIFY_HOSTNAME} = 0;
 
 GetOptions(
     'app|a=s'    => \my $app,
