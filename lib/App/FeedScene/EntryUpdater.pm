@@ -573,7 +573,7 @@ sub _validate_enclosure {
     my ($self, $url, $type) = @_;
 
     # Ignore useless URIs and obvious ads.
-    return if !$url->can('host') || $url->host =~ /\bdoubleclick[.]net$/;
+    return if !$url->can('host') || !$url->host || $url->host =~ /\bdoubleclick[.]net$/;
 
     # Make sure we have a type.
     ($type, $url) = $self->_get_type($url) unless $type;
