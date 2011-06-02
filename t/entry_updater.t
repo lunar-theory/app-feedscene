@@ -709,6 +709,8 @@ for my $spec (
     ) || ['no row'], $spec->[1], "Should have proper Atom enclosure for $spec->[2]";
 
     $spec->[1][2] =~ s{[.]com}{.org};
+    # The "audio" enclosure has a relative URL.
+    $spec->[1][2] =~ s{flickr[.]}{example.} if $spec->[0] eq 'audio';
 
     is_deeply $dbh->selectrow_arrayref(
         'SELECT summary, enclosure_type, enclosure_url FROM entries WHERE id = ?',

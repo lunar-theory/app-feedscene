@@ -517,7 +517,7 @@ sub _find_enclosure {
     # Have a look at the enclosures.
     for my $enc ($entry->enclosures) {
         my $enc_data = $self->_validate_enclosure(
-            URI->new($enc->url)->canonical, $enc->type
+            URI->new_abs($enc->url, $base_url)->canonical, $enc->type
         ) or next;
         return $enc_data;
     }
