@@ -22,6 +22,7 @@ Module::Build->new(
         'Test::XPath'      => '0.13',
     },
     requires           => {
+        'aliased'                    => '0.30',
         'Crypt::SSLeay'              => '0.58',
         'Data::Feed'                 => '0.00014',
         'DateTime'                   => '0.55',
