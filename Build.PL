@@ -55,6 +55,7 @@ Module::Build->new(
         'XML::RSS::LibXML'           => '0.3100',
     },
     recommends         => {
+        'LWP::Protocol::https' =>    => '6.02',
         'Test::Pod'           => '1.41',
 #       'Test::Pod::Coverage' => '1.06',
     },
