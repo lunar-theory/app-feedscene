@@ -61,14 +61,14 @@ fs_dba - FeedScene database administration
 
 =head1 Description
 
-This program initializes and updates FeedScene application SQLite databases.
-The databases are stored in the F<db> directory, and each is named for the
-C<--app> option.
+This program initializes and updates FeedScene application PostgreSQL
+databases. The databases are stored in the F<db> directory, and each is named
+for the C<--app> option.
 
 =head1 Options
 
   -a --app NAME       Name of the FeedScene app.
-  -c --client CLIENT  Path to the SQLite 3 client.
+  -c --client CLIENT  Path to the psql client.
   -d --dir DIRECTORY  Directory containing SQL upgrade scripts
   -h --help           Print a usage statement and exit.
   -m --man            Print the complete documentation and exit.
