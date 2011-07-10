@@ -24,7 +24,7 @@ Module::Build->new(
     requires           => {
         'aliased'                    => '0.30',
         'Crypt::SSLeay'              => '0.58',
-        'Data::Feed'                 => '0.00014',
+        'Data::Feed'                 => '0.00015',
         'DateTime'                   => '0.55',
         'DBD::Pg'                    => '2.17.2',
         'DBI'                        => '1.608',
@@ -52,7 +52,7 @@ Module::Build->new(
         'XML::Builder'               => '0.902',
         'XML::Liberal'               => '0.22',
         'XML::LibXML'                => '1.70',
-        'XML::RSS::LibXML'           => '0.3100',
+        'XML::RSS::LibXML'           => '0.3101',
     },
     recommends         => {
         'LWP::Protocol::https' =>    => '6.02',
