@@ -53,10 +53,8 @@ sub parse_feed {
     # http://juerd.nl/site.plp/perluniadvice
     local $@;
 
-    # Yikes. This line replaced so that we can get proper decoding of
-    # compressed content, but still need to pass the raw data to the parser.
-    # So we have to re-encode it, because HTTP::Message's decoded_content()
-    # both decompresses *and* decodes. Reported here:
+    # Be sure to specify charset => 'none' so that the file will be
+    # decompressed, if necessary, but not decoded to Perl's internal form.
     # https://github.com/gisle/libwww-perl/issues/17.
     my $feed = eval { Data::Feed->parse($res->decoded_content(ref => 1, charset => 'none')) };
     if (my $err = $@) {
