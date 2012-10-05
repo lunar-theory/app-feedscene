@@ -635,7 +635,7 @@ sub _audit_enclosure {
     # Set up the basic enclosure info. An undef $type is fine for now.
     my $enc = { type => $type, url  => $url };
 
-    return $enc unless $url->host =~ /^farm\d+[.]static[.]flickr[.]com$/;
+    return $enc unless $url->host =~ /^farm\d+[.]static[.]?flickr[.]com$/;
 
     # Grab the photo ID or return.
     my ($photo_id) = ($url->path_segments)[-1] =~ /^([^_]+)(?=_)/;
