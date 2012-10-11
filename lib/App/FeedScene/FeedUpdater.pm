@@ -95,7 +95,7 @@ sub process {
                          ? URI->new_abs($site_url, $feed->base)->canonical
                          : URI->new($site_url)->canonical;
             my $icon_url = URI->new(sprintf(
-                'http://getfavicon.appspot.com/%s?defaulticon=none',
+                'http://g.etfv.co/%s?defaulticon=none',
                 $site_url || $feed_url
             ))->canonical;
 

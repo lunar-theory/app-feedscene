@@ -26,7 +26,7 @@ Test::MockTime::set_fixed_time($time);
 
 my $domain   = 'lunar-theory.com';
 my $company  = 'Lunar Theory';
-my $icon_url = 'http://getfavicon.appspot.com/%s?defaulticon=none';
+my $icon_url = 'http://g.etfv.co/%s?defaulticon=none';
 
 # Build a database for us to use.
 ok my $dba = App::FeedScene::DBA->new( app => 'foo' ),

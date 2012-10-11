@@ -226,7 +226,7 @@ sub process {
                 Parser->strip_html($feed->description || ''),
                 $site_url,
                 URI->new(sprintf(
-                    'http://getfavicon.appspot.com/%s?defaulticon=%s',
+                    'http://g.etfv.co/%s?defaulticon=%s',
                     $site_url || $feed_url, $self->icon
                 ))->canonical,
                 ($feed->modified || DateTime->now)->set_time_zone('UTC')->iso8601 . 'Z',
