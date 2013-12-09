@@ -516,6 +516,9 @@ sub _find_enclosure {
 
     # Have a look at the enclosures.
     for my $enc ($entry->enclosures) {
+        next unless $enc->url;
+        say STDERR "        Validating $entry_id enclosure ", $enc->url
+            if $self->verbose > 1;
         my $enc_data = $self->_validate_enclosure(
             ($base_url
                 ? URI->new_abs($enc->url, $base_url)->canonical
@@ -535,6 +538,8 @@ sub _find_enclosure {
             $url = $base_url
                 ? URI->new_abs($url, $base_url)->canonical
                 : URI->new($url)->canonical;
+            say STDERR "        Validating $entry_id object $url"
+                if $self->verbose > 1;
             my $enc_data = $self->_validate_enclosure($url) or next;
             return $enc_data;
         }
