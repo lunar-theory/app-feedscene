@@ -660,7 +660,7 @@ sub _audit_enclosure {
 
     # Request information about the photo or return.
     my $api_key = '58e9ec90618e63825e2372a94e306bb3';
-    my $api_url = 'http://api.flickr.com/services/rest/?method='
+    my $api_url = 'https://api.flickr.com/services/rest/?method='
         . "flickr.photos.%s&api_key=$api_key&photo_id=$photo_id";
     my $res = $self->ua->get(sprintf $api_url, 'getInfo');
 
