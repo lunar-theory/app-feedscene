@@ -42,7 +42,7 @@ Module::Build->new(
         'Moose'                      => '1.06',
         'namespace::autoclean'       => '0.11',
         'Net::Amazon::S3'            => '0.53',
-        'OSSP::uuid'                 => '1.0602',
+        'UUID::Tiny'                 => '1.04',
         'perl'                       => 5.012,
         'Pod::Usage'                 => '1.36',
         'Text::CSV_XS'               => '0.73',

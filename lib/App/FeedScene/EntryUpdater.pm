@@ -9,7 +9,7 @@ use aliased 'App::FeedScene::Parser';
 use Encode::ZapCP1252;
 use HTTP::Status qw(HTTP_NOT_MODIFIED);
 use XML::LibXML qw(XML_ELEMENT_NODE XML_TEXT_NODE);
-use OSSP::uuid;
+use UUID::Tiny qw(create_uuid_as_string UUID_V5 UUID_NS_URL);
 use MIME::Types;
 use Image::Size;
 use Text::Trim;
@@ -549,15 +549,10 @@ sub _find_enclosure {
     return $self->_validate_enclosure($entry_link);
 }
 
-my $uuid_gen = OSSP::uuid->new;
-my $uuid_ns  = OSSP::uuid->new;
-
 sub _uuid {
     my ($site_url, $entry_url) = @_;
-    $uuid_ns->load('ns:URL');
-    $uuid_gen->make('v5', $uuid_ns, $site_url); # Make UUID for site URL.
-    $uuid_gen->make('v5', $uuid_gen, $entry_url); # Make UUID for site + entry URLs.
-    return 'urn:uuid:' . $uuid_gen->export('str');
+    my $ns = create_uuid_as_string(UUID_V5, UUID_NS_URL, "$site_url");
+    return 'urn:uuid:' . create_uuid_as_string(UUID_V5, $ns, "$entry_url");
 }
 
 my $mt = MIME::Types->new;
