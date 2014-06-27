@@ -3,6 +3,10 @@ package App::FeedScene::Distributor 0.51;
 use 5.12.0;
 use utf8;
 use IO::Compress::Gzip qw(gzip $GzipError Z_BEST_COMPRESSION);
+BEGIN {
+    local $SIG{__WARN__} = sub {};
+    require Net::Amazon::S3;
+}
 use aliased 'Net::Amazon::S3';
 use File::Basename;
 use namespace::autoclean;

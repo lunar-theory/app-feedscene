@@ -4,7 +4,10 @@ use 5.12.0;
 use utf8;
 use Data::Feed;
 use Data::Feed::Parser::Atom;
-use Data::Feed::Parser::RSS;
+BEGIN {
+    local $SIG{__WARN__} = sub {};
+    require Data::Feed::Parser::RSS;
+}
 use XML::Liberal;
 use XML::LibXML qw(XML_TEXT_NODE XML_ELEMENT_NODE);
 use XML::LibXML::ErrNo;
@@ -56,7 +59,10 @@ sub parse_feed {
     # Be sure to specify charset => 'none' so that the file will be
     # decompressed, if necessary, but not decoded to Perl's internal form.
     # https://github.com/gisle/libwww-perl/issues/17.
-    my $feed = eval { Data::Feed->parse($res->decoded_content(ref => 1, charset => 'none')) };
+    my $feed = eval {
+	local $SIG{__WARN__} = sub {};
+	Data::Feed->parse($res->decoded_content(ref => 1, charset => 'none'))
+    };
     if (my $err = $@) {
         say STDERR "Error parsing ", eval { $res->request->uri }, eval {
             ' (libxml2 error code ' . $err->code . "):\n\n" . $err->as_string

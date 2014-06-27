@@ -25,7 +25,10 @@ sub run {
     my $self = shift;
     my $ua = $self->ua(App::FeedScene::UA->new($self->app));
     $ua->cache->clear;
-    my $res = $ua->get($self->url);
+    my $res = do {
+	local $SIG{__WARN__} = sub {};
+	$ua->get($self->url);
+    };
     say STDERR 'Error retrieving ', $self->url, ': ', $res->status_line
         unless $res->is_success or $res->code == HTTP_NOT_MODIFIED;
     $self->process($res->decoded_content)
